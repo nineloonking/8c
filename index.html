@@ -15,8 +15,9 @@
 
         .container {
             position: relative;
-            width: 400px;
-            height: 400px;
+            width: 500px; /* 加大容器以匹配原圖比例 */
+            height: 500px;
+            overflow: visible;
         }
 
         .element {
@@ -33,7 +34,8 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        .wood { background-color: #00cc00; top: 50%; left: 0; transform: translateY(-50%); }
+        /* 調整元素位置，用百分比以適應不同螢幕 */
+        .wood { background-color: #00cc00; bottom: 10%; left: 10%; }
         .fire { background-color: #ff3333; top: 10%; left: 10%; }
         .earth { background-color: #ffcc00; top: 0; left: 50%; transform: translateX(-50%); }
         .metal { background-color: #cccccc; top: 10%; right: 10%; }
@@ -46,11 +48,12 @@
             color: black;
         }
 
-        .label-wood { bottom: 10%; left: 0; }
+        /* 調整標籤位置 */
+        .label-wood { bottom: 0; left: 5%; }
         .label-fire { top: 20%; left: 0; }
-        .label-earth { top: 0; left: 50%; transform: translateX(-50%); }
+        .label-earth { top: -5%; left: 50%; transform: translateX(-50%); }
         .label-metal { top: 20%; right: 0; }
-        .label-water { bottom: 10%; right: 0; }
+        .label-water { bottom: 0; right: 5%; }
 
         .yin-yang {
             position: absolute;
@@ -115,29 +118,29 @@
         <div class="yin-yang"></div>
 
         <!-- 相生箭頭（使用 SVG 繪製） -->
-        <svg class="arrow" width="400" height="400">
+        <svg class="arrow" width="500" height="500">
             <!-- 木 -> 火 -->
-            <path d="M 80 200 Q 120 100 160 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 100 400 Q 150 300 100 100" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 火 -> 土 -->
-            <path d="M 160 80 Q 200 40 240 40" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 100 100 Q 200 50 250 50" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 土 -> 金 -->
-            <path d="M 240 40 Q 280 80 320 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 250 50 Q 300 50 400 100" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 金 -> 水 -->
-            <path d="M 320 80 Q 360 200 320 320" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 400 100 Q 450 300 400 400" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 水 -> 木 -->
-            <path d="M 320 320 Q 200 360 80 200" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 400 400 Q 250 450 100 400" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
 
             <!-- 相剋箭頭 -->
             <!-- 木 -> 土 -->
-            <path d="M 80 200 Q 160 160 240 40" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 100 400 Q 200 300 250 50" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 土 -> 水 -->
-            <path d="M 240 40 Q 280 200 320 320" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 250 50 Q 350 300 400 400" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 水 -> 火 -->
-            <path d="M 320 320 Q 240 280 160 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 400 400 Q 300 350 100 100" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 火 -> 金 -->
-            <path d="M 160 80 Q 240 120 320 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 100 100 Q 250 150 400 100" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
             <!-- 金 -> 木 -->
-            <path d="M 320 80 Q 200 120 80 200" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <path d="M 400 100 Q 300 350 100 400" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
 
             <!-- 箭頭定義 -->
             <defs>
