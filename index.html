@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>五行相生相剋圖</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        .element {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .wood { background-color: #00cc00; top: 50%; left: 0; transform: translateY(-50%); }
+        .fire { background-color: #ff3333; top: 10%; left: 10%; }
+        .earth { background-color: #ffcc00; top: 0; left: 50%; transform: translateX(-50%); }
+        .metal { background-color: #cccccc; top: 10%; right: 10%; }
+        .water { background-color: #333333; bottom: 10%; right: 10%; }
+
+        .label {
+            position: absolute;
+            font-size: 18px;
+            font-family: 'Arial', sans-serif;
+            color: black;
+        }
+
+        .label-wood { bottom: 10%; left: 0; }
+        .label-fire { top: 20%; left: 0; }
+        .label-earth { top: 0; left: 50%; transform: translateX(-50%); }
+        .label-metal { top: 20%; right: 0; }
+        .label-water { bottom: 10%; right: 0; }
+
+        .yin-yang {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(90deg, black 50%, white 50%);
+            border-radius: 50%;
+            border: 2px solid black;
+        }
+
+        .yin-yang::before,
+        .yin-yang::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .yin-yang::before {
+            top: 15px;
+            left: 15px;
+            background: white;
+            border: 2px solid black;
+        }
+
+        .yin-yang::after {
+            bottom: 15px;
+            right: 15px;
+            background: black;
+            border: 2px solid white;
+        }
+
+        .arrow {
+            position: absolute;
+            stroke: gray;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 五行元素 -->
+        <div class="element wood">木</div>
+        <div class="element fire">火</div>
+        <div class="element earth">土</div>
+        <div class="element metal">金</div>
+        <div class="element water">水</div>
+
+        <!-- 標籤 -->
+        <div class="label label-wood">木生火</div>
+        <div class="label label-fire">火生土</div>
+        <div class="label label-earth">土生金</div>
+        <div class="label label-metal">金生水</div>
+        <div class="label label-water">水生木</div>
+
+        <!-- 陰陽符號 -->
+        <div class="yin-yang"></div>
+
+        <!-- 相生箭頭（使用 SVG 繪製） -->
+        <svg class="arrow" width="400" height="400">
+            <!-- 木 -> 火 -->
+            <path d="M 80 200 Q 120 100 160 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 火 -> 土 -->
+            <path d="M 160 80 Q 200 40 240 40" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 土 -> 金 -->
+            <path d="M 240 40 Q 280 80 320 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 金 -> 水 -->
+            <path d="M 320 80 Q 360 200 320 320" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 水 -> 木 -->
+            <path d="M 320 320 Q 200 360 80 200" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+
+            <!-- 相剋箭頭 -->
+            <!-- 木 -> 土 -->
+            <path d="M 80 200 Q 160 160 240 40" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 土 -> 水 -->
+            <path d="M 240 40 Q 280 200 320 320" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 水 -> 火 -->
+            <path d="M 320 320 Q 240 280 160 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 火 -> 金 -->
+            <path d="M 160 80 Q 240 120 320 80" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+            <!-- 金 -> 木 -->
+            <path d="M 320 80 Q 200 120 80 200" stroke="gray" stroke-width="2" fill="none" marker-end="url(#arrowhead)" />
+
+            <!-- 箭頭定義 -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="gray" />
+                </marker>
+            </defs>
+        </svg>
+    </div>
+</body>
+</html>
