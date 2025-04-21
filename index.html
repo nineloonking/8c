@@ -22,7 +22,7 @@
 
         .element {
             position: absolute;
-            border-radius: 50%; /* 改回圓形 */
+            border-radius: 50%; /* 圓形 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -31,12 +31,17 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
+        .arrow {
+            position: absolute;
+            fill: none;
+        }
+
         /* 五行元素大小同位置 */
-        .wood { background-color: #00cc00; width: 40px; height: 40px; font-size: 16px; top: 166.5px; left: 280px; } /* 木：(300, 186.5) - 半徑 20px */
-        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; top: 288.5px; left: 213px; } /* 土：(224.5, 300) - 半徑 11.5px */
-        .metal { background-color: #cccccc; width: 27px; height: 27px; font-size: 12px; top: 286.5px; left: 286px; } /* 金：(299.5, 300) - 半徑 13.5px */
-        .fire { background-color: #ff3333; width: 25px; height: 25px; font-size: 12px; top: 287.5px; left: 363px; } /* 火：(375.5, 300) - 半徑 12.5px */
-        .water { background-color: #333333; width: 50px; height: 50px; font-size: 20px; bottom: 156.5px; left: 275px; } /* 水：(300, 418.5) - 半徑 25px */
+        .wood { background-color: #00cc00; width: 40px; height: 40px; font-size: 16px; top: 222.5px; left: 332.5px; } /* 木：(352.5, 242.5) - 半徑 20px */
+        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; top: 288.5px; left: 236px; } /* 土：(247.5, 300) - 半徑 11.5px */
+        .metal { background-color: #cccccc; width: 27px; height: 27px; font-size: 12px; top: 286.5px; left: 259px; } /* 金：(272.5, 300) - 半徑 13.5px */
+        .fire { background-color: #ff3333; width: 25px; height: 25px; font-size: 12px; top: 287.5px; left: 340px; } /* 火：(352.5, 300) - 半徑 12.5px */
+        .water { background-color: #333333; width: 50px; height: 50px; font-size: 20px; bottom: 212.5px; left: 327.5px; } /* 水：(352.5, 362.5) - 半徑 25px */
     </style>
 </head>
 <body>
@@ -47,6 +52,28 @@
         <div class="element metal">金</div>
         <div class="element fire">火</div>
         <div class="element water">水</div>
+
+        <!-- 箭頭 -->
+        <svg class="arrow" width="600" height="600">
+            <!-- 紅色箭頭 -->
+            <!-- 火 -> 金 -->
+            <path d="M 340 287.5 Q 300 270 259 286.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 金 -> 木 -->
+            <path d="M 272.5 286.5 Q 300 240 332.5 222.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 綠色箭頭 -->
+            <!-- 金 -> 水 -->
+            <path d="M 272.5 313.5 Q 300 360 327.5 337.5" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+
+            <!-- 箭頭定義 -->
+            <defs>
+                <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="red" />
+                </marker>
+                <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="green" />
+                </marker>
+            </defs>
+        </svg>
     </div>
 </body>
 </html>
