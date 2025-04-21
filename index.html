@@ -22,8 +22,6 @@
 
         .element {
             position: absolute;
-            width: 80px;
-            height: 80px;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -34,12 +32,12 @@
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        /* 圓心喺 (300, 300)，半徑 200px，五角形角度分佈 */
-        .earth { background-color: #ffcc00; top: 100px; left: 260px; } /* 土，0° */
-        .metal { background-color: #cccccc; top: 235px; right: 60px; } /* 金，72° */
-        .water { background-color: #333333; bottom: 60px; right: 135px; } /* 水，144° */
-        .wood { background-color: #00cc00; bottom: 60px; left: 135px; } /* 木，216° */
-        .fire { background-color: #ff3333; top: 235px; left: 60px; } /* 火，288° */
+        /* 五行元素位置同大小 */
+        .earth { background-color: #ffcc00; top: 100px; left: 260px; width: 23px; height: 23px; font-size: 12px; } /* 土，0° */
+        .metal { background-color: #cccccc; top: 235px; right: 60px; width: 32px; height: 32px; font-size: 14px; } /* 金，72° */
+        .water { background-color: #333333; bottom: 60px; right: 135px; width: 120px; height: 120px; font-size: 30px; } /* 水，144° */
+        .wood { background-color: #00cc00; bottom: 60px; left: 135px; width: 74px; height: 74px; font-size: 20px; } /* 木，216° */
+        .fire { background-color: #ff3333; top: 235px; left: 60px; width: 28px; height: 28px; font-size: 12px; } /* 火，288° */
 
         .arrow {
             position: absolute;
@@ -58,34 +56,34 @@
 
         <!-- 相生相剋箭頭 -->
         <svg class="arrow" width="600" height="600">
-            <!-- 相生箭頭（外圈，綠色） -->
+            <!-- 相生箭頭（外圈，黑色） -->
             <!-- 木 -> 火 -->
-            <path d="M 135 540 Q 75 480 75 240" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <path d="M 90 540 Q 30 480 30 210" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
             <!-- 火 -> 土 -->
-            <path d="M 75 240 Q 150 150 260 100" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <path d="M 30 210 Q 150 90 248.5 111.5" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
             <!-- 土 -> 金 -->
-            <path d="M 260 100 Q 420 150 525 240" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <path d="M 248.5 111.5 Q 450 90 570 224" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
             <!-- 金 -> 水 -->
-            <path d="M 525 240 Q 525 420 465 540" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <path d="M 570 224 Q 570 420 525 480" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
             <!-- 水 -> 木 -->
-            <path d="M 465 540 Q 300 600 135 540" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <path d="M 525 480 Q 300 600 150 540" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
 
             <!-- 相剋箭頭（星形，紅色） -->
             <!-- 木 -> 土 -->
-            <path d="M 175 500 Q 220 300 260 140" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <path d="M 150 540 Q 220 300 248.5 111.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
             <!-- 土 -> 水 -->
-            <path d="M 300 140 Q 360 360 425 500" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <path d="M 248.5 111.5 Q 360 360 525 480" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
             <!-- 水 -> 火 -->
-            <path d="M 425 500 Q 300 420 115 240" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <path d="M 525 480 Q 300 420 30 210" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
             <!-- 火 -> 金 -->
-            <path d="M 115 240 Q 300 210 485 240" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <path d="M 30 210 Q 300 180 570 224" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
             <!-- 金 -> 木 -->
-            <path d="M 485 240 Q 360 360 175 500" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <path d="M 570 224 Q 360 360 150 540" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
 
             <!-- 箭頭定義 -->
             <defs>
-                <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="green" />
+                <marker id="arrowhead-black" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="black" />
                 </marker>
                 <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
                     <polygon points="0 0, 10 3.5, 0 7" fill="red" />
