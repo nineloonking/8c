@@ -26,18 +26,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
             color: white;
             font-family: 'Arial', sans-serif;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        /* 五行元素位置同大小 */
-        .earth { background-color: #ffcc00; top: 100px; left: 260px; width: 23px; height: 23px; font-size: 12px; } /* 土，0° */
-        .metal { background-color: #cccccc; top: 235px; right: 60px; width: 32px; height: 32px; font-size: 14px; } /* 金，72° */
-        .water { background-color: #333333; bottom: 60px; right: 135px; width: 120px; height: 120px; font-size: 30px; } /* 水，144° */
-        .wood { background-color: #00cc00; bottom: 60px; left: 135px; width: 74px; height: 74px; font-size: 20px; } /* 木，216° */
-        .fire { background-color: #ff3333; top: 235px; left: 60px; width: 28px; height: 28px; font-size: 12px; } /* 火，288° */
+        /* 五行元素大小同位置（之後會根據五角星頂點調整位置） */
+        .wood { background-color: #00cc00; width: 74px; height: 74px; font-size: 20px; }
+        .fire { background-color: #ff3333; width: 28px; height: 28px; font-size: 12px; }
+        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; }
+        .metal { background-color: #cccccc; width: 32px; height: 32px; font-size: 14px; }
+        .water { background-color: #333333; width: 120px; height: 120px; font-size: 30px; }
 
         .arrow {
             position: absolute;
@@ -47,15 +46,23 @@
 </head>
 <body>
     <div class="container">
-        <!-- 五行元素 -->
-        <div class="element earth">土</div>
-        <div class="element metal">金</div>
-        <div class="element water">水</div>
-        <div class="element wood">木</div>
-        <div class="element fire">火</div>
-
         <!-- 相生相剋箭頭 -->
         <svg class="arrow" width="600" height="600">
+            <!-- 相剋箭頭（五角星，紅色） -->
+            <!-- 五角星頂點座標（半徑 200px，中心 (300, 300)） -->
+            <!-- 木 (216°): (135, 540), 火 (288°): (60, 240), 土 (0°): (300, 100) -->
+            <!-- 金 (72°): (540, 240), 水 (144°): (465, 540) -->
+            <!-- 木 -> 土 -->
+            <path d="M 150 540 Q 220 300 248.5 111.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 土 -> 水 -->
+            <path d="M 248.5 111.5 Q 360 360 525 480" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 水 -> 火 -->
+            <path d="M 525 480 Q 300 420 30 210" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 火 -> 金 -->
+            <path d="M 30 210 Q 300 180 570 224" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 金 -> 木 -->
+            <path d="M 570 224 Q 360 360 150 540" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+
             <!-- 相生箭頭（外圈，黑色） -->
             <!-- 木 -> 火 -->
             <path d="M 90 540 Q 30 480 30 210" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
@@ -68,18 +75,6 @@
             <!-- 水 -> 木 -->
             <path d="M 525 480 Q 300 600 150 540" stroke="black" stroke-width="2" fill="none" marker-end="url(#arrowhead-black)" />
 
-            <!-- 相剋箭頭（星形，紅色） -->
-            <!-- 木 -> 土 -->
-            <path d="M 150 540 Q 220 300 248.5 111.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 土 -> 水 -->
-            <path d="M 248.5 111.5 Q 360 360 525 480" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 水 -> 火 -->
-            <path d="M 525 480 Q 300 420 30 210" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 火 -> 金 -->
-            <path d="M 30 210 Q 300 180 570 224" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 金 -> 木 -->
-            <path d="M 570 224 Q 360 360 150 540" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-
             <!-- 箭頭定義 -->
             <defs>
                 <marker id="arrowhead-black" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
@@ -90,6 +85,13 @@
                 </marker>
             </defs>
         </svg>
+
+        <!-- 五行元素（放置喺五角星頂點） -->
+        <div class="element wood" style="top: 503px; left: 98px;">木</div> <!-- 木 (135, 540) - 半徑 37px -->
+        <div class="element fire" style="top: 226px; left: 46px;">火</div> <!-- 火 (60, 240) - 半徑 14px -->
+        <div class="element earth" style="top: 88.5px; left: 288.5px;">土</div> <!-- 土 (300, 100) - 半徑 11.5px -->
+        <div class="element metal" style="top: 224px; right: 44px;">金</div> <!-- 金 (540, 240) - 半徑 16px -->
+        <div class="element water" style="bottom: 0px; right: 75px;">水</div> <!-- 水 (465, 540) - 半徑 60px -->
     </div>
 </body>
 </html>
