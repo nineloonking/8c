@@ -2,15 +2,17 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>五行元素圖</title>
     <style>
         body {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            align-items: flex-start; /* 圖案移到頂部 */
+            padding-top: 10px; /* 少量頂部間距 */
             margin: 0;
             background-color: #f0f0f0;
+            min-height: 100vh;
         }
 
         .container {
@@ -22,7 +24,7 @@
 
         .element {
             position: absolute;
-            border-radius: 50%; /* 圓形 */
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -37,11 +39,11 @@
         }
 
         /* 五行元素大小同位置 */
-        .wood { background-color: #00cc00; width: 40px; height: 40px; font-size: 16px; top: 222.5px; left: 332.5px; } /* 木：(352.5, 242.5) - 半徑 20px */
-        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; top: 288.5px; left: 236px; } /* 土：(247.5, 300) - 半徑 11.5px */
-        .metal { background-color: #cccccc; width: 27px; height: 27px; font-size: 12px; top: 286.5px; left: 259px; } /* 金：(272.5, 300) - 半徑 13.5px */
-        .fire { background-color: #ff3333; width: 25px; height: 25px; font-size: 12px; top: 287.5px; left: 340px; } /* 火：(352.5, 300) - 半徑 12.5px */
-        .water { background-color: #333333; width: 50px; height: 50px; font-size: 20px; bottom: 212.5px; left: 327.5px; } /* 水：(352.5, 362.5) - 半徑 25px */
+        .wood { background-color: #00cc00; width: 40px; height: 40px; font-size: 16px; top: 10px; left: 314.36px; } /* 木：中心 (top: 30, left: 334.36) - 半徑 20px */
+        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; top: 80.36px; left: 236px; } /* 土：中心 (top: 91.86, left: 247.5) - 半徑 11.5px */
+        .metal { background-color: #cccccc; width: 27px; height: 27px; font-size: 12px; top: 78.36px; left: 259px; } /* 金：中心 (top: 91.86, left: 272.5) - 半徑 13.5px */
+        .fire { background-color: #ff3333; width: 25px; height: 25px; font-size: 12px; top: 79.36px; left: 340px; } /* 火：中心 (top: 91.86, left: 352.5) - 半徑 12.5px */
+        .water { background-color: #333333; width: 50px; height: 50px; font-size: 20px; top: 132.26px; left: 312.90px; } /* 水：中心 (top: 157.26, left: 337.90) - 半徑 25px */
     </style>
 </head>
 <body>
@@ -56,21 +58,28 @@
         <!-- 箭頭 -->
         <svg class="arrow" width="600" height="600">
             <!-- 紅色箭頭 -->
-            <!-- 火 -> 金 -->
-            <path d="M 340 287.5 Q 300 270 259 286.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 金 -> 木 -->
-            <path d="M 272.5 286.5 Q 300 240 332.5 222.5" stroke="red" stroke-width="2" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 火 -> 金：起點 (top: 91.86, left: 340)，終點 (top: 91.86, left: 286) -->
+            <path d="M 340 91.86 L 286 91.86" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 金 -> 木：起點 (top: 78.36, left: 272.5)，終點 (top: 30, left: 314.36) -->
+            <path d="M 272.5 78.36 L 314.36 30" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
+            <!-- 水 -> 火：起點 (top: 132.26, left: 337.90)，終點 (top: 104.36, left: 352.5) -->
+            <path d="M 337.90 132.26 L 352.5 104.36" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
+
             <!-- 綠色箭頭 -->
-            <!-- 金 -> 水 -->
-            <path d="M 272.5 313.5 Q 300 360 327.5 337.5" stroke="green" stroke-width="2" fill="none" marker-end="url(#arrowhead-green)" />
+            <!-- 金 -> 水：起點 (top: 105.36, left: 272.5)，終點 (top: 157.26, left: 312.90) -->
+            <path d="M 272.5 105.36 L 312.90 157.26" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
+            <!-- 木 -> 火：起點 (top: 50, left: 334.36)，終點 (top: 79.36, left: 352.5) -->
+            <path d="M 334.36 50 L 352.5 79.36" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
+            <!-- 水 -> 木：起點 (top: 157.26, left: 362.90)，終點 (top: 30, left: 354.36)，控制點 (top: 91.86, left: 390) -->
+            <path d="M 362.90 157.26 Q 390 91.86 354.36 30" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
 
             <!-- 箭頭定義 -->
             <defs>
-                <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="red" />
+                <marker id="arrowhead-red" markerWidth="4" markerHeight="3" refX="5" refY="1.5" orient="auto">
+                    <polygon points="0 0, 4 1.5, 0 3" fill="red" />
                 </marker>
-                <marker id="arrowhead-green" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="green" />
+                <marker id="arrowhead-green" markerWidth="4" markerHeight="3" refX="5" refY="1.5" orient="auto">
+                    <polygon points="0 0, 4 1.5, 0 3" fill="green" />
                 </marker>
             </defs>
         </svg>
