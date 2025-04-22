@@ -3,95 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五行元素圖</title>
+    <title>命格運勢五行形意</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding-top: 10px;
-            margin: 0;
-            background-color: #f0f0f0;
-            min-height: 100vh;
-        }
-
-        .container {
-            position: relative;
-            width: 400px;
-            height: 280px;
-            overflow: visible;
-        }
-
-        .element {
-            position: absolute;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            color: white;
-            font-family: 'Arial', sans-serif;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
-
-        .arrow {
-            position: absolute;
-            fill: none;
+        #canvas {
+            border: 1px solid #ccc;
+            width: 350px;
+            height: 350px;
         }
-
-        /* 五行元素大小同位置 */
-        .wood { background-color: #00cc00; width: 40px; height: 40px; font-size: 16px; top: 10px; left: 178.86px; }
-        .earth { background-color: #ffcc00; width: 23px; height: 23px; font-size: 12px; top: 80.36px; left: 100.5px; z-index: 1; }
-        .metal { background-color: #cccccc; width: 27px; height: 27px; font-size: 12px; top: 78.36px; left: 123.5px; z-index: 2; }
-        .fire { background-color: #ff3333; width: 25px; height: 25px; font-size: 12px; top: 79.36px; left: 204.5px; }
-        .water { background-color: #333333; width: 50px; height: 50px; font-size: 20px; top: 132.26px; left: 177.4px; }
+        .controls {
+            margin-top: 15px;
+            width: 100%;
+            max-width: 350px;
+        }
+        select {
+            width: 100%;
+            padding: 5px;
+            font-size: 16px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 350px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        select.number-select, select.fortune-select, select.year-select {
+            width: 60px;
+        }
+        .checkbox-container {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        #fortuneHeader {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 五行元素 -->
-        <div class="element wood">木</div>
-        <div class="element earth">土</div>
-        <div class="element metal">金</div>
-        <div class="element fire">火</div>
-        <div class="element water">水</div>
-
-        <!-- 箭頭 -->
-        <svg class="arrow" width="400" height="280">
-            <!-- 原有紅色箭頭 -->
-            <!-- 火 -> 金 -->
-            <path d="M 204.5 91.86 L 150.5 91.86" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 金 -> 木 -->
-            <path d="M 137 78.36 L 178.86 30" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 水 -> 火 -->
-            <path d="M 202.4 132.26 L 217 104.36" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
-
-            <!-- 新增紅色曲線 -->
-            <!-- 木頂 -> 土頂 -->
-            <path d="M 198.86 10 Q 155.43 10 112 80.36" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
-            <!-- 土底 -> 水底 -->
-            <path d="M 112 103.36 Q 157.2 182.26 202.4 182.26" stroke="red" stroke-width="1" fill="none" marker-end="url(#arrowhead-red)" />
-
-            <!-- 原有綠色箭頭 -->
-            <!-- 金 -> 水 -->
-            <path d="M 137 105.36 L 177.4 157.26" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
-            <!-- 木 -> 火 -->
-            <path d="M 198.86 50 L 217 79.36" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
-            <!-- 水 -> 木 -->
-            <path d="M 227.4 157.26 Q 254.5 91.86 218.86 30" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
-
-            <!-- 綠色曲線：火右 -> 土左，喺水下方繞過去 -->
-            <path d="M 229.5 91.86 C 302.4 232.26, 130 232.26, 100.5 91.86" stroke="green" stroke-width="1" fill="none" marker-end="url(#arrowhead-green)" />
-
-            <!-- 箭頭定義 -->
-            <defs>
-                <marker id="arrowhead-red" markerWidth="4" markerHeight="3" refX="5" refY="1.5" orient="auto">
-                    <polygon points="0 0, 4 1.5, 0 3" fill="red" />
-                </marker>
-                <marker id="arrowhead-green" markerWidth="4" markerHeight="3" refX="5" refY="1.5" orient="auto">
-                    <polygon points="0 0, 4 1.5, 0 3" fill="green" />
-                </marker>
-            </defs>
-        </svg>
+    <h2>命格運勢五行形意</h2>
+    <canvas id="canvas" width="350" height="350"></canvas>
+    <div class="controls">
+        <label for="orderSelect">五行順序：</label>
+        <select id="orderSelect" onchange="updateCanvas()">
+            <option value="金水木火土">金水木火土 (預設)</option>
+            <option value="土金水木火">土金水木火</option>
+            <option value="火土金水木">火土金水木</option>
+            <option value="木火土金水">木火土金水</option>
+            <option value="水木火土金">水木火土金</option>
+        </select>
+        <div class="checkbox-container">
+            <input type="checkbox" id="limitSum" checked onchange="updateNumberSelects(); updateFortuneSelects(); updateYearSelects(); updateCanvas()">
+            <label for="limitSum">限制命格運勢總和</label>
+        </div>
     </div>
+    <table>
+        <thead>
+            <tr>
+                <th>位置</th>
+                <th>五行</th>
+                <th>命格</th>
+                <th id="fortuneHeader" onclick="toggleFortuneMode()">大運(干)</th>
+                <th>流年</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr><td>一位</td><td id="element1">金</td><td><select id="number1" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune1" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year1" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td>二位</td><td id="element2">水</td><td><select id="number2" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune2" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year2" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td>三位</td><td id="element3">木</td><td><select id="number3" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune3" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year3" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td>四位</td><td id="element4">火</td><td><select id="number4" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune4" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year4" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td>五位</td><td id="element5">土</td><td><select id="number5" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune5" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year5" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const orderSelect = document.getElementById('orderSelect');
+        const limitSumCheckbox = document.getElementById('limitSum');
+        const fortuneHeader = document.getElementById('fortuneHeader');
+        const numberSelects = [
+            document.getElementById('number1'),
+            document.getElementById('number2'),
+            document.getElementById('number3'),
+            document.getElementById('number4'),
+            document.getElementById('number5')
+        ];
+        const fortuneSelects = [
+            document.getElementById('fortune1'),
+            document.getElementById('fortune2'),
+            document.getElementById('fortune3'),
+            document.getElementById('fortune4'),
+            document.getElementById('fortune5')
+        ];
+        const yearSelects = [
+            document.getElementById('year1'),
+            document.getElementById('year2'),
+            document.getElementById('year3'),
+            document.getElementById('year4'),
+            document.getElementById('year5')
+        ];
+        const elementCells = [
+            document.getElementById('element1'),
+            document.getElementById('element2'),
+            document.getElementById('element3'),
+            document.getElementById('element4'),
+            document.getElementById('element5')
+        ];
+
+        // 五行顏色對應
+        const elementColors = {
+            '木': '#00cc00',
+            '土': '#ffcc00',
+            '金': '#cccccc',
+            '火': '#ff3333',
+            '水': '#333333'
+        };
+
+        // 屬性文字對應
+        const attributeTexts = [
+            '比劫', // 一位
+            '食傷', // 二位
+            '財才', // 三位
+            '官殺', // 四位
+            '印梟'  // 五位
+        ];
+
+        // 大運模式
+        let fortuneMode = 'stem'; // 'stem' (干) 或 'branch' (支)
+
+        // 切換大運模式
+        function toggleFortuneMode() {
+            fortuneMode = fortuneMode === 'stem' ? 'branch' : 'stem';
+            fortuneHeader.textContent = fortuneMode === 'stem' ? '大運(干)' : '大運(支)';
+            updateFortuneSelects();
+            updateCanvas();
+        }
+
+        // 初始化命格下拉選單 (0-60)
+        function initNumberSelects() {
+            updateNumberSelects();
+            numberSelects[0].value = 7;
+            numberSelects[1].value = 26;
+            numberSelects[2].value = 16;
+            numberSelects[3].value = 6;
+            numberSelects[4].value = 5;
+            updateNumberSelects();
+        }
+
+        // 初始化大運和流年下拉選單
+        function initFortuneYearSelects() {
+            updateFortuneSelects();
+            updateYearSelects();
+            for (let i = 0; i < fortuneSelects.length; i++) {
+                fortuneSelects[i].value = 0;
+                yearSelects[i].value = 0;
+            }
+        }
+
+        // 更新命格下拉選單選項
+        function updateNumberSelects() {
+            const limitSum = limitSumCheckbox.checked;
+            const currentValues = numberSelects.map(select => parseInt(select.value) || 0);
+
+            for (let i = 0; i < numberSelects.length; i++) {
+                const select = numberSelects[i];
+                const currentValue = currentValues[i];
+                select.innerHTML = '';
+                const otherSum = currentValues.reduce((sum, val, idx) => idx !== i ? sum + val : sum, 0);
+                const maxValue = limitSum ? Math.min(60 - otherSum, 60) : 60;
+                for (let j = 0; j <= maxValue; j++) {
+                    const option = document.createElement('option');
+                    option.value = j;
+                    option.text = j;
+                    select.appendChild(option);
+                }
+                select.value = Math.min(currentValue, maxValue);
+            }
+        }
+
+        // 更新大運下拉選單選項
+        function updateFortuneSelects() {
+            const limitSum = limitSumCheckbox.checked;
+            const currentValues = fortuneSelects.map(select => parseInt(select.value) || 0);
+            const maxRange = fortuneMode === 'stem' ? 18 : 21;
+            const maxSum = fortuneMode === 'stem' ? 18 : 21;
+
+            for (let i = 0; i < fortuneSelects.length; i++) {
+                const select = fortuneSelects[i];
+                const currentValue = currentValues[i];
+                select.innerHTML = '';
+                const otherSum = currentValues.reduce((sum, val, idx) => idx !== i ? sum + val : sum, 0);
+                const maxValue = limitSum ? Math.min(maxSum - otherSum, maxRange) : maxRange;
+                for (let j = 0; j <= maxValue; j++) {
+                    const option = document.createElement('option');
+                    option.value = j;
+                    option.text = j;
+                    select.appendChild(option);
+                }
+                select.value = Math.min(currentValue, maxValue);
+            }
+        }
+
+        // 更新流年下拉選單選項
+        function updateYearSelects() {
+            const limitSum = limitSumCheckbox.checked;
+            const currentValues = yearSelects.map(select => parseInt(select.value) || 0);
+
+            for (let i = 0; i < yearSelects.length; i++) {
+                const select = yearSelects[i];
+                const currentValue = currentValues[i];
+                select.innerHTML = '';
+                const otherSum = currentValues.reduce((sum, val, idx) => idx !== i ? sum + val : sum, 0);
+                const maxValue = limitSum ? Math.min(13 - otherSum, 13) : 13;
+                for (let j = 0; j <= maxValue; j++) {
+                    const option = document.createElement('option');
+                    option.value = j;
+                    option.text = j;
+                    select.appendChild(option);
+                }
+                select.value = Math.min(currentValue, maxValue);
+            }
+        }
+
+        // 計算坐標
+        function calculatePositions(radii) {
+            const baseRadius = radii[0]; // 以一位的總半徑為基準
+            return [
+                { x: 175, y: 225 }, // 一位：畫布中間下方
+                { x: 175 - 3 * baseRadius * Math.cos(Math.PI / 6), y: 225 - 3 * baseRadius * Math.sin(Math.PI / 6) }, // 二位：左方偏上，3個半徑，30°
+                { x: 175 - 5 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 5 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 三位：左上偏上，5個半徑，72°
+                { x: 175 + 5 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 5 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 四位：右上偏上，5個半徑，72°
+                { x: 175 + 3 * baseRadius * Math.cos(Math.PI / 6), y: 225 - 3 * baseRadius * Math.sin(Math.PI / 6) } // 五位：右方偏上，3個半徑，30°
+            ];
+        }
+
+        // 更新表格和畫布
+        function updateCanvas() {
+            const order = orderSelect.value.split('');
+            const numbers = numberSelects.map(select => parseInt(select.value) || 0);
+            const fortunes = fortuneSelects.map(select => parseInt(select.value) || 0);
+            const years = yearSelects.map(select => parseInt(select.value) || 0);
+            const totalAreas = numbers.map((n, i) => n + fortunes[i] + years[i]);
+            const radii = totalAreas.map(area => Math.sqrt(area / Math.PI) * 15);
+            const positions = calculatePositions(radii);
+
+            for (let i = 0; i < 5; i++) {
+                elementCells[i].textContent = order[i];
+            }
+
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = 350 * dpr;
+            canvas.height = 350 * dpr;
+            ctx.scale(dpr, dpr);
+
+            ctx.clearRect(0, 0, 350, 350);
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 2;
+            const generateOrder = [0, 1, 2, 3, 4, 0];
+            for (let i = 0; i < generateOrder.length - 1; i++) {
+                const start = positions[generateOrder[i]];
+                const end = positions[generateOrder[i + 1]];
+                const midX = (start.x + end.x) / 2;
+                const midY = (start.y + end.y) / 2;
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const controlX = midX + dy * 0.2;
+                const controlY = midY - dx * 0.2;
+                ctx.moveTo(start.x, start.y);
+                ctx.quadraticCurveTo(controlX, controlY, end.x, end.y);
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            const restrainOrder = [0, 2, 4, 1, 3, 0];
+            for (let i = 0; i < restrainOrder.length - 1; i++) {
+                ctx.moveTo(positions[restrainOrder[i]].x, positions[restrainOrder[i]].y);
+                ctx.lineTo(positions[restrainOrder[i + 1]].x, positions[restrainOrder[i + 1]].y);
+            }
+            ctx.stroke();
+
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(positions[i].x, positions[i].y, radii[i], 0, 2 * Math.PI);
+                ctx.fillStyle = elementColors[order[i]];
+                ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '14px Arial';
+                ctx.fillText(order[i], positions[i].x, positions[i].y - 6);
+                ctx.font = '12px Arial';
+                ctx.fillText(attributeTexts[i], positions[i].x, positions[i].y + 12);
+            }
+        }
+
+        // 初始化
+        initNumberSelects();
+        initFortuneYearSelects();
+        updateCanvas();
+    </script>
 </body>
 </html>
