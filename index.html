@@ -72,19 +72,19 @@
     <table>
         <thead>
             <tr>
-                <th>位置</th>
                 <th>五行</th>
+                <th>位置</th>
                 <th>命格</th>
                 <th id="fortuneHeader" onclick="toggleFortuneMode()">大運(干)</th>
                 <th>流年</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td>一位</td><td id="element1">金</td><td><select id="number1" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune1" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year1" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
-            <tr><td>二位</td><td id="element2">水</td><td><select id="number2" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune2" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year2" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
-            <tr><td>三位</td><td id="element3">木</td><td><select id="number3" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune3" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year3" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
-            <tr><td>四位</td><td id="element4">火</td><td><select id="number4" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune4" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year4" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
-            <tr><td>五位</td><td id="element5">土</td><td><select id="number5" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune5" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year5" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td id="element1">木</td><td id="position1"></td><td><select id="number1" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune1" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year1" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td id="element2">火</td><td id="position2"></td><td><select id="number2" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune2" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year2" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td id="element3">土</td><td id="position3"></td><td><select id="number3" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune3" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year3" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td id="element4">金</td><td id="position4"></td><td><select id="number4" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune4" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year4" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
+            <tr><td id="element5">水</td><td id="position5"></td><td><select id="number5" class="number-select" onchange="updateNumberSelects(); updateCanvas()"></select></td><td><select id="fortune5" class="fortune-select" onchange="updateFortuneSelects(); updateCanvas()"></select></td><td><select id="year5" class="year-select" onchange="updateYearSelects(); updateCanvas()"></select></td></tr>
         </tbody>
     </table>
 
@@ -122,6 +122,13 @@
             document.getElementById('element4'),
             document.getElementById('element5')
         ];
+        const positionCells = [
+            document.getElementById('position1'),
+            document.getElementById('position2'),
+            document.getElementById('position3'),
+            document.getElementById('position4'),
+            document.getElementById('position5')
+        ];
 
         // 五行顏色對應
         const elementColors = {
@@ -141,6 +148,18 @@
             '印梟'  // 五位
         ];
 
+        // 固定五行順序
+        const fixedElements = ['木', '火', '土', '金', '水'];
+
+        // 粗體規則
+        const boldElements = {
+            '金水木火土': ['金', '土'],
+            '土金水木火': ['土', '火'],
+            '火土金水木': ['火', '木'],
+            '木火土金水': ['木', '水'],
+            '水木火土金': ['水', '金']
+        };
+
         // 大運模式
         let fortuneMode = 'stem'; // 'stem' (干) 或 'branch' (支)
 
@@ -155,11 +174,16 @@
         // 初始化命格下拉選單 (0-60)
         function initNumberSelects() {
             updateNumberSelects();
-            numberSelects[0].value = 7;
-            numberSelects[1].value = 26;
-            numberSelects[2].value = 16;
-            numberSelects[3].value = 6;
-            numberSelects[4].value = 5;
+            // 預設值根據 fixedElements 順序（木, 火, 土, 金, 水）
+            // 但需映射到 orderSelect 的初始值（金水木火土）
+            const defaultOrder = '金水木火土';
+            const defaultValues = { '金': 7, '水': 26, '木': 16, '火': 6, '土': 5 };
+            const order = defaultOrder.split('');
+            for (let i = 0; i < fixedElements.length; i++) {
+                const element = fixedElements[i];
+                const indexInOrder = order.indexOf(element);
+                numberSelects[i].value = defaultValues[element] || 0;
+            }
             updateNumberSelects();
         }
 
@@ -240,13 +264,24 @@
 
         // 計算坐標
         function calculatePositions(radii) {
-            const baseRadius = radii[0]; // 以一位的總半徑為基準
+            const maxDistance = 150; // 限制最大距離以避免嚴重超出畫布
+            const distances = [
+                0, // 一位
+                2 * radii[0] + 2 * radii[4] - radii[1], // 二位
+                (2 * radii[0] + 2 * radii[4] - radii[2]) * 1.618, // 三位
+                (2 * radii[0] + 2 * radii[4] - radii[3]) * 1.618, // 四位
+                4 * radii[0] - radii[4] // 五位
+            ];
+            // 限制最大距離
+            for (let i = 1; i < distances.length; i++) {
+                distances[i] = Math.min(distances[i], maxDistance);
+            }
             return [
                 { x: 175, y: 225 }, // 一位：畫布中間下方
-                { x: 175 - 2 * baseRadius * Math.cos(36 * Math.PI / 180), y: 225 - 2 * baseRadius * Math.sin(36 * Math.PI / 180) }, // 二位：左方偏上，2個半徑，36°
-                { x: 175 - 3.236 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 3.236 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 三位：左上偏上，3.236個半徑，72°
-                { x: 175 + 3.236 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 3.236 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 四位：右上偏上，3.236個半徑，72°
-                { x: 175 + 2 * baseRadius * Math.cos(36 * Math.PI / 180), y: 225 - 2 * baseRadius * Math.sin(36 * Math.PI / 180) } // 五位：右方偏上，2個半徑，36°
+                { x: 175 - distances[1] * Math.cos(36 * Math.PI / 180), y: 225 - distances[1] * Math.sin(36 * Math.PI / 180) }, // 二位：左方偏上
+                { x: 175 - distances[2] * Math.cos(72 * Math.PI / 180), y: 225 - distances[2] * Math.sin(72 * Math.PI / 180) }, // 三位：左上偏上
+                { x: 175 + distances[3] * Math.cos(72 * Math.PI / 180), y: 225 - distances[3] * Math.sin(72 * Math.PI / 180) }, // 四位：右上偏上
+                { x: 175 + distances[4] * Math.cos(36 * Math.PI / 180), y: 225 - distances[4] * Math.sin(36 * Math.PI / 180) } // 五位：右方偏上
             ];
         }
 
@@ -256,13 +291,31 @@
             const numbers = numberSelects.map(select => parseInt(select.value) || 0);
             const fortunes = fortuneSelects.map(select => parseInt(select.value) || 0);
             const years = yearSelects.map(select => parseInt(select.value) || 0);
-            const totalAreas = numbers.map((n, i) => n + fortunes[i] + years[i]);
+
+            // 表格：固定五行順序，動態位置
+            const positionLabels = ['一位', '二位', '三位', '四位', '五位'];
+            for (let i = 0; i < fixedElements.length; i++) {
+                const element = fixedElements[i];
+                const indexInOrder = order.indexOf(element);
+                positionCells[i].textContent = positionLabels[indexInOrder];
+                // 設置粗體
+                elementCells[i].style.fontWeight = boldElements[orderSelect.value].includes(element) ? 'bold' : 'normal';
+            }
+
+            // 畫布：根據 order 順序計算
+            const mappedNumbers = new Array(5).fill(0);
+            const mappedFortunes = new Array(5).fill(0);
+            const mappedYears = new Array(5).fill(0);
+            for (let i = 0; i < fixedElements.length; i++) {
+                const element = fixedElements[i];
+                const indexInOrder = order.indexOf(element);
+                mappedNumbers[indexInOrder] = numbers[i];
+                mappedFortunes[indexInOrder] = fortunes[i];
+                mappedYears[indexInOrder] = years[i];
+            }
+            const totalAreas = mappedNumbers.map((n, i) => n + mappedFortunes[i] + mappedYears[i]);
             const radii = totalAreas.map(area => Math.sqrt(area / Math.PI) * 15);
             const positions = calculatePositions(radii);
-
-            for (let i = 0; i < 5; i++) {
-                elementCells[i].textContent = order[i];
-            }
 
             const dpr = window.devicePixelRatio || 1;
             canvas.width = 350 * dpr;
