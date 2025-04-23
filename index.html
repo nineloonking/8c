@@ -243,10 +243,10 @@
             const baseRadius = radii[0]; // 以一位的總半徑為基準
             return [
                 { x: 175, y: 225 }, // 一位：畫布中間下方
-                { x: 175 - 3 * baseRadius * Math.cos(Math.PI / 6), y: 225 - 3 * baseRadius * Math.sin(Math.PI / 6) }, // 二位：左方偏上，3個半徑，30°
-                { x: 175 - 5 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 5 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 三位：左上偏上，5個半徑，72°
-                { x: 175 + 5 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 5 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 四位：右上偏上，5個半徑，72°
-                { x: 175 + 3 * baseRadius * Math.cos(Math.PI / 6), y: 225 - 3 * baseRadius * Math.sin(Math.PI / 6) } // 五位：右方偏上，3個半徑，30°
+                { x: 175 - 2 * baseRadius * Math.cos(36 * Math.PI / 180), y: 225 - 2 * baseRadius * Math.sin(36 * Math.PI / 180) }, // 二位：左方偏上，2個半徑，36°
+                { x: 175 - 3.236 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 3.236 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 三位：左上偏上，3.236個半徑，72°
+                { x: 175 + 3.236 * baseRadius * Math.cos(72 * Math.PI / 180), y: 225 - 3.236 * baseRadius * Math.sin(72 * Math.PI / 180) }, // 四位：右上偏上，3.236個半徑，72°
+                { x: 175 + 2 * baseRadius * Math.cos(36 * Math.PI / 180), y: 225 - 2 * baseRadius * Math.sin(36 * Math.PI / 180) } // 五位：右方偏上，2個半徑，36°
             ];
         }
 
