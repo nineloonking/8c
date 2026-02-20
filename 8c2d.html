@@ -114,8 +114,6 @@ function findSurroundingDates(dateArray, targetDate) {
   return { beforeIndex: high, afterIndex: low };
 }
 
-	document.getElementById('mydate').valueAsDate = new Date();
-	document.getElementById('mytime').valueAsDate = new Date();
 function datechanged(){
 	
 	
@@ -142,7 +140,7 @@ if (true) {
 	let utcDate = new Date(utcTimestamp);
 
 	// For day pillar and others, use the local date components
-	let comparedate = new Date(Date.UTC(1, 0, 1, 0, 0, 0));
+	let comparedate = new Date(); comparedate.setFullYear(1); comparedate.setDate(1);comparedate.setMonth(0); 
 	let dateafteradjustment = new Date(Date.UTC(year, month, day, 0, 0, 0));
 	let datediff = finddifference(comparedate, dateafteradjustment);
 
@@ -222,6 +220,14 @@ if (true) {
 
 }//Closing Date Changed
 
+// Set initial date and time based on selected timezone
+let nowUtcMs = Date.now();
+let initialOffset = parseFloat(document.getElementById('timezone').value);
+let nowInZone = new Date(nowUtcMs + (initialOffset * 3600 * 1000));
+let isoDate = nowInZone.toISOString().split('T')[0];
+let isoTime = nowInZone.toISOString().split('T')[1].split('.')[0].slice(0,5); // HH:MM
+document.getElementById('mydate').value = isoDate;
+document.getElementById('mytime').value = isoTime;
 
 datechanged();
 
