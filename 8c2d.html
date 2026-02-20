@@ -1,12 +1,38 @@
 <!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>現在四柱八字</title>
+<style>
+body {
+    text-align: center;
+    font-family: sans-serif;
+}
+.inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.inputs input, .inputs select {
+    margin: 5px 0;
+    width: 80%;
+    max-width: 300px;
+}
+table {
+    margin: auto;
+    border-collapse: collapse;
+}
+td {
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+</style>
 </head>
 
 <body>
 
-
+<div class="inputs">
 	<input type="date" id="mydate" onchange="datechanged()" >
 	<input type="time" id="mytime" onchange="datechanged()" >
 	<select id="timezone" onchange="datechanged()">
@@ -17,7 +43,7 @@
 		<option value="1">UTC+1</option>
 		<option value="-5">美國東部 (UTC-5)</option>
 	</select>
-				
+</div>			
 <div id="here"></div>
 
 <script>  
@@ -54,7 +80,7 @@ var workingdates = datelist;
 const colorMap = {
             '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
             '丙': 'red', '丁': 'red', '巳': 'red', '午': 'red',
-            '戊': 'yellow', '己': 'yellow', '丑': 'yellow', '辰': 'yellow', '未': 'yellow', '戌': 'yellow',
+            '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
             '庚': 'gray', '辛': 'gray', '申': 'gray', '酉': 'gray',
             '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
         };
@@ -203,7 +229,7 @@ if (true) {
 		
 		here.innerHTML = `
 		<table>
-		<tr><td>時柱</td><td>日柱</td><td>月柱</td><td>年柱</td></tr>
+		<tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
 		<tr>
 			<td><span style="color: ${colorMap[stems[hourstem]] || 'black'}">${stems[hourstem]}</span></td>
 			<td><span style="color: ${colorMap[stems[daystem]] || 'black'}">${stems[daystem]}</span></td>
