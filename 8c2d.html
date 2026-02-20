@@ -15,7 +15,6 @@
 <script>  
 
 var datelist = [
-null,
 '2026-01-05T08:23:00Z',
 '2026-01-20T01:45:00Z',
 '2026-02-03T20:02:00Z',
@@ -124,8 +123,6 @@ if (true) {
 	}
 	
 	
-		const currentDate = new Date("2025-04-30T00:00:00Z"); 
-
 		var comparedate = new Date(); comparedate.setFullYear(1); comparedate.setDate(1);comparedate.setMonth(0); 
 		var datediff = finddifference(comparedate,dateafteradjustment);
 		//DayPillar Calculations Here
@@ -133,64 +130,49 @@ if (true) {
 					daybranch = getinrange((datediff % 12) +4,12);		
 					
 		//Solar Term and Solar Month start both here
-		//If we have the position of the solar term should be this: (dateafteradjustment.getFullYear -1900+ 22) % 24;
 		
 		
-		firstsolartermindex = 1;
-		
-		firstsolarterm = new Date(workingdates[firstsolartermindex] );
 		
 		let surroundingindex = findSurroundingDates(workingdates, dateEntered.toISOString() );
 		var previoussolartermindex = surroundingindex.beforeIndex;
-		var nextsolartermindex = surroundingindex.afterIndex;
+		if (previoussolartermindex === null) {
+		  previoussolartermindex = -1;
+		}
 		
 
 		
-		solarterm = (previoussolartermindex + 22) % 24;
+		// Year calculation
+		var year = dateafteradjustment.getFullYear();
+		var yearstem = ((year - 3) % 10) || 10;
+		var yearbranch = ((year - 3) % 12) || 12;
+		
+		// Adjust year if before Li Chun
+		if (previoussolartermindex < 2) {
+		  yearstem = getinrange(yearstem - 1, 10);
+		  yearbranch = getinrange(yearbranch - 1, 12);
+		}
 	
-		solarmonth = Math.floor((solarterm - 1) / 2) + 1;
-		monthbranch = getinrange(solarmonth+2,12);	
+		// Month calculation
+		let last_jie_index;
+		if (previoussolartermindex === -1) {
+		  last_jie_index = 22;
+		} else {
+		  const is_zhong = previoussolartermindex % 2 === 1;
+		  last_jie_index = is_zhong ? previoussolartermindex - 1 : previoussolartermindex;
+		}
+		var monthbranch = getinrange((last_jie_index / 2) + 2, 12);
+		var solarmonth = getinrange(monthbranch - 2, 12);
 		
-		longitude_of_the_sun = (solarterm * 15) % 360;
+		// Month stem
+		var monthstem = getinrange(((yearstem % 5) * 2) + solarmonth, 10);
 		
-		
-		//Exception for Year Start Here
-		if ((longitude_of_the_sun<=315) && (dateEntered.getMonth() < 2) )   { 
-		//basically if month is jan or feb and longitude is less then 315, as Yin month starts at 315
-		yearbranch = getinrange(yearbranch-1,12);
-		yearstem = getinrange(yearstem-1,10);
-		};
-		//Month Starts here
-		monthbranch = getinrange(solarmonth+2,12);	
-		monthstem = getinrange((((yearstem % 5) * 2 )+ solarmonth),10);
-		
-		daystoendofmonth = getinrange(30-(longitude_of_the_sun % 30 + 15),30);
 		
 		//Hour Start here
-
+		var hourbranch = (Math.floor((hours + 1) / 2) % 12) + 1;
 		
-		hourbranch = getinrange(hours,23);
+		var starting_stem = ((daystem * 2 - 1) % 10) || 10;
+		var hourstem = getinrange(starting_stem + hourbranch - 1, 10);
 		
-			if ((hourbranch % 2) == 0){	
-			hourbranch = getinrange((hourbranch - 1),23);
-			};
-			if (hourbranch  == 0) {
-				hourbranch = 1;
-				} else {	
-			hourbranch = getinrange(((hourbranch+3) / 2),12);
-			};
-		
-			hourstem = getinrange(hourbranch + (((daystem % 5) *2) -2 ),10);
-			
-			if ( dateafteradjustment.getHours()>=23){
-				hourstem = getinrange(13 + (((daystem % 5) *2) -2 ),10);
-				};
-		
-		
-		
-		
-		voidbranch1 = getinrange(11 - daystem + daybranch,12);
-		voidbranch2 = getinrange(12 - daystem + daybranch,12);
 		
 		
 		
