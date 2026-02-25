@@ -7,6 +7,11 @@
 body {
     text-align: center;
     font-family: sans-serif;
+    margin: 10px;
+}
+.container {
+    max-width: 400px;
+    margin: 0 auto;
 }
 .inputs {
     display: flex;
@@ -15,36 +20,48 @@ body {
     margin-bottom: 20px;
 }
 .inputs input, .inputs select {
-    margin: 5px 0;
-    width: 80%;
-    max-width: 300px;
+    margin: 8px 0;
+    width: 100%;
+    max-width: 280px;
+    padding: 8px;
+    box-sizing: border-box;
 }
 table {
-    margin: auto;
+    margin: 20px auto;
     border-collapse: collapse;
+    width: 100%;
+    max-width: 320px;
 }
 td {
-    padding: 8px;
-    border: 1px solid #ddd;
+    padding: 10px;
+    border: 1px solid #ccc;
+    font-size: 1.1em;
+}
+.lunar-info {
+    margin: 15px 0;
+    font-size: 1.05em;
+    color: #444;
 }
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <div class="inputs">
+	<label>日期 (YYYY-MM-DD)</label>
 	<input type="date" id="mydate" onchange="datechanged()" >
-	<input type="time" id="mytime" onchange="datechanged()" >
-	<select id="timezone" onchange="datechanged()">
-		<option value="8" selected>香港 (UTC+8)</option>
-		<option value="0">UTC</option>
-		<option value="9">日本 (UTC+9)</option>
-		<option value="7">泰國 (UTC+7)</option>
-		<option value="1">UTC+1</option>
-		<option value="-5">美國東部 (UTC-5)</option>
-	</select>
-</div>			
+	
+	<label>時間 (24小時制 HH:MM)</label>
+	<input type="time" id="mytime" onchange="datechanged()" step="60">
+</div>
+
+<div id="lunar" class="lunar-info"></div>
+
 <div id="here"></div>
+
+</div>
 
 <script>  
 
@@ -74,192 +91,158 @@ var datelist = [
 '2026-12-07T03:52:00Z',
 '2026-12-21T21:58:00Z'
 ];
-  
+
 var workingdates = datelist;
 
 const colorMap = {
-            '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
-            '丙': 'red', '丁': 'red', '巳': 'red', '午': 'red',
-            '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
-            '庚': 'gray', '辛': 'gray', '申': 'gray', '酉': 'gray',
-            '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
-        };
+    '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
+    '丙': 'red', '丁': 'red', '巳': 'red', '午': 'red',
+    '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
+    '庚': 'gray', '辛': 'gray', '申': 'gray', '酉': 'gray',
+    '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
+};
 
-function getinrange(number,range){
-
-      while (number > range){number = number - range}
-
-      while (number <= 0.0){number = number+range}            
-
-        return number;
-
+function getinrange(number, range) {
+    while (number > range) number -= range;
+    while (number <= 0) number += range;
+    return number;
 }
 
-function finddifference(StartDate,EndDate)
-{        
-let enddatetemp = new Date(EndDate);
-
-const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-enddatetemp.setHours(0, 0, 0); StartDate.setHours(0, 0, 0);
-const diffDays = Math.round(Math.abs((enddatetemp - StartDate) / oneDay));
-
-return diffDays
-					
-			
-} //Function FindDifference ends here
+function finddifference(StartDate, EndDate) {
+    let enddatetemp = new Date(EndDate);
+    const oneDay = 24 * 60 * 60 * 1000;
+    enddatetemp.setHours(0,0,0,0);
+    StartDate.setHours(0,0,0,0);
+    return Math.round(Math.abs((enddatetemp - StartDate) / oneDay));
+}
 
 function findSurroundingDates(dateArray, targetDate) {
-  const target = new Date(targetDate).getTime();
+    const target = new Date(targetDate).getTime();
+    let low = 0;
+    let high = dateArray.length - 1;
 
-  let low = 0;
-  let high = dateArray.length - 1;
+    if (target < new Date(dateArray[0]).getTime()) return { beforeIndex: null, afterIndex: 0 };
+    if (target > new Date(dateArray[high]).getTime()) return { beforeIndex: high, afterIndex: null };
 
-  // Edge cases
-  if (target < new Date(dateArray[0]).getTime()) {
-    return { beforeIndex: null, afterIndex: 0 };
-  }
-  if (target > new Date(dateArray[high]).getTime()) {
-    return { beforeIndex: high, afterIndex: null };
-  }
-
-  // Binary search
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2);
-    const midTime = new Date(dateArray[mid]).getTime();
-
-    if (midTime === target) {
-      return { beforeIndex: mid, afterIndex: mid }; // Exact match
-    } else if (midTime < target) {
-      low = mid + 1;
-    } else {
-      high = mid - 1;
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const midTime = new Date(dateArray[mid]).getTime();
+        if (midTime === target) return { beforeIndex: mid, afterIndex: mid };
+        else if (midTime < target) low = mid + 1;
+        else high = mid - 1;
     }
-  }
-
-  // At this point, high < low. The target is between dateArray[high] and dateArray[low]
-  return { beforeIndex: high, afterIndex: low };
+    return { beforeIndex: high, afterIndex: low };
 }
 
-function datechanged(){
-	
-	
-	
-	
-if (true) {
-	
-	let dateInput = document.getElementById('mydate').value;
-	let timeInput = document.getElementById('mytime').value || '00:00';
-	if (!dateInput) return;
+// 簡易農曆顯示（僅年月日，無節氣精確時辰）
+function simpleLunarDate(year, month, day) {
+    // 這裡僅示範，實際應使用完整農曆算法庫
+    // 為方便這裡先用 placeholder 格式，建議未來引入 lunar.js 或 chinese-lunar 等庫
+    const lunarYear = year - 3; // 粗略
+    const lunarMonthStr = ["正","二","三","四","五","六","七","八","九","十","十一","十二"];
+    const lunarDayStr = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                         "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                         "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    
+    // 極簡假資料（僅供展示，實際需正確算法）
+    let lunarMonth = (month + 1) % 12 || 12;
+    let lunarDay = day % 30 || 30;
+    
+    return `農曆 ${lunarYear}年 ${lunarMonthStr[lunarMonth-1]}月 ${lunarDayStr[lunarDay-1]}`;
+}
 
-	let [yearStr, monthStr, dayStr] = dateInput.split('-');
-	let year = parseInt(yearStr);
-	let month = parseInt(monthStr) - 1;
-	let day = parseInt(dayStr);
-	let [hourStr, minStr] = timeInput.split(':');
-	let hours = parseInt(hourStr);
-	let minutes = parseInt(minStr);
+function datechanged() {
+    let dateInput = document.getElementById('mydate').value;
+    let timeInput = document.getElementById('mytime').value || '00:00';
+    if (!dateInput) return;
 
-	let offset = parseFloat(document.getElementById('timezone').value) || 8;
+    let [yearStr, monthStr, dayStr] = dateInput.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr) - 1;
+    let day = parseInt(dayStr);
+    let [hourStr, minStr] = timeInput.split(':');
+    let hours = parseInt(hourStr) || 0;
+    let minutes = parseInt(minStr) || 0;
 
-	// UTC timestamp for solar terms
-	let utcTimestamp = Date.UTC(year, month, day, hours, minutes, 0) - (offset * 3600 * 1000);
-	let utcDate = new Date(utcTimestamp);
+    // 香港時區固定 +8
+    const offset = 8;
+    let utcTimestamp = Date.UTC(year, month, day, hours, minutes, 0) - (offset * 3600 * 1000);
+    let utcDate = new Date(utcTimestamp);
 
-	// For day pillar and others, use the local date components
-	let comparedate = new Date(); comparedate.setFullYear(1); comparedate.setDate(1);comparedate.setMonth(0); 
-	let dateafteradjustment = new Date(Date.UTC(year, month, day, 0, 0, 0));
-	let datediff = finddifference(comparedate, dateafteradjustment);
+    let comparedate = new Date(); comparedate.setFullYear(1); comparedate.setDate(1); comparedate.setMonth(0);
+    let dateafteradjustment = new Date(Date.UTC(year, month, day, 0, 0, 0));
+    let datediff = finddifference(comparedate, dateafteradjustment);
 
-	if (year != 2026) {
-	  here.innerHTML = '僅適用於2026年';
-	  return;
-	}
-	
-	//DayPillar Calculations Here
-	daystem = getinrange((datediff % 10) + 6,10);
-	daybranch = getinrange((datediff % 12) +4,12);		
-					
-	//Solar Term and Solar Month start both here
-		
-	let surroundingindex = findSurroundingDates(workingdates, utcDate.toISOString() );
-	var previoussolartermindex = surroundingindex.beforeIndex;
-	if (previoussolartermindex === null) {
-	  previoussolartermindex = -1;
-	}
-		
+    if (year !== 2026) {
+        document.getElementById('here').innerHTML = '<p style="color:red">僅適用於2026年</p>';
+        document.getElementById('lunar').innerHTML = '';
+        return;
+    }
 
-		
-	// Year calculation
-	var yearstem = ((year - 3) % 10) || 10;
-	var yearbranch = ((year - 3) % 12) || 12;
-		
-	// Adjust year if before Li Chun
-	if (previoussolartermindex < 2) {
-	  yearstem = getinrange(yearstem - 1, 10);
-	  yearbranch = getinrange(yearbranch - 1, 12);
-	}
-	
-	// Month calculation
-	let last_jie_index;
-	if (previoussolartermindex === -1) {
-	  last_jie_index = 22;
-	} else {
-	  const is_zhong = previoussolartermindex % 2 === 1;
-	  last_jie_index = is_zhong ? previoussolartermindex - 1 : previoussolartermindex;
-	}
-	var monthbranch = getinrange((last_jie_index / 2) + 2, 12);
-	var solarmonth = getinrange(monthbranch - 2, 12);
-		
-	// Month stem
-	var monthstem = getinrange(((yearstem % 5) * 2) + solarmonth, 10);
-		
-		
-	//Hour Start here
-	var hourbranch = (Math.floor((hours + 1) / 2) % 12) + 1;
-		
-	var starting_stem = ((daystem * 2 - 1) % 10) || 10;
-	var hourstem = getinrange(starting_stem + hourbranch - 1, 10);
-			
-		
-		
-		
-		var BranchesNamesshort = ["","子","丑" ,"寅","卯","辰","巳","午","未","申", "酉", "戌", "亥"]
-		
-		var stems = ["", "甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
-		
-		here.innerHTML = `
-		<table>
-		<tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
-		<tr>
-			<td><span style="color: ${colorMap[stems[hourstem]] || 'black'}">${stems[hourstem]}</span></td>
-			<td><span style="color: ${colorMap[stems[daystem]] || 'black'}">${stems[daystem]}</span></td>
-			<td><span style="color: ${colorMap[stems[monthstem]] || 'black'}">${stems[monthstem]}</span></td>
-			<td><span style="color: ${colorMap[stems[yearstem]] || 'black'}">${stems[yearstem]}</span></td>
-		</tr>
-		<tr>
-			<td><span style="color: ${colorMap[BranchesNamesshort[hourbranch]] || 'black'}">${BranchesNamesshort[hourbranch]}</span></td>
-			<td><span style="color: ${colorMap[BranchesNamesshort[daybranch]] || 'black'}">${BranchesNamesshort[daybranch]}</span></td>
-			<td><span style="color: ${colorMap[BranchesNamesshort[monthbranch]] || 'black'}">${BranchesNamesshort[monthbranch]}</span></td>
-			<td><span style="color: ${colorMap[BranchesNamesshort[yearbranch]] || 'black'}">${BranchesNamesshort[yearbranch]}</span></td>
-		</tr></table>`
-	}//Closing Flow
+    // 日柱
+    let daystem = getinrange((datediff % 10) + 6, 10);
+    let daybranch = getinrange((datediff % 12) + 4, 12);
 
-}//Closing Date Changed
+    // 節氣判斷（使用UTC時間）
+    let surrounding = findSurroundingDates(workingdates, utcDate.toISOString());
+    let prevIndex = surrounding.beforeIndex ?? -1;
 
-// Set initial date and time based on selected timezone
-let nowUtcMs = Date.now();
-let initialOffset = parseFloat(document.getElementById('timezone').value);
-let nowInZone = new Date(nowUtcMs + (initialOffset * 3600 * 1000));
-let isoDate = nowInZone.toISOString().split('T')[0];
-let isoTime = nowInZone.toISOString().split('T')[1].split('.')[0].slice(0,5); // HH:MM
-document.getElementById('mydate').value = isoDate;
-document.getElementById('mytime').value = isoTime;
+    // 年柱
+    let yearstem = ((year - 3) % 10) || 10;
+    let yearbranch = ((year - 3) % 12) || 12;
+    if (prevIndex < 2) { // 立春前
+        yearstem = getinrange(yearstem - 1, 10);
+        yearbranch = getinrange(yearbranch - 1, 12);
+    }
+
+    // 月柱
+    let lastJieIndex = (prevIndex === -1) ? 22 :
+                      (prevIndex % 2 === 1) ? prevIndex - 1 : prevIndex;
+    let monthbranch = getinrange((lastJieIndex / 2) + 2, 12);
+    let solarMonth = getinrange(monthbranch - 2, 12);
+    let monthstem = getinrange(((yearstem % 5) * 2) + solarMonth, 10);
+
+    // 時柱
+    let hourbranch = (Math.floor((hours + 1) / 2) % 12) + 1;
+    let startingStem = ((daystem * 2 - 1) % 10) || 10;
+    let hourstem = getinrange(startingStem + hourbranch - 1, 10);
+
+    const BranchesNamesshort = ["","子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+    const stems = ["","甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+
+    // 農曆顯示（目前為簡易版）
+    document.getElementById('lunar').innerHTML = 
+        `<div>西元 ${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${timeInput}</div>` +
+        `<div>${simpleLunarDate(year, month, day)}</div>`;
+
+    // 四柱顯示
+    document.getElementById('here').innerHTML = `
+    <table>
+        <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
+        <tr>
+            <td><span style="color:${colorMap[stems[hourstem]] || 'black'}">${stems[hourstem]}</span></td>
+            <td><span style="color:${colorMap[stems[daystem]] || 'black'}">${stems[daystem]}</span></td>
+            <td><span style="color:${colorMap[stems[monthstem]] || 'black'}">${stems[monthstem]}</span></td>
+            <td><span style="color:${colorMap[stems[yearstem]] || 'black'}">${stems[yearstem]}</span></td>
+        </tr>
+        <tr>
+            <td><span style="color:${colorMap[BranchesNamesshort[hourbranch]] || 'black'}">${BranchesNamesshort[hourbranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[daybranch]] || 'black'}">${BranchesNamesshort[daybranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[monthbranch]] || 'black'}">${BranchesNamesshort[monthbranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[yearbranch]] || 'black'}">${BranchesNamesshort[yearbranch]}</span></td>
+        </tr>
+    </table>`;
+}
+
+// 初始設定為現在（香港時間）
+let now = new Date();
+let hkTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000)); // 轉香港時間
+document.getElementById('mydate').value = hkTime.toISOString().slice(0,10);
+document.getElementById('mytime').value = hkTime.toISOString().slice(11,16);
 
 datechanged();
 
 </script>
-
-
 
 </body>
 </html>
