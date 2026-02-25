@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九柱十八字</title>
+    <title>九柱十八字 (加權修正版)</title>
     <style>
         body {
             margin: 5px;
@@ -113,8 +113,7 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100%;<br>            height: 100%;
             background-color: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
@@ -143,75 +142,12 @@
             background-color: #e0e0e0;
         }
         @media screen and (max-width: 414px) {
-            #canvas {
-                width: 300px;
-                height: 300px;
-            }
-            table {
-                max-width: 100%;
-            }
-            th {
-                font-size: 13px;
-                width: 18px;
-                height: 55px;
-            }
-            td {
-                font-size: 13px;
-                height: 55px;
-            }
-            .five-elements {
-                font-size: 7px;
-                height: 90px;
-            }
-            .total-elements {
-                font-size: 13px;
-            }
-            .modal-content {
-                max-width: 260px;
-            }
-            .modal-table td {
-                font-size: 13px;
-                padding: 4px;
-            }
-            .buttons span {
-                font-size: 11px;
-                padding: 2px 5px;
-                margin-right: 4px;
-            }
-        }
-        @media screen and (max-width: 320px) {
-            #canvas {
-                width: 280px;
-                height: 280px;
-            }
-            th {
-                font-size: 12px;
-                width: 16px;
-                height: 50px;
-            }
-            td {
-                font-size: 12px;
-                height: 50px;
-            }
-            .five-elements {
-                font-size: 6px;
-                height: 80px;
-            }
-            .total-elements {
-                font-size: 12px;
-            }
-            .modal-content {
-                max-width: 240px;
-            }
-            .modal-table td {
-                font-size: 12px;
-                padding: 3px;
-            }
-            .buttons span {
-                font-size: 10px;
-                padding: 2px 4px;
-                margin-right: 3px;
-            }
+            #canvas { width: 300px; height: 300px; }
+            table { max-width: 100%; }
+            th { font-size: 13px; width: 18px; height: 55px; }
+            td { font-size: 13px; height: 55px; }
+            .five-elements { font-size: 7px; height: 90px; }
+            .total-elements { font-size: 13px; }
         }
     </style>
 </head>
@@ -293,80 +229,83 @@
 
         const fiveElementsMap = {
             tianGan: {
-                '甲': {木: 5}, '乙': {木: 5},
-                '丙': {火: 5}, '丁': {火: 5},
-                '戊': {土: 5}, '己': {土: 5},
-                '庚': {金: 5}, '辛': {金: 5},
-                '壬': {水: 5}, '癸': {水: 5}
+                '甲': {木: 5}, '乙': {木: 5}, '丙': {火: 5}, '丁': {火: 5}, '戊': {土: 5},
+                '己': {土: 5}, '庚': {金: 5}, '辛': {金: 5}, '壬': {水: 5}, '癸': {水: 5}
             },
             diZhi: {
-                '子': {水: 8},
-                '丑': {土: 5, 水: 2, 金: 1},
-                '寅': {木: 5, 火: 2, 土: 1},
-                '卯': {木: 8},
-                '辰': {土: 5, 木: 2, 水: 1},
-                '巳': {火: 5, 金: 2, 土: 1},
-                '午': {火: 5, 土: 3},
-                '未': {土: 5, 火: 2, 木: 1},
-                '申': {金: 5, 水: 2, 土: 1},
-                '酉': {金: 8},
-                '戌': {土: 5, 金: 2, 火: 1},
-                '亥': {水: 5, 木: 3}
+                '子': {水: 8}, '丑': {土: 5, 水: 2, 金: 1}, '寅': {木: 5, 火: 2, 土: 1}, '卯': {木: 8},
+                '辰': {土: 5, 木: 2, 水: 1}, '巳': {火: 5, 金: 2, 土: 1}, '午': {火: 5, 土: 3},
+                '未': {土: 5, 火: 2, 木: 1}, '申': {金: 5, 水: 2, 土: 1}, '酉': {金: 8},
+                '戌': {土: 5, 金: 2, 火: 1}, '亥': {水: 5, 木: 3}
             }
         };
 
         const fiveElementsMapFlow = {
             tianGan: {
-                '甲': {木: 4}, '乙': {木: 4},
-                '丙': {火: 4}, '丁': {火: 4},
-                '戊': {土: 4}, '己': {土: 4},
-                '庚': {金: 4}, '辛': {金: 4},
-                '壬': {水: 4}, '癸': {水: 4}
+                '甲': {木: 4}, '乙': {木: 4}, '丙': {火: 4}, '丁': {火: 4}, '戊': {土: 4},
+                '己': {土: 4}, '庚': {金: 4}, '辛': {金: 4}, '壬': {水: 4}, '癸': {水: 4}
             },
             diZhi: {
-                '子': {水: 6},
-                '丑': {土: 3, 水: 2, 金: 1},
-                '寅': {木: 3, 火: 2, 土: 1},
-                '卯': {木: 6},
-                '辰': {土: 3, 木: 2, 水: 1},
-                '巳': {火: 3, 金: 2, 土: 1},
-                '午': {火: 4, 土: 2},
-                '未': {土: 3, 火: 2, 木: 1},
-                '申': {金: 3, 水: 2, 土: 1},
-                '酉': {金: 6},
-                '戌': {土: 3, 金: 2, 火: 1},
-                '亥': {水: 4, 木: 2}
+                '子': {水: 6}, '丑': {土: 3, 水: 2, 金: 1}, '寅': {木: 3, 火: 2, 土: 1}, '卯': {木: 6},
+                '辰': {土: 3, 木: 2, 水: 1}, '巳': {火: 3, 金: 2, 土: 1}, '午': {火: 4, 土: 2},
+                '未': {土: 3, 火: 2, 木: 1}, '申': {金: 3, 水: 2, 土: 1}, '酉': {金: 6},
+                '戌': {土: 3, 金: 2, 火: 1}, '亥': {水: 4, 木: 2}
             }
         };
 
-        const elementColors = {
-            '木': '#00cc00',
-            '火': '#ff3333',
-            '土': '#ffcc00',
-            '金': '#cccccc',
-            '水': '#333333'
-        };
-
+        const elementColors = { '木': '#00cc00', '火': '#ff3333', '土': '#ffcc00', '金': '#cccccc', '水': '#333333' };
         const attributeTexts = ['比劫', '食傷', '財才', '官殺', '印梟'];
-
         const orderMap = {
-            '甲': '木火土金水', '乙': '木火土金水',
-            '丙': '火土金水木', '丁': '火土金水木',
-            '戊': '土金水木火', '己': '土金水木火',
-            '庚': '金水木火土', '辛': '金水木火土',
+            '甲': '木火土金水', '乙': '木火土金水', '丙': '火土金水木', '丁': '火土金水木',
+            '戊': '土金水木火', '己': '土金水木火', '庚': '金水木火土', '辛': '金水木火土',
             '壬': '水木火土金', '癸': '水木火土金'
         };
-
         const boldElements = {
-            '金水木火土': ['金', '土'],
-            '土金水木火': ['土', '火'],
-            '火土金水木': ['火', '木'],
-            '木火土金水': ['木', '水'],
-            '水木火土金': ['水', '金']
+            '金水木火土': ['金', '土'], '土金水木火': ['土', '火'], '火土金水木': ['火', '木'],
+            '木火土金水': ['木', '水'], '水木火土金': ['水', '金']
         };
 
         let currentColumn = '';
         let elementsRowVisible = false;
+
+        // --- 核心修改：權重計算邏輯 ---
+        function getElementsValue(col, gz) {
+            const elements = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
+            if (!gz || gz === '自定') return elements;
+
+            const [tg, dz] = gz.split('');
+            let map = fiveElementsMap;
+            let tgWeight = 1;
+            let dzWeight = 1;
+
+            // 判斷是否使用 Flow Map
+            if (['great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'].includes(col)) {
+                map = fiveElementsMapFlow;
+            }
+
+            // 處理大運：天平地支都是兩倍
+            if (col === 'great_cycle') {
+                tgWeight = 2;
+                dzWeight = 2;
+            }
+
+            // 處理月令：月支是兩倍
+            if (col === 'month') {
+                dzWeight = 2;
+            }
+
+            if (map.tianGan[tg]) {
+                Object.keys(map.tianGan[tg]).forEach(key => {
+                    elements[key] += map.tianGan[tg][key] * tgWeight;
+                });
+            }
+            if (map.diZhi[dz]) {
+                Object.keys(map.diZhi[dz]).forEach(key => {
+                    elements[key] += map.diZhi[dz][key] * dzWeight;
+                });
+            }
+            return elements;
+        }
 
         function calculatePositions(radii) {
             const maxDistance = 150;
@@ -377,9 +316,7 @@
                 (2 * radii[0] + 2 * radii[4] - radii[3]) * 1.618,
                 4 * radii[0] - radii[4]
             ];
-            for (let i = 1; i < distances.length; i++) {
-                distances[i] = Math.min(distances[i], maxDistance);
-            }
+            for (let i = 1; i < distances.length; i++) distances[i] = Math.min(distances[i], maxDistance);
             return [
                 { x: 175, y: 225 },
                 { x: 175 - distances[1] * Math.cos(36 * Math.PI / 180), y: 225 - distances[1] * Math.sin(36 * Math.PI / 180) },
@@ -393,41 +330,27 @@
             const elements = ['木', '火', '土', '金', '水'];
             const values = elements.map(e => total[e] || 0);
             const mappedValues = new Array(5).fill(0);
-            for (let i = 0; i < elements.length; i++) {
-                const index = order.indexOf(elements[i]);
-                mappedValues[index] = values[i];
-            }
+            for (let i = 0; i < elements.length; i++) mappedValues[order.indexOf(elements[i])] = values[i];
             const radii = mappedValues.map(value => Math.sqrt(value / Math.PI) * 15);
             const positions = calculatePositions(radii);
 
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = 350 * dpr;
-            canvas.height = 350 * dpr;
+            canvas.width = 350 * dpr; canvas.height = 350 * dpr;
             ctx.scale(dpr, dpr);
-
             ctx.clearRect(0, 0, 350, 350);
 
-            ctx.beginPath();
-            ctx.strokeStyle = '#00FF00';
-            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.strokeStyle = '#00FF00'; ctx.lineWidth = 2;
             const generateOrder = [0, 1, 2, 3, 4, 0];
             for (let i = 0; i < generateOrder.length - 1; i++) {
-                const start = positions[generateOrder[i]];
-                const end = positions[generateOrder[i + 1]];
-                const midX = (start.x + end.x) / 2;
-                const midY = (start.y + end.y) / 2;
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-                const controlX = midX + dy * 0.2;
-                const controlY = midY - dx * 0.2;
+                const start = positions[generateOrder[i]], end = positions[generateOrder[i + 1]];
+                const midX = (start.x + end.x) / 2, midY = (start.y + end.y) / 2;
+                const dx = end.x - start.x, dy = end.y - start.y;
                 ctx.moveTo(start.x, start.y);
-                ctx.quadraticCurveTo(controlX, controlY, end.x, end.y);
+                ctx.quadraticCurveTo(midX + dy * 0.2, midY - dx * 0.2, end.x, end.y);
             }
             ctx.stroke();
 
-            ctx.beginPath();
-            ctx.strokeStyle = '#FF0000';
-            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.strokeStyle = '#FF0000'; ctx.lineWidth = 2;
             const restrainOrder = [0, 2, 4, 1, 3, 0];
             for (let i = 0; i < restrainOrder.length - 1; i++) {
                 ctx.moveTo(positions[restrainOrder[i]].x, positions[restrainOrder[i]].y);
@@ -436,18 +359,12 @@
             ctx.stroke();
 
             for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.arc(positions[i].x, positions[i].y, radii[i], 0, 2 * Math.PI);
-                ctx.fillStyle = elementColors[order[i]];
-                ctx.fill();
-
-                ctx.fillStyle = '#FFFFFF';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                ctx.beginPath(); ctx.arc(positions[i].x, positions[i].y, radii[i], 0, 2 * Math.PI);
+                ctx.fillStyle = elementColors[order[i]]; ctx.fill();
+                ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.font = boldElements[order.join('')].includes(order[i]) ? 'bold 14px Arial' : '14px Arial';
                 ctx.fillText(order[i], positions[i].x, positions[i].y - 6);
-                ctx.font = '12px Arial';
-                ctx.fillText(attributeTexts[i], positions[i].x, positions[i].y + 12);
+                ctx.font = '12px Arial'; ctx.fillText(attributeTexts[i], positions[i].x, positions[i].y + 12);
             }
         }
 
@@ -456,45 +373,30 @@
             const modal = document.getElementById('modal');
             const modalTable = document.getElementById('modal-table');
             modalTable.innerHTML = '';
-
             for (let i = 0; i < 6; i++) {
                 const row = document.createElement('tr');
                 for (let j = 0; j < 10; j++) {
-                    const index = i * 10 + j;
+                    const index = i * 10 + j, gz = liuShiJiaZi[index], [tg, dz] = gz.split('');
                     const cell = document.createElement('td');
-                    const gz = liuShiJiaZi[index];
-                    const [tianGan, diZhi] = gz.split('');
-                    cell.innerHTML = `<span class="${colorMap[tianGan]}">${tianGan}</span><span class="${colorMap[diZhi]}">${diZhi}</span>`;
+                    cell.innerHTML = `<span class="${colorMap[tg]}">${tg}</span><span class="${colorMap[dz]}">${dz}</span>`;
                     cell.onclick = () => selectGanZhi(gz);
                     row.appendChild(cell);
                 }
                 modalTable.appendChild(row);
             }
-
             modal.style.display = 'flex';
         }
 
         function selectGanZhi(gz) {
-            const [tianGan, diZhi] = gz.split('');
+            const [tg, dz] = gz.split('');
             const cell = document.getElementById(currentColumn);
-            cell.innerHTML = `<span class="ganzhi"><span class="${colorMap[tianGan]}">${tianGan}</span><span class="${colorMap[diZhi]}">${diZhi}</span></span>`;
-            const elements = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
-            if (fiveElementsMap.tianGan[tianGan]) {
-                Object.keys(fiveElementsMap.tianGan[tianGan]).forEach(key => {
-                    elements[key] += fiveElementsMap.tianGan[tianGan][key];
-                });
-            }
-            if (fiveElementsMap.diZhi[diZhi]) {
-                Object.keys(fiveElementsMap.diZhi[diZhi]).forEach(key => {
-                    elements[key] += fiveElementsMap.diZhi[diZhi][key];
-                });
-            }
+            cell.innerHTML = `<span class="ganzhi"><span class="${colorMap[tg]}">${tg}</span><span class="${colorMap[dz]}">${dz}</span></span>`;
+            
+            const elements = getElementsValue(currentColumn, gz);
             const elementsCell = document.getElementById(`${currentColumn}-elements`);
             elementsCell.innerHTML = `<span class="five-elements">
-                <span class="green">木${elements.木}</span>
-                <span class="red">火${elements.火}</span>
-                <span class="yellow">土${elements.土}</span>
-                <span class="gray">金${elements.金}</span>
+                <span class="green">木${elements.木}</span><span class="red">火${elements.火}</span>
+                <span class="yellow">土${elements.土}</span><span class="gray">金${elements.金}</span>
                 <span class="black">水${elements.水}</span>
             </span>`;
             updateTotalElements();
@@ -502,149 +404,63 @@
         }
 
         function clearColumn(column) {
-            const cell = document.getElementById(column);
-            cell.innerHTML = `<span class="ganzhi">自定</span>`;
-            const elementsCell = document.getElementById(`${column}-elements`);
-            elementsCell.innerHTML = `<span class="five-elements">-</span>`;
+            document.getElementById(column).innerHTML = `<span class="ganzhi">自定</span>`;
+            document.getElementById(`${column}-elements`).innerHTML = `<span class="five-elements">-</span>`;
             updateTotalElements();
         }
 
         function clearAll() {
-            const columns = ['hour', 'day', 'month', 'year', 'great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'];
-            columns.forEach(col => {
+            ['hour', 'day', 'month', 'year', 'great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'].forEach(col => {
+                document.getElementById(col).innerHTML = `<span class="ganzhi">自定</span>`;
+                document.getElementById(`${col}-elements`).innerHTML = `<span class="five-elements">-</span>`;
+            });
+            updateTotalElements();
+        }
+
+        function setPresetByData(preset) {
+            Object.keys(preset).forEach(col => {
+                const gz = preset[col];
                 const cell = document.getElementById(col);
-                cell.innerHTML = `<span class="ganzhi">自定</span>`;
-                const elementsCell = document.getElementById(`${col}-elements`);
-                elementsCell.innerHTML = `<span class="five-elements">-</span>`;
+                if (gz === '自定') {
+                    cell.innerHTML = `<span class="ganzhi">自定</span>`;
+                    document.getElementById(`${col}-elements`).innerHTML = `<span class="five-elements">-</span>`;
+                } else {
+                    const [tg, dz] = gz.split('');
+                    cell.innerHTML = `<span class="ganzhi"><span class="${colorMap[tg]}">${tg}</span><span class="${colorMap[dz]}">${dz}</span></span>`;
+                    const elements = getElementsValue(col, gz);
+                    document.getElementById(`${col}-elements`).innerHTML = `<span class="five-elements">
+                        <span class="green">木${elements.木}</span><span class="red">火${elements.火}</span>
+                        <span class="yellow">土${elements.土}</span><span class="gray">金${elements.金}</span>
+                        <span class="black">水${elements.水}</span>
+                    </span>`;
+                }
             });
             updateTotalElements();
         }
 
         function setPreset1() {
-            const preset = {
-                'hour': '丙子',
-                'day': '庚戌',
-                'month': '乙亥',
-                'year': '甲子',
-                'great_cycle': '己卯',
-                'flow_year': '丙午',
-                'flow_month': '自定',
-                'flow_day': '自定',
-                'flow_hour': '自定'
-            };
-            Object.keys(preset).forEach(col => {
-                const cell = document.getElementById(col);
-                const gz = preset[col];
-                if (gz === '自定') {
-                    cell.innerHTML = `<span class="ganzhi">自定</span>`;
-                    const elementsCell = document.getElementById(`${col}-elements`);
-                    elementsCell.innerHTML = `<span class="five-elements">-</span>`;
-                } else {
-                    const [tianGan, diZhi] = gz.split('');
-                    cell.innerHTML = `<span class="ganzhi"><span class="${colorMap[tianGan]}">${tianGan}</span><span class="${colorMap[diZhi]}">${diZhi}</span></span>`;
-                    const elements = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
-                    if (fiveElementsMap.tianGan[tianGan]) {
-                        Object.keys(fiveElementsMap.tianGan[tianGan]).forEach(key => {
-                            elements[key] += fiveElementsMap.tianGan[tianGan][key];
-                        });
-                    }
-                    if (fiveElementsMap.diZhi[diZhi]) {
-                        Object.keys(fiveElementsMap.diZhi[diZhi]).forEach(key => {
-                            elements[key] += fiveElementsMap.diZhi[diZhi][key];
-                        });
-                    }
-                    const elementsCell = document.getElementById(`${col}-elements`);
-                    elementsCell.innerHTML = `<span class="five-elements">
-                        <span class="green">木${elements.木}</span>
-                        <span class="red">火${elements.火}</span>
-                        <span class="yellow">土${elements.土}</span>
-                        <span class="gray">金${elements.金}</span>
-                        <span class="black">水${elements.水}</span>
-                    </span>`;
-                }
-            });
-            updateTotalElements();
+            setPresetByData({'hour': '丙子', 'day': '庚戌', 'month': '乙亥', 'year': '甲子', 'great_cycle': '己卯', 'flow_year': '丙午', 'flow_month': '自定', 'flow_day': '自定', 'flow_hour': '自定'});
         }
 
         function setPreset2() {
-            const preset = {
-                'hour': '辛亥',
-                'day': '丁亥',
-                'month': '壬辰',
-                'year': '丙寅',
-                'great_cycle': '戊子',
-                'flow_year': '丙午',
-                'flow_month': '自定',
-                'flow_day': '自定',
-                'flow_hour': '自定'
-            };
-            Object.keys(preset).forEach(col => {
-                const cell = document.getElementById(col);
-                const gz = preset[col];
-                if (gz === '自定') {
-                    cell.innerHTML = `<span class="ganzhi">自定</span>`;
-                    const elementsCell = document.getElementById(`${col}-elements`);
-                    elementsCell.innerHTML = `<span class="five-elements">-</span>`;
-                } else {
-                    const [tianGan, diZhi] = gz.split('');
-                    cell.innerHTML = `<span class="ganzhi"><span class="${colorMap[tianGan]}">${tianGan}</span><span class="${colorMap[diZhi]}">${diZhi}</span></span>`;
-                    const elements = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
-                    if (fiveElementsMap.tianGan[tianGan]) {
-                        Object.keys(fiveElementsMap.tianGan[tianGan]).forEach(key => {
-                            elements[key] += fiveElementsMap.tianGan[tianGan][key];
-                        });
-                    }
-                    if (fiveElementsMap.diZhi[diZhi]) {
-                        Object.keys(fiveElementsMap.diZhi[diZhi]).forEach(key => {
-                            elements[key] += fiveElementsMap.diZhi[diZhi][key];
-                        });
-                    }
-                    const elementsCell = document.getElementById(`${col}-elements`);
-                    elementsCell.innerHTML = `<span class="five-elements">
-                        <span class="green">木${elements.木}</span>
-                        <span class="red">火${elements.火}</span>
-                        <span class="yellow">土${elements.土}</span>
-                        <span class="gray">金${elements.金}</span>
-                        <span class="black">水${elements.水}</span>
-                    </span>`;
-                }
-            });
-            updateTotalElements();
+            setPresetByData({'hour': '辛亥', 'day': '丁亥', 'month': '壬辰', 'year': '丙寅', 'great_cycle': '戊子', 'flow_year': '丙午', 'flow_month': '自定', 'flow_day': '自定', 'flow_hour': '自定'});
         }
 
         function toggleElementsRow() {
             const row = document.getElementById('elements-row');
+            elementsRowVisible = !elementsRowVisible;
+            row.style.display = elementsRowVisible ? '' : 'none';
             if (elementsRowVisible) {
-                row.style.display = 'none';
-                elementsRowVisible = false;
-            } else {
-                row.style.display = '';
-                elementsRowVisible = true;
-                const columns = ['hour', 'day', 'month', 'year', 'great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'];
-                columns.forEach(col => {
-                    const ganZhiCell = document.getElementById(col);
+                ['hour', 'day', 'month', 'year', 'great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'].forEach(col => {
+                    const text = document.getElementById(col).textContent;
                     const elementsCell = document.getElementById(`${col}-elements`);
-                    const text = ganZhiCell.textContent;
                     if (text === '自定') {
                         elementsCell.innerHTML = `<span class="five-elements">-</span>`;
                     } else {
-                        const [tianGan, diZhi] = text.split('');
-                        const elements = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
-                        if (fiveElementsMap.tianGan[tianGan]) {
-                            Object.keys(fiveElementsMap.tianGan[tianGan]).forEach(key => {
-                                elements[key] += fiveElementsMap.tianGan[tianGan][key];
-                            });
-                        }
-                        if (fiveElementsMap.diZhi[diZhi]) {
-                            Object.keys(fiveElementsMap.diZhi[diZhi]).forEach(key => {
-                                elements[key] += fiveElementsMap.diZhi[diZhi][key];
-                            });
-                        }
+                        const elements = getElementsValue(col, text);
                         elementsCell.innerHTML = `<span class="five-elements">
-                            <span class="green">木${elements.木}</span>
-                            <span class="red">火${elements.火}</span>
-                            <span class="yellow">土${elements.土}</span>
-                            <span class="gray">金${elements.金}</span>
+                            <span class="green">木${elements.木}</span><span class="red">火${elements.火}</span>
+                            <span class="yellow">土${elements.土}</span><span class="gray">金${elements.金}</span>
                             <span class="black">水${elements.水}</span>
                         </span>`;
                     }
@@ -657,47 +473,22 @@
             const total = {木: 0, 火: 0, 土: 0, 金: 0, 水: 0};
             const columns = ['hour', 'day', 'month', 'year', 'great_cycle', 'flow_year', 'flow_month', 'flow_day', 'flow_hour'];
             columns.forEach(col => {
-                const cell = document.getElementById(col);
-                const text = cell.textContent;
-                if (text !== '自定') {
-                    const [tianGan, diZhi] = text.split('');
-                    if (fiveElementsMap.tianGan[tianGan]) {
-                        Object.keys(fiveElementsMap.tianGan[tianGan]).forEach(key => {
-                            total[key] += fiveElementsMap.tianGan[tianGan][key];
-                        });
-                    }
-                    if (fiveElementsMap.diZhi[diZhi]) {
-                        Object.keys(fiveElementsMap.diZhi[diZhi]).forEach(key => {
-                            total[key] += fiveElementsMap.diZhi[diZhi][key];
-                        });
-                    }
-                }
+                const text = document.getElementById(col).textContent;
+                const vals = getElementsValue(col, text);
+                Object.keys(vals).forEach(k => total[k] += vals[k]);
             });
             document.getElementById('total-elements').innerHTML = `
-                <span class="green">木${total.木}</span>
-                <span class="red">火${total.火}</span>
-                <span class="yellow">土${total.土}</span>
-                <span class="gray">金${total.金}</span>
-                <span class="black">水${total.水}</span>
-            `;
+                <span class="green">木${total.木}</span><span class="red">火${total.火}</span>
+                <span class="yellow">土${total.土}</span><span class="gray">金${total.金}</span>
+                <span class="black">水${total.水}</span>`;
 
-            const dayCell = document.getElementById('day');
-            const dayText = dayCell.textContent;
-            let order = ['金', '水', '木', '火', '土']; // 預設順序
-            if (dayText !== '自定') {
-                const tianGan = dayText[0];
-                if (orderMap[tianGan]) {
-                    order = orderMap[tianGan].split('');
-                }
-            }
+            const dayText = document.getElementById('day').textContent;
+            let order = ['金', '水', '木', '火', '土'];
+            if (dayText !== '自定' && orderMap[dayText[0]]) order = orderMap[dayText[0]].split('');
             updateCanvas(total, order);
         }
 
-        document.getElementById('modal').onclick = function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
-            }
-        };
+        document.getElementById('modal').onclick = function(e) { if (e.target === this) this.style.display = 'none'; };
     </script>
 </body>
 </html>
