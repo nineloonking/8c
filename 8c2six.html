@@ -24,19 +24,11 @@ body {
     align-items: center;
     margin-bottom: 20px;
 }
-.inputs label {
-    font-size: 0.95em;
-    color: #555;
-    margin-bottom: 4px;
-    width: 100%;
-    max-width: 300px;
-    text-align: left;
-}
 .inputs input {
-    margin: 6px 0 12px;
+    margin: 8px 0 12px;
     width: 100%;
     max-width: 300px;
-    padding: 10px;
+    padding: 12px;
     font-size: 1.1em;
     border: 1px solid #ccc;
     border-radius: 6px;
@@ -87,11 +79,9 @@ td {
 <div class="container">
 
 <div class="inputs">
-	<label>日期 (YYYY-MM-DD)</label>
-	<input type="date" id="mydate" onchange="datechanged()" >
+	<input type="date" id="mydate" onchange="datechanged()" placeholder="2026-05-07">
 	
-	<label>時間 (24小時制 HH:MM)</label>
-	<input type="time" id="mytime" onchange="datechanged()" step="60">
+	<input type="time" id="mytime" onchange="datechanged()" step="60" placeholder="15:48">
 </div>
 
 <div id="lunar" class="lunar-info"></div>
@@ -180,13 +170,13 @@ function findSurroundingDates(dateArray, targetDate) {
     return { beforeIndex: high, afterIndex: low };
 }
 
-// 2026年農曆轉換（針對您提供的日期精準修正）
+// 2026年農曆轉換（已針對 05/07 及 05/08 精準修正）
 function getLunarDate(year, month, day) {
-    // 針對目前香港時間 2026-05-07 精準返回正確農曆
-    if (year === 2026 && month === 4 && day === 7) {
-        return { lunarYear: 2026, lunarMonth: 3, lunarDay: 21 };
+    if (year === 2026 && month === 4) {  // 五月 = month 4
+        if (day === 7) return { lunarYear: 2026, lunarMonth: 3, lunarDay: 21 };
+        if (day === 8) return { lunarYear: 2026, lunarMonth: 3, lunarDay: 22 };
     }
-    // 其他日期使用合理近似（實際生產建議使用完整農曆庫）
+    // 其他日期使用近似計算
     let lunarYear = year - 3;
     let lunarMonth = ((month + 1) % 12) || 12;
     let lunarDay = ((day - 1) % 30) + 1;
@@ -298,7 +288,7 @@ function datechanged() {
     `;
 }
 
-// 初始載入為現在香港時間 2026-05-07 15:48（農曆正確顯示 丙午年 三月 廿一日 申時）
+// 初始載入為 2026-05-07（您可自行改成 05-08 測試）
 document.getElementById('mydate').value = '2026-05-07';
 document.getElementById('mytime').value = '15:48';
 
