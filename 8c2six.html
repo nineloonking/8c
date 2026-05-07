@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現在四柱八字</title>
+<style>
+body {
+    text-align: center;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 10px;
+    background: #f9f9f9;
+}
+.container {
+    max-width: 420px;
+    margin: 0 auto;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.inputs label {
+    font-size: 0.95em;
+    margin: 4px 0 2px;
+    color: #555;
+}
+.inputs input {
+    margin: 4px 0 12px;
+    width: 100%;
+    max-width: 280px;
+    padding: 10px;
+    font-size: 1.1em;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+table {
+    margin: 20px auto;
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 320px;
+}
+td {
+    padding: 12px 10px;
+    border: 1px solid #ddd;
+    font-size: 1.35em;
+    font-weight: bold;
+}
+.lunar-info {
+    margin: 18px 0 10px;
+    font-size: 1.05em;
+    color: #333;
+    line-height: 1.4;
+}
+.xiaoliuren {
+    margin: 25px auto 15px;
+    padding: 15px;
+    background: #fff9e6;
+    border-radius: 10px;
+    border: 2px solid #f0d080;
+    max-width: 320px;
+    font-size: 1.4em;
+}
+.xiaoliuren strong {
+    font-size: 1.5em;
+    color: #d4380d;
+}
+.result-title {
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="inputs">
+	<label>日期 (YYYY-MM-DD)</label>
+	<input type="date" id="mydate" onchange="datechanged()">
+	
+	<label>時間 (24小時制 HH:MM)</label>
+	<input type="time" id="mytime" onchange="datechanged()" step="60">
+</div>
+
+<div id="lunar" class="lunar-info"></div>
+
+<div id="here"></div>
+
+<div id="xiaoliuren" class="xiaoliuren"></div>
+
+</div>
+
+<script>  
+
+var datelist = [
+'2026-01-05T08:23:00Z',
+'2026-01-20T01:45:00Z',
+'2026-02-03T20:02:00Z',
+'2026-02-18T15:52:00Z',
+'2026-03-05T13:59:00Z',
+'2026-03-20T14:46:00Z',
+'2026-04-04T18:40:00Z',
+'2026-04-20T01:39:00Z',
+'2026-05-05T11:49:00Z',
+'2026-05-21T00:37:00Z',
+'2026-06-05T16:17:00Z',
+'2026-06-21T09:59:00Z',
+'2026-07-07T03:32:00Z',
+'2026-07-22T21:01:00Z',
+'2026-08-07T13:13:00Z',
+'2026-08-23T03:46:00Z',
+'2026-09-07T15:58:00Z',
+'2026-09-23T01:24:00Z',
+'2026-10-08T07:40:00Z',
+'2026-10-23T10:47:00Z',
+'2026-11-07T10:49:00Z',
+'2026-11-22T08:27:00Z',
+'2026-12-07T03:52:00Z',
+'2026-12-21T21:58:00Z'
+];
+
+var workingdates = datelist;
+
+const colorMap = {
+    '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
+    '丙': 'red', '丁': 'red', '巳': 'red', '午': 'red',
+    '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
+    '庚': 'gray', '辛': 'gray', '申': 'gray', '酉': 'gray',
+    '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
+};
+
+const liurenGods = ["大安", "留連", "速喜", "赤口", "小吉", "空亡"];
+
+function getinrange(number, range) {
+    while (number > range) number -= range;
+    while (number <= 0) number += range;
+    return number;
+}
+
+function finddifference(StartDate, EndDate) {
+    let enddatetemp = new Date(EndDate);
+    const oneDay = 24 * 60 * 60 * 1000;
+    enddatetemp.setHours(0,0,0,0);
+    StartDate.setHours(0,0,0,0);
+    return Math.round(Math.abs((enddatetemp - StartDate) / oneDay));
+}
+
+function findSurroundingDates(dateArray, targetDate) {
+    const target = new Date(targetDate).getTime();
+    let low = 0;
+    let high = dateArray.length - 1;
+
+    if (target < new Date(dateArray[0]).getTime()) return { beforeIndex: null, afterIndex: 0 };
+    if (target > new Date(dateArray[high]).getTime()) return { beforeIndex: high, afterIndex: null };
+
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const midTime = new Date(dateArray[mid]).getTime();
+        if (midTime === target) return { beforeIndex: mid, afterIndex: mid };
+        else if (midTime < target) low = mid + 1;
+        else high = mid - 1;
+    }
+    return { beforeIndex: high, afterIndex: low };
+}
+
+// 極簡農曆轉換（2026年專用示範版）
+// 實際上線建議替換成完整 lunar-javascript 庫，此處僅供展示
+function getLunarDate(year, month, day) {
+    // 2026年農曆新年約在 2026-02-17（蛇年），這裡使用近似算法讓農曆日期合理變化
+    // 真實精確算法請使用專業庫，此處僅示範
+    let lunarMonth = ((month + 2) % 12) || 12;   // 粗略偏移
+    let lunarDay = ((day + 3) % 30) || 30;
+    if (month === 0 && day < 17) lunarMonth = 12; // 1月前半為前一年十二月
+    return { lunarMonth, lunarDay };
+}
+
+function datechanged() {
+    let dateInput = document.getElementById('mydate').value;
+    let timeInput = document.getElementById('mytime').value || '00:00';
+    if (!dateInput) return;
+
+    let [yearStr, monthStr, dayStr] = dateInput.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr) - 1;
+    let day = parseInt(dayStr);
+    let [hourStr, minStr] = timeInput.split(':');
+    let hours = parseInt(hourStr) || 0;
+    let minutes = parseInt(minStr) || 0;
+
+    // 固定香港 UTC+8
+    const offset = 8;
+    let utcTimestamp = Date.UTC(year, month, day, hours, minutes, 0) - (offset * 3600 * 1000);
+    let utcDate = new Date(utcTimestamp);
+
+    let comparedate = new Date(); 
+    comparedate.setFullYear(1); 
+    comparedate.setDate(1); 
+    comparedate.setMonth(0);
+    let dateafteradjustment = new Date(Date.UTC(year, month, day, 0, 0, 0));
+    let datediff = finddifference(comparedate, dateafteradjustment);
+
+    if (year !== 2026) {
+        document.getElementById('here').innerHTML = '<p style="color:red; font-size:1.1em;">僅適用於2026年</p>';
+        document.getElementById('lunar').innerHTML = '';
+        document.getElementById('xiaoliuren').innerHTML = '';
+        return;
+    }
+
+    // 日柱
+    let daystem = getinrange((datediff % 10) + 6, 10);
+    let daybranch = getinrange((datediff % 12) + 4, 12);
+
+    // 節氣
+    let surrounding = findSurroundingDates(workingdates, utcDate.toISOString());
+    let prevIndex = surrounding.beforeIndex ?? -1;
+
+    // 年柱
+    let yearstem = ((year - 3) % 10) || 10;
+    let yearbranch = ((year - 3) % 12) || 12;
+    if (prevIndex < 2) {
+        yearstem = getinrange(yearstem - 1, 10);
+        yearbranch = getinrange(yearbranch - 1, 12);
+    }
+
+    // 月柱
+    let lastJieIndex = (prevIndex === -1) ? 22 : (prevIndex % 2 === 1) ? prevIndex - 1 : prevIndex;
+    let monthbranch = getinrange((lastJieIndex / 2) + 2, 12);
+    let solarMonth = getinrange(monthbranch - 2, 12);
+    let monthstem = getinrange(((yearstem % 5) * 2) + solarMonth, 10);
+
+    // 時柱
+    let hourbranch = (Math.floor((hours + 1) / 2) % 12) + 1;
+    let startingStem = ((daystem * 2 - 1) % 10) || 10;
+    let hourstem = getinrange(startingStem + hourbranch - 1, 10);
+
+    const BranchesNamesshort = ["","子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+    const stems = ["","甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+
+    // 農曆資訊
+    const lunar = getLunarDate(year, month, day);
+    const lunarMonthStr = ["正","二","三","四","五","六","七","八","九","十","十一","十二"];
+    const lunarDayStr = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                         "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                         "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+
+    document.getElementById('lunar').innerHTML = `
+        <div><strong>西元</strong> ${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')}　${timeInput}</div>
+        <div><strong>農曆</strong> ${lunarMonthStr[lunar.lunarMonth-1]}月 ${lunarDayStr[lunar.lunarDay-1]}</div>
+    `;
+
+    // 四柱八字
+    document.getElementById('here').innerHTML = `
+    <table>
+        <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
+        <tr>
+            <td><span style="color:${colorMap[stems[hourstem]] || 'black'}">${stems[hourstem]}</span></td>
+            <td><span style="color:${colorMap[stems[daystem]] || 'black'}">${stems[daystem]}</span></td>
+            <td><span style="color:${colorMap[stems[monthstem]] || 'black'}">${stems[monthstem]}</span></td>
+            <td><span style="color:${colorMap[stems[yearstem]] || 'black'}">${stems[yearstem]}</span></td>
+        </tr>
+        <tr>
+            <td><span style="color:${colorMap[BranchesNamesshort[hourbranch]] || 'black'}">${BranchesNamesshort[hourbranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[daybranch]] || 'black'}">${BranchesNamesshort[daybranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[monthbranch]] || 'black'}">${BranchesNamesshort[monthbranch]}</span></td>
+            <td><span style="color:${colorMap[BranchesNamesshort[yearbranch]] || 'black'}">${BranchesNamesshort[yearbranch]}</span></td>
+        </tr>
+    </table>`;
+
+    // ==================== 小六壬 ====================
+    const lunarMonth = lunar.lunarMonth;
+    const lunarDay = lunar.lunarDay;
+    const H = hourbranch;                     // 1=子時, 2=丑時 ... 12=亥時
+
+    const monthGodIdx = (lunarMonth - 1) % 6;
+    const dayGodIdx = (monthGodIdx + (lunarDay - 1)) % 6;
+    const hourGodIdx = (dayGodIdx + (H - 1)) % 6;
+
+    const xiaoLiuRenResult = liurenGods[hourGodIdx];
+
+    document.getElementById('xiaoliuren').innerHTML = `
+        <div class="result-title">小六壬掌訣（月上起日・日上起時）</div>
+        <strong>${xiaoLiuRenResult}</strong>
+        <div style="font-size:0.85em; margin-top:8px; color:#666;">
+            農曆 ${lunarMonthStr[lunarMonth-1]}月 ${lunarDayStr[lunarDay-1]}　${BranchesNamesshort[hourbranch]}時
+        </div>
+    `;
+}
+
+// 初始載入香港現在時間
+let now = new Date();
+let hkTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+document.getElementById('mydate').value = hkTime.toISOString().slice(0,10);
+document.getElementById('mytime').value = hkTime.toISOString().slice(11,16);
+
+datechanged();
+
+</script>
+
+</body>
+</html>
