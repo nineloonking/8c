@@ -1,11 +1,3 @@
-<!DOCTYPE html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bazi-calculator.js（現代天文精算版）</title>
-</head>
-<body>
-<pre style="background:#f9f7f0; padding:20px; font-size:13px; line-height:1.4; white-space:pre-wrap; max-width:100%; overflow:auto;">
 /* ================================================
    bazi-calculator.js  ── 現代天文精算版（真太陽黃經）
    完全符合香港天文台（HKO）使用的天文算法
@@ -217,15 +209,4 @@ window.getSolarTerms = function(year) {
     }
 };
 </pre>
-<p><strong>✅ 已完成！</strong></p>
-<p>把上面 <strong>全部內容</strong> 存成 <code>bazi-calculator.js</code>（取代舊檔）即可。</p>
-<p>現在：</p>
-<ul>
-<li>廿四節氣時間已與香港天文台官方資料高度吻合（誤差通常在 1 分鐘內）</li>
-<li>八字（getBazi）自動使用最新天文精算</li>
-<li>小六壬、廿四節氣頁面全部正常運作</li>
-<li>完全自含、無外部依賴</li>
-</ul>
-<p>直接刷新你的 solar-terms.html 和 xiaoliuren.html 即可看到最新結果！</p>
-</body>
-</html>
+
