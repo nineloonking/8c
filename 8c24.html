@@ -76,7 +76,7 @@
     th { background: #f9f7f0; }
     .jie { color: #8B4513; font-weight: bold; }
     .qi { color: #666; }
-    #json { display: none; }
+    .error { color: red; font-size: 1.1em; margin: 20px 0; }
 </style>
 </head>
 <body>
@@ -98,148 +98,153 @@ function getTermDateObj(term) {
 }
 
 function daysInclusive(date1, date2) {
-    // date1 和 date2 只取年月日
     const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
     const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
     return Math.floor((d2 - d1) / 86400000) + 1;
 }
 
 function querySolarTerms() {
-    const dateInput = document.getElementById('mydate').value;
-    const timeInput = document.getElementById('mytime').value || '00:00';
-    if (!dateInput) return;
+    try {
+        const dateInput = document.getElementById('mydate').value;
+        const timeInput = document.getElementById('mytime').value || '00:00';
+        if (!dateInput) return;
 
-    const [yearStr, monthStr, dayStr] = dateInput.split('-');
-    const year = parseInt(yearStr);
-    const month = parseInt(monthStr);
-    const day = parseInt(dayStr);
-    const [hourStr, minStr] = timeInput.split(':');
-    const hour = parseInt(hourStr);
-    const minute = parseInt(minStr);
+        const [yearStr, monthStr, dayStr] = dateInput.split('-');
+        const year = parseInt(yearStr);
+        const month = parseInt(monthStr);
+        const day = parseInt(dayStr);
+        const [hourStr, minStr] = timeInput.split(':');
+        const hour = parseInt(hourStr);
+        const minute = parseInt(minStr);
 
-    // 1. 取得農曆與時辰
-    const baziResult = window.getBazi(year, month, day, hour, minute);
-    if (baziResult.error) {
-        document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
-        return;
-    }
+        // 1. 取得農曆與時辰
+        const baziResult = window.getBazi(year, month, day, hour, minute);
+        if (baziResult.error) throw new Error(baziResult.error);
 
-    // 2. 取得本年 24 節氣
-    let terms = window.getSolarTerms(year);
-    if (terms.error) {
-        document.getElementById('here').innerHTML = `<p style="color:red;">${terms.error}</p>`;
-        return;
-    }
+        // 2. 取得本年 24 節氣
+        let terms = window.getSolarTerms(year);
+        if (terms.error) throw new Error(terms.error);
 
-    // 3. 建立當前香港時間物件
-    const currentHK = new Date(year, month - 1, day, hour, minute, 0);
+        // 3. 當前香港時間
+        const currentHK = new Date(year, month - 1, day, hour, minute, 0);
 
-    // 4. 找出目前所在的節氣（最後一個已過的節氣）
-    let currentIndex = -1;
-    for (let i = 0; i < terms.length; i++) {
-        const termTime = getTermDateObj(terms[i]);
-        if (termTime.getTime() > currentHK.getTime()) {
-            currentIndex = i - 1;
-            break;
+        // 4. 找出目前所在的節氣（最後一個已過的）
+        let currentIndex = -1;
+        for (let i = 0; i < terms.length; i++) {
+            const termTime = getTermDateObj(terms[i]);
+            if (termTime.getTime() > currentHK.getTime()) {
+                currentIndex = i - 1;
+                break;
+            }
         }
-    }
-    if (currentIndex === -1) currentIndex = 23; // 超過今年最後一個
-    const currentTerm = terms[currentIndex];
+        if (currentIndex === -1) currentIndex = 23;
+        const currentTerm = terms[currentIndex];
 
-    // 5. 找出下一個「節令」（isJie === true）
-    let nextJie = null;
-    for (let i = currentIndex + 1; i < terms.length; i++) {
-        if (terms[i].isJie) {
-            nextJie = terms[i];
-            break;
+        // 5. 下一個「節令」（isJie === true）
+        let nextJie = null;
+        for (let i = currentIndex + 1; i < terms.length; i++) {
+            if (terms[i].isJie) {
+                nextJie = terms[i];
+                break;
+            }
         }
-    }
-    if (!nextJie) {
-        // 跨到下一年（小寒一定是節）
-        const nextYearTerms = window.getSolarTerms(year + 1);
-        nextJie = nextYearTerms[0];
-    }
-
-    // 6. 找出上一個「節令」
-    let prevJie = null;
-    for (let i = currentIndex; i >= 0; i--) {
-        if (terms[i].isJie) {
-            prevJie = terms[i];
-            break;
+        if (!nextJie) {
+            const nextYearTerms = window.getSolarTerms(year + 1);
+            if (nextYearTerms.error) throw new Error(nextYearTerms.error);
+            nextJie = nextYearTerms[0];
         }
-    }
-    if (!prevJie) {
-        // 極少見（年初前），取前一年最後一個節
-        const prevYearTerms = window.getSolarTerms(year - 1);
-        prevJie = prevYearTerms[22]; // 大雪（最後一個節）
-    }
 
-    // 7. 計算天數（今天也算）
-    const currentDateOnly = new Date(year, month - 1, day);
-    const nextDateOnly = new Date(nextJie.date.split('-').map(Number)[0], nextJie.date.split('-').map(Number)[1] - 1, nextJie.date.split('-').map(Number)[2]);
-    const prevDateOnly = new Date(prevJie.date.split('-').map(Number)[0], prevJie.date.split('-').map(Number)[1] - 1, prevJie.date.split('-').map(Number)[2]);
+        // 6. 上一個「節令」
+        let prevJie = null;
+        for (let i = currentIndex; i >= 0; i--) {
+            if (terms[i].isJie) {
+                prevJie = terms[i];
+                break;
+            }
+        }
+        if (!prevJie) {
+            const prevYearTerms = window.getSolarTerms(year - 1);
+            if (prevYearTerms.error) throw new Error(prevYearTerms.error);
+            prevJie = prevYearTerms[22]; // 大雪
+        }
 
-    const daysToNext = daysInclusive(currentDateOnly, nextDateOnly);
-    const daysToPrev = daysInclusive(prevDateOnly, currentDateOnly);
+        // 7. 計算天數（今天也算）
+        const currentDateOnly = new Date(year, month - 1, day);
+        const nextDateOnly = new Date(nextJie.date.split('-').map(Number)[0], nextJie.date.split('-').map(Number)[1] - 1, nextJie.date.split('-').map(Number)[2]);
+        const prevDateOnly = new Date(prevJie.date.split('-').map(Number)[0], prevJie.date.split('-').map(Number)[1] - 1, prevJie.date.split('-').map(Number)[2]);
 
-    // 8. 組合顯示
-    const gregorian = `${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${hourStr.padStart(2,'0')}:${minStr.padStart(2,'0')}`;
-    const lunarStr = `${baziResult.lunar.year}年　${baziResult.lunar.month}月${baziResult.lunar.day}　${baziResult.branches.hour}時`;
+        const daysToNext = daysInclusive(currentDateOnly, nextDateOnly);
+        const daysToPrev = daysInclusive(prevDateOnly, currentDateOnly);
 
-    let html = `
-        <div class="date-info">
-            <strong>公曆</strong><br>
-            ${gregorian}<br><br>
-            <strong class="lunar">農曆</strong><br>
-            ${lunarStr}
-        </div>
+        // 8. 顯示
+        const gregorian = `${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${hourStr.padStart(2,'0')}:${minStr.padStart(2,'0')}`;
+        const lunarStr = `${baziResult.lunar.year}年　${baziResult.lunar.month}月${baziResult.lunar.day}　${baziResult.branches.hour}時`;
 
-        <div class="current-term">
-            現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span>
-        </div>
-
-        <div class="days">
-            <div>
-                距離下一個節令<br>
-                <strong>${nextJie.name}</strong>　${nextJie.date}<br>
-                <span style="font-size:1.4em; color:#8B4513;">${daysToNext} 天</span>
+        let html = `
+            <div class="date-info">
+                <strong>公曆</strong><br>
+                ${gregorian}<br><br>
+                <strong class="lunar">農曆</strong><br>
+                ${lunarStr}
             </div>
-            <div>
-                距離上一個節令<br>
-                <strong>${prevJie.name}</strong>　${prevJie.date}<br>
-                <span style="font-size:1.4em; color:#8B4513;">${daysToPrev} 天</span>
+
+            <div class="current-term">
+                現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span>
             </div>
-        </div>
 
-        <p style="margin:15px 0 10px; color:#666; font-size:1.05em;">${year} 年 廿四節氣完整列表</p>
-        <table>
-            <tr>
-                <th>序</th>
-                <th>節氣</th>
-                <th>日期</th>
-                <th>時間</th>
-                <th>類型</th>
-            </tr>
-    `;
+            <div class="days">
+                <div>
+                    距離下一個節令<br>
+                    <strong>${nextJie.name}</strong>　${nextJie.date}<br>
+                    <span style="font-size:1.4em; color:#8B4513;">${daysToNext} 天</span>
+                </div>
+                <div>
+                    距離上一個節令<br>
+                    <strong>${prevJie.name}</strong>　${prevJie.date}<br>
+                    <span style="font-size:1.4em; color:#8B4513;">${daysToPrev} 天</span>
+                </div>
+            </div>
 
-    terms.forEach((t, idx) => {
-        const typeClass = t.isJie ? 'jie' : 'qi';
-        const typeText = t.isJie ? '節' : '中氣';
-        html += `
-            <tr>
-                <td>${idx + 1}</td>
-                <td class="${typeClass}">${t.name}</td>
-                <td>${t.date}</td>
-                <td>${t.time}</td>
-                <td class="${typeClass}">${typeText}</td>
-            </tr>`;
-    });
+            <p style="margin:15px 0 10px; color:#666; font-size:1.05em;">${year} 年 廿四節氣完整列表</p>
+            <table>
+                <tr>
+                    <th>序</th>
+                    <th>節氣</th>
+                    <th>日期</th>
+                    <th>時間</th>
+                    <th>類型</th>
+                </tr>
+        `;
 
-    html += `</table>`;
-    document.getElementById('here').innerHTML = html;
+        terms.forEach((t, idx) => {
+            const typeClass = t.isJie ? 'jie' : 'qi';
+            const typeText = t.isJie ? '節' : '中氣';
+            html += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td class="${typeClass}">${t.name}</td>
+                    <td>${t.date}</td>
+                    <td>${t.time}</td>
+                    <td class="${typeClass}">${typeText}</td>
+                </tr>`;
+        });
+
+        html += `</table>`;
+        document.getElementById('here').innerHTML = html;
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('here').innerHTML = `
+            <p class="error">⚠️ 顯示節氣失敗</p>
+            <p style="color:#666; line-height:1.5;">錯誤訊息：<br><strong>${e.message}</strong></p>
+            <p style="color:#666; font-size:0.95em;">請確認：<br>
+            1. bazi-calculator.js 已更新至最新版本（含 getSolarTerms 函數）<br>
+            2. 刷新頁面後再試<br>
+            3. 日期範圍在 1900～2100 年之間</p>`;
+    }
 }
 
-// 初始載入現在香港時間並立即顯示
+// 初始載入現在香港時間
 const now = new Date();
 const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
 document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
