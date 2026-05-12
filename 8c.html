@@ -165,6 +165,38 @@ async function queryBaziFate() {
     const html = `
         <div class="lunar-line"><strong>農曆</strong>　${lunarLine}</div>
         ${pillarsHTML}
+        ${godsHTML}
+
+        // ====================== 十二神煞表 ======================
+        const dayStem = baziResult.stems.day;
+        const dayBranch = data.stemToBranch[dayStem][0];           // 日干對應的地支
+        const godsList = data.daily12Gods;                         // 12神煞順序
+
+        let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">十二神煞表</p>`;
+        godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+
+        // 第一行（天干對應神煞，日柱顯示「日元」）
+        godsHTML += `<tr>`;
+        ["hour","day","month","year"].forEach((key, idx) => {
+            if (idx === 1) {
+                godsHTML += `<td><strong>日元</strong></td>`;
+            } else {
+                const stem = baziResult.stems[key];
+                const mappedBranch = data.stemToBranch[stem][0];
+                const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+                godsHTML += `<td>${godsList[offset]}</td>`;
+            }
+        });
+        godsHTML += `</tr>`;
+
+        // 第二行（實際地支對應神煞）
+        godsHTML += `<tr>`;
+        [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year].forEach(branch => {
+            const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+            godsHTML += `<td>${godsList[offset]}</td>`;
+        });
+        godsHTML += `</tr></table>`;
+        
         <div class="current-term">現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
         <div class="days-container">
             <div class="days-box">距離上一個節令<br><strong>${prevJie.name}</strong>　${prevJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToPrev} 天</span></div>
