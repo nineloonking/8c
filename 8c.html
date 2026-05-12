@@ -124,6 +124,28 @@ async function queryBaziFate() {
         let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
         pillarsHTML += `<td>${html}</td>`;
     });
+    pillarsHTML += `</tr>`;
+
+    // ====================== 新增：納音五行行（垂直顯示） ======================
+    pillarsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach(key => {
+        const stem = baziResult.stems[key];
+        const branch = baziResult.branches[key];
+        const naYinKey = stem + branch;
+        const naYin = data.naYin[naYinKey] || '-';
+        
+        // 垂直顯示，每個字一行，最後一個字（五行屬性）上色
+        const chars = naYin.split('');
+        let verticalHTML = chars.map((ch, i) => {
+            if (i === chars.length - 1) {
+                const color = data.fiveColors[ch] || '#555';
+                return `<span style="color:${color}; font-weight:bold;">${ch}</span>`;
+            }
+            return ch;
+        }).join('<br>');
+        
+        pillarsHTML += `<td style="font-size:0.85em; line-height:1.15; padding:6px 4px;">${verticalHTML}</td>`;
+    });
     pillarsHTML += `</tr></table>`;
 
     // ====================== 十二神煞表（新增） ======================
