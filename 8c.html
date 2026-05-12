@@ -35,7 +35,7 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .lunar-line {
-        font-size: 1.4em;
+        font-size: 1.45em;
         margin-bottom: 25px;
         color: #8B4513;
         font-weight: bold;
@@ -44,13 +44,14 @@
         margin: 20px auto; 
         border-collapse: collapse; 
         width: 100%;
-        max-width: 480px;
+        max-width: 520px;
         font-size: 1.35em;
     }
     .pillars td { 
-        padding: 12px 10px; 
+        padding: 10px 8px; 
         border: 2px solid #D2B48C; 
         text-align: center;
+        vertical-align: middle;
     }
     .current-term {
         font-size: 1.5em;
@@ -73,19 +74,22 @@
         font-size: 1.05em;
     }
     .days-box strong { font-size: 1.35em; color: #8B4513; }
+    
+    /* 大運表：改為 3行 x 8列，由右至左 */
     table.daiyun {
         margin: 30px auto 0;
         border-collapse: collapse;
         width: 100%;
-        max-width: 620px;
+        max-width: 680px;
         font-size: 1.1em;
     }
     .daiyun th, .daiyun td {
-        padding: 10px 8px;
+        padding: 10px 6px;
         border: 1px solid #D2B48C;
         text-align: center;
     }
     .daiyun th { background: #f9f7f0; }
+    
     .source-info {
         margin-top: 30px;
         padding: 12px;
@@ -121,6 +125,22 @@ const colorMap = {
     '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
 };
 
+// 支藏（藏干）
+const hiddenStemsMap = {
+    "子": "癸",
+    "丑": "己癸辛",
+    "寅": "甲丙戊",
+    "卯": "乙",
+    "辰": "戊乙癸",
+    "巳": "丙庚戊",
+    "午": "丁己",
+    "未": "己丁乙",
+    "申": "庚壬戊",
+    "酉": "辛",
+    "戌": "戊辛丁",
+    "亥": "壬甲"
+};
+
 async function queryBaziFate() {
     const dateInput = document.getElementById('mydate').value;
     const timeInput = document.getElementById('mytime').value || '00:00';
@@ -133,7 +153,6 @@ async function queryBaziFate() {
     const [hourStr, minStr] = timeInput.split(':');
     const hour = parseInt(hourStr);
     const minute = parseInt(minStr);
-    const gender = document.getElementById('gender').value;
 
     const baziResult = window.getBazi(year, month, day, hour, minute);
     if (baziResult.error) {
@@ -142,9 +161,9 @@ async function queryBaziFate() {
     }
 
     let terms = await window.getSolarTerms(year);
-    if (terms.error) terms = { source: 'local' }; // fallback
+    if (terms.error) terms = { source: 'local' };
 
-    // 計算現在節氣與距離
+    // 節氣計算（與之前相同）
     const currentHK = new Date(year, month - 1, day, hour, minute, 0);
     let currentIndex = -1;
     for (let i = 0; i < terms.length; i++) {
@@ -167,7 +186,6 @@ async function queryBaziFate() {
         const nextYear = await window.getSolarTerms(year + 1);
         nextJie = nextYear[0];
     }
-
     let prevJie = null;
     for (let i = currentIndex; i >= 0; i--) {
         if (terms[i].isJie) { prevJie = terms[i]; break; }
@@ -184,32 +202,22 @@ async function queryBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // ====================== 大運計算 ======================
+    // ====================== 大運（與之前相同） ======================
     const birthYear = year;
-    const yearStemIdx = stems.indexOf(baziResult.stems.year); // 1~10
+    const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
     const monthBranchIdx = BranchesNamesshort.indexOf(baziResult.branches.month);
-
-    const isYearYang = (yearStemIdx % 2 === 1); // 甲丙戊庚壬 = 奇數 = 陽
-    const isMale = gender === '男';
-
+    const isYearYang = (yearStemIdx % 2 === 1);
+    const isMale = document.getElementById('gender').value === '男';
     const forward = (isYearYang && isMale) || (!isYearYang && !isMale);
-
-    // 上運數
     const daysForLuck = forward ? daysToNext : daysToPrev;
     let luckStart = Math.floor(daysForLuck / 3);
     if (daysForLuck % 3 === 2) luckStart += 1;
 
-    // 生成 8 步大運
-    let daYears = [];
-    let daStems = [];
-    let daBranches = [];
-
+    let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
     let curBranch = monthBranchIdx;
-
     for (let i = 0; i < 8; i++) {
-        // 向前或向後走一步
         if (forward) {
             curStem = (curStem % 10) + 1;
             curBranch = (curBranch % 12) + 1;
@@ -222,20 +230,10 @@ async function queryBaziFate() {
         daYears.push(birthYear + luckStart + i * 10);
     }
 
-    // 來源文字
-    const sourceText = terms.source === 'hko' 
-        ? '✅ 節氣資料來源：Solarterm.json（香港天文台精準資料）' 
-        : '📌 節氣資料來源：本地標準公式';
-
     // ====================== 最終 HTML ======================
-    const gregorian = `${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${hourStr.padStart(2,'0')}:${minStr.padStart(2,'0')}`;
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
 
-    let html = `
-        <div class="lunar-line">
-            <strong>農曆</strong>　${lunarLine}
-        </div>
-
+    let pillarsHTML = `
         <table class="pillars">
             <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
             <tr>
@@ -250,14 +248,68 @@ async function queryBaziFate() {
                 <td><span style="color:${colorMap[baziResult.branches.month]||'black'}">${baziResult.branches.month}</span></td>
                 <td><span style="color:${colorMap[baziResult.branches.year]||'black'}">${baziResult.branches.year}</span></td>
             </tr>
-        </table>
+            <tr>
+                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.hour]||''}</span></td>
+                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.day]||''}</span></td>
+                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.month]||''}</span></td>
+                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.year]||''}</span></td>
+            </tr>
+        </table>`;
+
+    // 陰陽五行結構（簡單顯示四柱五行）
+    const fiveElements = {
+        "甲乙": "木", "丙丁": "火", "戊己": "土", "庚辛": "金", "壬癸": "水"
+    };
+    const getElement = (stem) => {
+        for (let key in fiveElements) if (key.includes(stem)) return fiveElements[key];
+        return "—";
+    };
+
+    let fiveHTML = `
+        <p style="margin:10px 0 5px; color:#666; font-size:1.05em;">陰陽五行結構</p>
+        <table class="pillars" style="max-width:520px; font-size:1.1em;">
+            <tr>
+                <td>時柱</td><td>日柱</td><td>月柱</td><td>年柱</td>
+            </tr>
+            <tr>
+                <td>${getElement(baziResult.stems.hour)}</td>
+                <td>${getElement(baziResult.stems.day)}</td>
+                <td>${getElement(baziResult.stems.month)}</td>
+                <td>${getElement(baziResult.stems.year)}</td>
+            </tr>
+        </table>`;
+
+    // 大運表（3行 × 8列，由右至左）
+    let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStart} 歲）</p>`;
+    daYunHTML += `<table class="daiyun"><tr>`;
+    // 年份行（由右至左）
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
+    daYunHTML += `</tr><tr>`;
+    // 天干行
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[daStems[i]]||'black'}">${daStems[i]}</span></td>`;
+    daYunHTML += `</tr><tr>`;
+    // 地支行
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[daBranches[i]]||'black'}">${daBranches[i]}</span></td>`;
+    daYunHTML += `</tr></table>`;
+
+    const sourceText = terms.source === 'hko' 
+        ? '✅ 節氣資料來源：Solarterm.json（香港天文台精準資料）' 
+        : '📌 節氣資料來源：本地標準公式';
+
+    const html = `
+        <div class="lunar-line">
+            <strong>農曆</strong>　${lunarLine}
+        </div>
+
+        ${pillarsHTML}
+
+        ${fiveHTML}
 
         <div class="current-term">
             現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span>
         </div>
 
         <div class="days-container">
-            <!-- 交換位置：先顯示「距離上一個」，再顯示「距離下一個」 -->
             <div class="days-box">
                 距離上一個節令<br>
                 <strong>${prevJie.name}</strong>　${prevJie.date}<br>
@@ -270,22 +322,7 @@ async function queryBaziFate() {
             </div>
         </div>
 
-        <!-- 大運表 -->
-        <p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStart} 歲）</p>
-        <table class="daiyun">
-            <tr>
-                <th>年份</th>
-                <th>天干</th>
-                <th>地支</th>
-            </tr>
-            ${daYears.map((y, i) => `
-                <tr>
-                    <td>${y}</td>
-                    <td><span style="color:${colorMap[daStems[i]]||'black'}">${daStems[i]}</span></td>
-                    <td><span style="color:${colorMap[daBranches[i]]||'black'}">${daBranches[i]}</span></td>
-                </tr>
-            `).join('')}
-        </table>
+        ${daYunHTML}
 
         <div class="source-info">
             ${sourceText}
@@ -295,7 +332,7 @@ async function queryBaziFate() {
     document.getElementById('here').innerHTML = html;
 }
 
-// 初始載入現在香港時間
+// 初始載入
 const now = new Date();
 const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
 document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
