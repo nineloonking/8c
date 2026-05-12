@@ -103,7 +103,7 @@ function daysInclusive(date1, date2) {
     return Math.floor((d2 - d1) / 86400000) + 1;
 }
 
-function querySolarTerms() {
+async function querySolarTerms() {
     try {
         const dateInput = document.getElementById('mydate').value;
         const timeInput = document.getElementById('mytime').value || '00:00';
