@@ -122,7 +122,7 @@ function querySolarTerms() {
         if (baziResult.error) throw new Error(baziResult.error);
 
         // 2. 取得本年 24 節氣
-        let terms = window.getSolarTerms(year);
+        let terms = await window.getSolarTerms(year);   // ← 加上 await
         if (terms.error) throw new Error(terms.error);
 
         // 3. 當前香港時間
