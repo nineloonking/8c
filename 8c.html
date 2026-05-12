@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字命盤</title>
+<style>
+    body { 
+        text-align: center; 
+        font-family: sans-serif; 
+        background: #f9f7f0;
+        padding: 20px;
+    }
+    h1 { color: #8B4513; margin-bottom: 10px; }
+    .inputs { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        margin-bottom: 25px; 
+        gap: 10px;
+    }
+    .inputs input, .inputs select { 
+        margin: 5px 0; 
+        width: 80%; 
+        max-width: 320px; 
+        padding: 12px; 
+        font-size: 1.1em; 
+        border: 2px solid #8B4513; 
+        border-radius: 8px;
+    }
+    .result-box {
+        max-width: 780px;
+        margin: 20px auto;
+        padding: 25px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .date-info {
+        font-size: 1.35em;
+        margin-bottom: 25px;
+        line-height: 1.5;
+        background: #f9f7f0;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .lunar { color: #8B4513; font-weight: bold; }
+    table { 
+        margin: 25px auto; 
+        border-collapse: collapse; 
+        width: 100%;
+        max-width: 480px;
+        font-size: 1.35em;
+    }
+    td { 
+        padding: 12px 10px; 
+        border: 2px solid #D2B48C; 
+        text-align: center;
+    }
+    .god-name {
+        font-size: 1.45em;
+        font-weight: bold;
+    }
+    .current-term {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #8B4513;
+        margin: 20px 0;
+    }
+    .days {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin: 20px 0;
+        font-size: 1.2em;
+    }
+    .days div {
+        background: #fffaf0;
+        padding: 12px 25px;
+        border-radius: 8px;
+        border: 2px solid #D2B48C;
+        min-width: 180px;
+    }
+    .source-info {
+        margin-top: 30px;
+        padding: 12px;
+        background: #fffaf0;
+        border-radius: 8px;
+        font-size: 0.95em;
+        color: #555;
+        text-align: left;
+    }
+</style>
+</head>
+<body>
+<h1>八字命盤</h1>
+
+<div class="inputs">
+    <input type="date" id="mydate" onchange="queryBaziFate()">
+    <input type="time" id="mytime" value="00:00" onchange="queryBaziFate()">
+    <select id="gender" onchange="queryBaziFate()">
+        <option value="男">男</option>
+        <option value="女">女</option>
+    </select>
+</div>
+
+<div id="here" class="result-box"></div>
+
+<script src="bazi-calculator.js"></script>
+<script>
+// 小六壬 / 八字顏色對應（與原本相同）
+const colorMap = {
+    '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
+    '丙': 'red',   '丁': 'red',   '巳': 'red',   '午': 'red',
+    '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
+    '庚': 'gray',  '辛': 'gray',  '申': 'gray',  '酉': 'gray',
+    '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
+};
+
+async function queryBaziFate() {
+    const dateInput = document.getElementById('mydate').value;
+    const timeInput = document.getElementById('mytime').value || '00:00';
+    const gender = document.getElementById('gender').value;
+
+    if (!dateInput) return;
+
+    const [yearStr, monthStr, dayStr] = dateInput.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const day = parseInt(dayStr);
+    const [hourStr, minStr] = timeInput.split(':');
+    const hour = parseInt(hourStr);
+    const minute = parseInt(minStr);
+
+    // 呼叫八字 API
+    const baziResult = window.getBazi(year, month, day, hour, minute);
+    if (baziResult.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
+        return;
+    }
+
+    // 呼叫節氣 API（支援 Solarterm.json）
+    let terms = await window.getSolarTerms(year);
+    if (terms.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red;">${terms.error}</p>`;
+        return;
+    }
+
+    // 計算現在節氣與距離天數
+    const currentHK = new Date(year, month - 1, day, hour, minute, 0);
+
+    let currentIndex = -1;
+    for (let i = 0; i < terms.length; i++) {
+        const [y, m, d] = terms[i].date.split('-').map(Number);
+        const [h, mi] = terms[i].time.split(':').map(Number);
+        const termTime = new Date(y, m-1, d, h, mi, 0);
+        if (termTime.getTime() > currentHK.getTime()) {
+            currentIndex = i - 1;
+            break;
+        }
+    }
+    if (currentIndex === -1) currentIndex = 23;
+    const currentTerm = terms[currentIndex];
+
+    // 下一個「節令」（isJie === true）
+    let nextJie = null;
+    for (let i = currentIndex + 1; i < terms.length; i++) {
+        if (terms[i].isJie) { nextJie = terms[i]; break; }
+    }
+    if (!nextJie) {
+        const nextYearTerms = await window.getSolarTerms(year + 1);
+        nextJie = nextYearTerms[0];
+    }
+
+    // 上一個「節令」
+    let prevJie = null;
+    for (let i = currentIndex; i >= 0; i--) {
+        if (terms[i].isJie) { prevJie = terms[i]; break; }
+    }
+    if (!prevJie) {
+        const prevYearTerms = await window.getSolarTerms(year - 1);
+        prevJie = prevYearTerms[22];
+    }
+
+    // 天數計算（今天也算）
+    const currentDateOnly = new Date(year, month - 1, day);
+    const nextDateOnly = new Date(nextJie.date.split('-').map(Number)[0], nextJie.date.split('-').map(Number)[1] - 1, nextJie.date.split('-').map(Number)[2]);
+    const prevDateOnly = new Date(prevJie.date.split('-').map(Number)[0], prevJie.date.split('-').map(Number)[1] - 1, prevJie.date.split('-').map(Number)[2]);
+
+    const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
+    const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
+
+    // 來源顯示
+    const sourceText = terms.source === 'hko' 
+        ? '✅ 節氣資料來源：Solarterm.json（香港天文台精準資料）' 
+        : '📌 節氣資料來源：本地標準公式（JSON 載入失敗時使用）';
+
+    // 組合 HTML
+    const gregorian = `${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${hourStr.padStart(2,'0')}:${minStr.padStart(2,'0')}`;
+    const lunarStr = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+
+    const html = `
+        <div class="date-info">
+            <strong>公曆</strong><br>${gregorian}<br><br>
+            <strong class="lunar">農曆</strong><br>${lunarStr}<br><br>
+            <strong>性別</strong><br>${gender}
+        </div>
+
+        <table>
+            <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
+            <tr>
+                <td><span style="color:${colorMap[baziResult.stems.hour]||'black'}">${baziResult.stems.hour}</span></td>
+                <td><span style="color:${colorMap[baziResult.stems.day]||'black'}">${baziResult.stems.day}</span></td>
+                <td><span style="color:${colorMap[baziResult.stems.month]||'black'}">${baziResult.stems.month}</span></td>
+                <td><span style="color:${colorMap[baziResult.stems.year]||'black'}">${baziResult.stems.year}</span></td>
+            </tr>
+            <tr>
+                <td><span style="color:${colorMap[baziResult.branches.hour]||'black'}">${baziResult.branches.hour}</span></td>
+                <td><span style="color:${colorMap[baziResult.branches.day]||'black'}">${baziResult.branches.day}</span></td>
+                <td><span style="color:${colorMap[baziResult.branches.month]||'black'}">${baziResult.branches.month}</span></td>
+                <td><span style="color:${colorMap[baziResult.branches.year]||'black'}">${baziResult.branches.year}</span></td>
+            </tr>
+        </table>
+
+        <div class="current-term">
+            現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span>
+        </div>
+
+        <div class="days">
+            <div>
+                距離下一個節令<br>
+                <strong>${nextJie.name}</strong>　${nextJie.date}<br>
+                <span style="font-size:1.4em; color:#8B4513;">${daysToNext} 天</span>
+            </div>
+            <div>
+                距離上一個節令<br>
+                <strong>${prevJie.name}</strong>　${prevJie.date}<br>
+                <span style="font-size:1.4em; color:#8B4513;">${daysToPrev} 天</span>
+            </div>
+        </div>
+
+        <div class="source-info">
+            ${sourceText}
+        </div>
+    `;
+
+    document.getElementById('here').innerHTML = html;
+}
+
+// 初始載入現在香港時間
+const now = new Date();
+const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+document.getElementById('gender').value = '男';
+
+queryBaziFate();
+</script>
+</body>
+</html>
