@@ -24,7 +24,6 @@
     .daiyun th, .daiyun td { padding: 10px 6px; border: 1px solid #D2B48C; text-align: center; }
     .daiyun th { background: #f9f7f0; }
     .source-info { margin-top: 30px; padding: 12px; background: #fffaf0; border-radius: 8px; font-size: 0.95em; color: #555; text-align: left; }
-    .error { color: red; margin: 20px 0; font-size: 1.1em; }
 </style>
 </head>
 <body>
@@ -49,12 +48,11 @@ async function loadBaziData() {
     if (baziData) return baziData;
     try {
         const res = await fetch('bazi-data.json');
-        if (!res.ok) throw new Error();
         baziData = await res.json();
         return baziData;
     } catch (e) {
         console.error("無法載入 bazi-data.json");
-        document.getElementById('here').innerHTML = `<p class="error">⚠️ 無法載入 bazi-data.json，請確認檔案已放在同一資料夾</p>`;
+        document.getElementById('here').innerHTML = `<p style="color:red;">⚠️ 無法載入 bazi-data.json，請確認檔案已放在同一資料夾</p>`;
         return null;
     }
 }
@@ -110,21 +108,40 @@ async function queryBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // ====================== 日家十二神煞 ======================
-    const dayBranch = baziResult.branches.day;
-    const godsList = data.daily12Gods[dayBranch] || [];
-    const pillarsBranches = [baziResult.branches.year, baziResult.branches.month, baziResult.branches.day, baziResult.branches.hour];
+    // ====================== 日家十二神煞表 ======================
+    const dayStem = baziResult.stems.day;
+    const dayBranch = data.stemToBranch[dayStem][0];                    // 日干對應的地支
+    const godsList = data.daily12Gods[dayBranch] || [];                 // 以日支為太歲的12神煞順序
+
+    const pillarsStems   = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year];
+    const pillarsBranches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
+
     let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
-    godsHTML += `<table class="gods-table"><tr><th>年支</th><th>月支</th><th>日支</th><th>時支</th></tr><tr>`;
+    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+
+    // 第一行：以各柱天干查出的地支對應神煞（日柱顯示「日元」）
+    godsHTML += `<tr>`;
+    pillarsStems.forEach((stem, idx) => {
+        if (idx === 1) { // 日柱
+            godsHTML += `<td><strong>日元</strong></td>`;
+        } else {
+            const mappedBranch = data.stemToBranch[stem][0];
+            const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+            godsHTML += `<td>${godsList[offset] || '-'}</td>`;
+        }
+    });
+    godsHTML += `</tr>`;
+
+    // 第二行：實際地支對應神煞
+    godsHTML += `<tr>`;
     pillarsBranches.forEach(branch => {
         const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-        const god = godsList[offset] || '-';
-        godsHTML += `<td>${god}</td>`;
+        godsHTML += `<td>${godsList[offset] || '-'}</td>`;
     });
     godsHTML += `</tr></table>`;
 
-    // ====================== 四柱八字表 ======================
-    const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
+    // ====================== 四柱八字表 + 大運表（保持不變） ======================
+    const branches = pillarsBranches;
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
     pillarsHTML += `<tr>`;
     ["hour","day","month","year"].forEach(key => {
@@ -145,7 +162,7 @@ async function queryBaziFate() {
     });
     pillarsHTML += `</tr></table>`;
 
-    // ====================== 大運表 ======================
+    // 大運表（3×8 右至左）
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
