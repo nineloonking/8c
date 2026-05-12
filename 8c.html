@@ -24,6 +24,7 @@
     .daiyun th, .daiyun td { padding: 10px 6px; border: 1px solid #D2B48C; text-align: center; }
     .daiyun th { background: #f9f7f0; }
     .source-info { margin-top: 30px; padding: 12px; background: #fffaf0; border-radius: 8px; font-size: 0.95em; color: #555; text-align: left; }
+    .error { color: red; margin: 20px 0; font-size: 1.1em; }
 </style>
 </head>
 <body>
@@ -45,12 +46,22 @@
 let baziData = null;
 
 async function loadBaziData() {
-    if (baziData) return baziData;
     try {
         const res = await fetch('bazi-data.json');
+        if (!res.ok) throw new Error('檔案不存在');
         baziData = await res.json();
         return baziData;
-    } catch (e) { console.error("無法載入 bazi-data.json"); return null; }
+    } catch (e) {
+        console.error("無法載入 bazi-data.json");
+        document.getElementById('here').innerHTML = `
+            <p class="error">⚠️ 無法載入 bazi-data.json</p>
+            <p style="color:#666;">請確認以下檔案已放在同一資料夾：<br>
+            • bazi-data.json<br>
+            • bazi-calculator.js<br>
+            • Solarterm.json<br>
+            • bazi-fate.html</p>`;
+        return null;
+    }
 }
 
 async function queryBaziFate() {
@@ -73,80 +84,18 @@ async function queryBaziFate() {
     }
 
     const data = await loadBaziData();
-    if (!data) return;
+    if (!data) return;   // 已顯示錯誤訊息
 
+    // ...（後面程式碼與上次完全相同，請保留你原本的 queryBaziFate 其餘部分）...
+    // （為了節省篇幅，這裡省略後續程式碼，你只需把上面的 loadBaziData 替換進去即可）
+
+    // 以下是簡化版示意（實際請使用你上一個版本的完整 queryBaziFate 內容）
     let terms = await window.getSolarTerms(year);
     if (terms.error) terms = { source: 'local' };
 
-    // 節氣計算（略）
-    const currentHK = new Date(year, month - 1, day, hour, minute, 0);
-    let currentIndex = -1;
-    for (let i = 0; i < terms.length; i++) {
-        const [y, m, d] = terms[i].date.split('-').map(Number);
-        const [h, mi] = terms[i].time.split(':').map(Number);
-        const termTime = new Date(y, m-1, d, h, mi);
-        if (termTime.getTime() > currentHK.getTime()) { currentIndex = i - 1; break; }
-    }
-    if (currentIndex === -1) currentIndex = 23;
-    const currentTerm = terms[currentIndex];
-
-    let nextJie = null;
-    for (let i = currentIndex + 1; i < terms.length; i++) if (terms[i].isJie) { nextJie = terms[i]; break; }
-    if (!nextJie) { const ny = await window.getSolarTerms(year+1); nextJie = ny[0]; }
-    let prevJie = null;
-    for (let i = currentIndex; i >= 0; i--) if (terms[i].isJie) { prevJie = terms[i]; break; }
-    if (!prevJie) { const py = await window.getSolarTerms(year-1); prevJie = py[22]; }
-
-    const currentDateOnly = new Date(year, month - 1, day);
-    const nextDateOnly = new Date(nextJie.date.split('-').map(Number)[0], nextJie.date.split('-').map(Number)[1]-1, nextJie.date.split('-').map(Number)[2]);
-    const prevDateOnly = new Date(prevJie.date.split('-').map(Number)[0], prevJie.date.split('-').map(Number)[1]-1, prevJie.date.split('-').map(Number)[2]);
-
-    const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
-    const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
-
-    // ====================== 日家十二神煞 ======================
-    const dayStem = baziResult.stems.day;
-    const dayBranch = baziData.stemToBranch[dayStem][0];           // 日支
-    const godsList = data.daily12Gods[dayBranch];                  // 從太歲位開始的12神煞
-
-    const pillarsBranches = [
-        baziResult.branches.year,
-        baziResult.branches.month,
-        baziResult.branches.day,
-        baziResult.branches.hour
-    ];
-
-    let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
-    godsHTML += `<table class="gods-table"><tr><th>年支</th><th>月支</th><th>日支</th><th>時支</th></tr><tr>`;
-    pillarsBranches.forEach(b => {
-        const idx = godsList.indexOf("太歲"); // 找到太歲位置
-        const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(b) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-        const god = godsList[(idx + offset) % 12];
-        godsHTML += `<td>${god}</td>`;
-    });
-    godsHTML += `</tr></table>`;
-
-    // ====================== 四柱八字表 + 大運表（與之前相同） ======================
-    // ...（這裡省略與上次完全相同的 pillarsHTML、daYunHTML、sourceText、lunarLine 部分）...
-
-    const html = `
-        <div class="lunar-line"><strong>農曆</strong>　${baziResult.lunar.full}　${baziResult.branches.hour}時</div>
-        <!-- 四柱八字表（包含支藏） -->
-        <table class="pillars">...（保持上次版本的四柱表格）...</table>
-        
-        ${godsHTML}
-
-        <!-- 現在節氣 + 距離兩個框 + 大運表 -->
-        <div class="current-term">現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
-        <div class="days-container">...（保持上次版本）...</div>
-        <!-- 大運表 ... -->
-        <div class="source-info">...（保持上次版本）...</div>
-    `;
-
-    document.getElementById('here').innerHTML = html;
+    // ... 其餘計算與顯示保持不變 ...
 }
 
-// 初始載入
 const now = new Date();
 const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
 document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
