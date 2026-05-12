@@ -4,100 +4,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>八字命盤</title>
 <style>
-    body { 
-        text-align: center; 
-        font-family: sans-serif; 
-        background: #f9f7f0;
-        padding: 20px;
-    }
+    body { text-align: center; font-family: sans-serif; background: #f9f7f0; padding: 20px; }
     h1 { color: #8B4513; margin-bottom: 15px; }
     
-    .input-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 25px;
-    }
+    .input-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 25px; }
     .input-row input, .input-row select {
-        padding: 12px;
-        font-size: 1.1em;
-        border: 2px solid #8B4513;
-        border-radius: 8px;
-        width: 220px;
+        padding: 12px; font-size: 1.1em; border: 2px solid #8B4513; border-radius: 8px; width: 220px;
     }
     .result-box {
-        max-width: 780px;
-        margin: 0 auto;
-        padding: 25px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        max-width: 780px; margin: 0 auto; padding: 25px; background: white;
+        border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .lunar-line {
-        font-size: 1.45em;
-        margin-bottom: 25px;
-        color: #8B4513;
-        font-weight: bold;
+        font-size: 1.45em; margin-bottom: 25px; color: #8B4513; font-weight: bold;
     }
     table.pillars { 
-        margin: 20px auto; 
-        border-collapse: collapse; 
-        width: 100%;
-        max-width: 520px;
-        font-size: 1.35em;
+        margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.35em;
     }
     .pillars td { 
-        padding: 10px 8px; 
-        border: 2px solid #D2B48C; 
-        text-align: center;
-        vertical-align: middle;
+        padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle;
     }
-    .current-term {
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #8B4513;
-        margin: 25px 0 15px;
-    }
+    .hidden-stem { font-size: 0.85em; line-height: 1.1; color: #555; }
+    .current-term { font-size: 1.5em; font-weight: bold; color: #8B4513; margin: 25px 0 15px; }
     .days-container {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin: 15px 0 25px;
+        display: flex; justify-content: center; gap: 20px; margin: 15px 0 25px;
     }
     .days-box {
-        background: #fffaf0;
-        padding: 12px 20px;
-        border-radius: 8px;
-        border: 2px solid #D2B48C;
-        width: 210px;
-        font-size: 1.05em;
+        background: #fffaf0; padding: 12px 20px; border-radius: 8px;
+        border: 2px solid #D2B48C; width: 210px; font-size: 1.05em;
     }
     .days-box strong { font-size: 1.35em; color: #8B4513; }
-    
-    /* 大運表：改為 3行 x 8列，由右至左 */
     table.daiyun {
-        margin: 30px auto 0;
-        border-collapse: collapse;
-        width: 100%;
-        max-width: 680px;
-        font-size: 1.1em;
+        margin: 30px auto 0; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.1em;
     }
     .daiyun th, .daiyun td {
-        padding: 10px 6px;
-        border: 1px solid #D2B48C;
-        text-align: center;
+        padding: 10px 6px; border: 1px solid #D2B48C; text-align: center;
     }
     .daiyun th { background: #f9f7f0; }
-    
     .source-info {
-        margin-top: 30px;
-        padding: 12px;
-        background: #fffaf0;
-        border-radius: 8px;
-        font-size: 0.95em;
-        color: #555;
-        text-align: left;
+        margin-top: 30px; padding: 12px; background: #fffaf0; border-radius: 8px;
+        font-size: 0.95em; color: #555; text-align: left;
     }
 </style>
 </head>
@@ -117,29 +63,37 @@
 
 <script src="bazi-calculator.js"></script>
 <script>
-const colorMap = {
-    '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
-    '丙': 'red',   '丁': 'red',   '巳': 'red',   '午': 'red',
-    '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
-    '庚': 'gray',  '辛': 'gray',  '申': 'gray',  '酉': 'gray',
-    '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
+// ====================== 完整五行資料 JSON ======================
+const baziData = {
+    fiveColors: { "木": "green", "火": "red", "土": "khaki", "金": "gray", "水": "black" },
+    stemsYinYang: { "甲":"陽","乙":"陰","丙":"陽","丁":"陰","戊":"陽","己":"陰","庚":"陽","辛":"陰","壬":"陽","癸":"陰" },
+    stemsElement: { "甲":"木","乙":"木","丙":"火","丁":"火","戊":"土","己":"土","庚":"金","辛":"金","壬":"水","癸":"水" },
+    branchesYinYang: { "子":"陽","丑":"陰","寅":"陽","卯":"陰","辰":"陽","巳":"陰","午":"陽","未":"陰","申":"陽","酉":"陰","戌":"陽","亥":"陰" },
+    branchesElement: { "子":"水","丑":"土","寅":"木","卯":"木","辰":"土","巳":"火","午":"火","未":"土","申":"金","酉":"金","戌":"土","亥":"水" },
+    hiddenStems: {
+        "子": ["癸"], "丑": ["己","癸","辛"], "寅": ["甲","丙","戊"], "卯": ["乙"],
+        "辰": ["戊","乙","癸"], "巳": ["丙","庚","戊"], "午": ["丁","己"], "未": ["己","丁","乙"],
+        "申": ["庚","壬","戊"], "酉": ["辛"], "戌": ["戊","辛","丁"], "亥": ["壬","甲"]
+    },
+    naYin: {
+        "甲子":"海中金","乙丑":"海中金","丙寅":"爐中火","丁卯":"爐中火","戊辰":"大林木","己巳":"大林木",
+        "庚午":"路旁土","辛未":"路旁土","壬申":"劍鋒金","癸酉":"劍鋒金","甲戌":"山頭火","乙亥":"山頭火",
+        "丙子":"澗下水","丁丑":"澗下水","戊寅":"城頭土","己卯":"城頭土","庚辰":"白蠟金","辛巳":"白蠟金",
+        "壬午":"楊柳木","癸未":"楊柳木","甲申":"泉中水","乙酉":"泉中水","丙戌":"屋上土","丁亥":"屋上土",
+        "戊子":"霹靂火","己丑":"霹靂火","庚寅":"松柏木","辛卯":"松柏木","壬辰":"長流水","癸巳":"長流水",
+        "甲午":"沙中金","乙未":"沙中金","丙申":"山下火","丁酉":"山下火","戊戌":"平地木","己亥":"平地木",
+        "庚子":"壁上土","辛丑":"壁上土","壬寅":"金箔金","癸卯":"金箔金","甲辰":"覆燈火","乙巳":"覆燈火",
+        "丙午":"天河水","丁未":"天河水","戊申":"大驛土","己酉":"大驛土","庚戌":"釵釧金","辛亥":"釵釧金",
+        "壬子":"桑柘木","癸丑":"桑柘木","甲寅":"大溪水","乙卯":"大溪水","丙辰":"沙中土","丁巳":"沙中土",
+        "戊午":"天上火","己未":"天上火","庚申":"石榴木","辛酉":"石榴木","壬戌":"大海水","癸亥":"大海水"
+    },
+    stemToBranch: {
+        "甲":["寅"],"乙":["卯"],"丙":["巳"],"丁":["午"],"戊":["戌"],"己":["丑"],
+        "庚":["申"],"辛":["酉"],"壬":["亥"],"癸":["子"]
+    }
 };
 
-// 支藏（藏干）
-const hiddenStemsMap = {
-    "子": "癸",
-    "丑": "己癸辛",
-    "寅": "甲丙戊",
-    "卯": "乙",
-    "辰": "戊乙癸",
-    "巳": "丙庚戊",
-    "午": "丁己",
-    "未": "己丁乙",
-    "申": "庚壬戊",
-    "酉": "辛",
-    "戌": "戊辛丁",
-    "亥": "壬甲"
-};
+const colorMap = baziData.fiveColors; // 使用 JSON 的五行顏色
 
 async function queryBaziFate() {
     const dateInput = document.getElementById('mydate').value;
@@ -170,10 +124,7 @@ async function queryBaziFate() {
         const [y, m, d] = terms[i].date.split('-').map(Number);
         const [h, mi] = terms[i].time.split(':').map(Number);
         const termTime = new Date(y, m-1, d, h, mi);
-        if (termTime.getTime() > currentHK.getTime()) {
-            currentIndex = i - 1;
-            break;
-        }
+        if (termTime.getTime() > currentHK.getTime()) { currentIndex = i - 1; break; }
     }
     if (currentIndex === -1) currentIndex = 23;
     const currentTerm = terms[currentIndex];
@@ -202,7 +153,7 @@ async function queryBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // ====================== 大運（與之前相同） ======================
+    // 大運（與之前相同）
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -230,71 +181,54 @@ async function queryBaziFate() {
         daYears.push(birthYear + luckStart + i * 10);
     }
 
-    // ====================== 最終 HTML ======================
-    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+    // ====================== 四柱八字表（4列 × 多行，支藏由上而下） ======================
+    const branches = [
+        baziResult.branches.hour,
+        baziResult.branches.day,
+        baziResult.branches.month,
+        baziResult.branches.year
+    ];
+    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
 
-    let pillarsHTML = `
-        <table class="pillars">
-            <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
-            <tr>
-                <td><span style="color:${colorMap[baziResult.stems.hour]||'black'}">${baziResult.stems.hour}</span></td>
-                <td><span style="color:${colorMap[baziResult.stems.day]||'black'}">${baziResult.stems.day}</span></td>
-                <td><span style="color:${colorMap[baziResult.stems.month]||'black'}">${baziResult.stems.month}</span></td>
-                <td><span style="color:${colorMap[baziResult.stems.year]||'black'}">${baziResult.stems.year}</span></td>
-            </tr>
-            <tr>
-                <td><span style="color:${colorMap[baziResult.branches.hour]||'black'}">${baziResult.branches.hour}</span></td>
-                <td><span style="color:${colorMap[baziResult.branches.day]||'black'}">${baziResult.branches.day}</span></td>
-                <td><span style="color:${colorMap[baziResult.branches.month]||'black'}">${baziResult.branches.month}</span></td>
-                <td><span style="color:${colorMap[baziResult.branches.year]||'black'}">${baziResult.branches.year}</span></td>
-            </tr>
-            <tr>
-                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.hour]||''}</span></td>
-                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.day]||''}</span></td>
-                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.month]||''}</span></td>
-                <td><span style="color:#666">${hiddenStemsMap[baziResult.branches.year]||''}</span></td>
-            </tr>
-        </table>`;
+    // 天干行
+    pillarsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach(key => {
+        const stem = baziResult.stems[key];
+        pillarsHTML += `<td><span style="color:${colorMap[baziData.stemsElement[stem]]}">${stem}</span></td>`;
+    });
+    pillarsHTML += `</tr>`;
 
-    // 陰陽五行結構（簡單顯示四柱五行）
-    const fiveElements = {
-        "甲乙": "木", "丙丁": "火", "戊己": "土", "庚辛": "金", "壬癸": "水"
-    };
-    const getElement = (stem) => {
-        for (let key in fiveElements) if (key.includes(stem)) return fiveElements[key];
-        return "—";
-    };
+    // 地支行
+    pillarsHTML += `<tr>`;
+    branches.forEach(branch => {
+        pillarsHTML += `<td><span style="color:${colorMap[baziData.branchesElement[branch]]}">${branch}</span></td>`;
+    });
+    pillarsHTML += `</tr>`;
 
-    let fiveHTML = `
-        <p style="margin:10px 0 5px; color:#666; font-size:1.05em;">陰陽五行結構</p>
-        <table class="pillars" style="max-width:520px; font-size:1.1em;">
-            <tr>
-                <td>時柱</td><td>日柱</td><td>月柱</td><td>年柱</td>
-            </tr>
-            <tr>
-                <td>${getElement(baziResult.stems.hour)}</td>
-                <td>${getElement(baziResult.stems.day)}</td>
-                <td>${getElement(baziResult.stems.month)}</td>
-                <td>${getElement(baziResult.stems.year)}</td>
-            </tr>
-        </table>`;
+    // 支藏行（每個藏干由上而下，小字）
+    pillarsHTML += `<tr>`;
+    branches.forEach(branch => {
+        const hiddens = baziData.hiddenStems[branch] || [];
+        let hiddenHTML = hiddens.map(h => `<span class="hidden-stem" style="color:${colorMap[baziData.stemsElement[h]]}">${h}</span>`).join('<br>');
+        pillarsHTML += `<td>${hiddenHTML}</td>`;
+    });
+    pillarsHTML += `</tr></table>`;
 
-    // 大運表（3行 × 8列，由右至左）
+    // ====================== 大運表（3×8 右至左） ======================
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStart} 歲）</p>`;
     daYunHTML += `<table class="daiyun"><tr>`;
-    // 年份行（由右至左）
     for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
-    // 天干行
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[daStems[i]]||'black'}">${daStems[i]}</span></td>`;
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[baziData.stemsElement[daStems[i]]]}">${daStems[i]}</span></td>`;
     daYunHTML += `</tr><tr>`;
-    // 地支行
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[daBranches[i]]||'black'}">${daBranches[i]}</span></td>`;
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${colorMap[baziData.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
     daYunHTML += `</tr></table>`;
 
     const sourceText = terms.source === 'hko' 
         ? '✅ 節氣資料來源：Solarterm.json（香港天文台精準資料）' 
         : '📌 節氣資料來源：本地標準公式';
+
+    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
 
     const html = `
         <div class="lunar-line">
@@ -302,8 +236,6 @@ async function queryBaziFate() {
         </div>
 
         ${pillarsHTML}
-
-        ${fiveHTML}
 
         <div class="current-term">
             現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span>
