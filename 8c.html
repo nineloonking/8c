@@ -71,6 +71,22 @@ async function queryBaziFate() {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
         return;
     }
+    // ====================== 夜子時 (23:00~23:59) 特殊處理 ======================
+    if (hour === 23) {
+        const dayStemIdx = stems.indexOf(baziResult.stems.day);
+        const adjustedDayStemIdx = (dayStemIdx + 1) % 10;
+        const adjustedDayStem = stems[adjustedDayStemIdx];
+
+        const ziHourStemMap = {
+            "甲": "甲", "己": "甲",
+            "乙": "丙", "庚": "丙",
+            "丙": "戊", "辛": "戊",
+            "丁": "庚", "壬": "庚",
+            "戊": "壬", "癸": "壬"
+        };
+
+        baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
+    }
 
     const data = await loadBaziData();
     if (!data) return;
