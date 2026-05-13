@@ -205,6 +205,7 @@ async function queryBaziFate() {
     const daysForLuck = forward ? daysToNext : daysToPrev;
     let luckStart = Math.floor(daysForLuck / 3);
     if (daysForLuck % 3 === 2) luckStart += 1;
+    const luckStartYear = birthYear + luckStart - 1;   // 虛歲計算：1984年生、上運9歲 → 1992年
 
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
@@ -219,10 +220,10 @@ async function queryBaziFate() {
         }
         daStems.push(stems[curStem]);
         daBranches.push(BranchesNamesshort[curBranch]);
-        daYears.push(birthYear + luckStart + i * 10);
+        daYears.push(luckStartYear + i * 10);
     }
 
-    let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStart} 歲）</p>`;
+    let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
     daYunHTML += `<table class="daiyun"><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
