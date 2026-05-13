@@ -2,9 +2,9 @@
   "fiveColors": {
     "木": "green",
     "火": "red",
-    "土": "khaki",
-    "金": "gray",
-    "水": "black"
+    "土": "brown",
+    "金": "gold",
+    "水": "blue"
   },
   "stemsYinYang": {
     "甲": "陽", "乙": "陰", "丙": "陽", "丁": "陰", "戊": "陽", "己": "陰",
