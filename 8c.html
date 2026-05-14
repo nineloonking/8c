@@ -249,10 +249,14 @@ async function queryBaziFate() {
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
     daYunHTML += `</tr></table>`;
 
+    const gregorianLine = `${year}年  ${month}月  ${day}日  ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
 
     const html = `
-        <div class="lunar-line"><strong>農曆</strong>　${lunarLine}</div>
+        <div class="lunar-line">
+            <strong>公曆</strong>　${gregorianLine}<br>
+            <strong>農曆</strong>　${lunarLine}
+        </div>
         ${pillarsHTML}
         ${godsHTML}
 
