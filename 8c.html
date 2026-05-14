@@ -71,6 +71,22 @@ async function queryBaziFate() {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
         return;
     }
+    // ====================== 夜子時 (23:00~23:59) 特殊處理 ======================
+    if (hour === 23) {
+        const dayStemIdx = stems.indexOf(baziResult.stems.day);
+        const adjustedDayStemIdx = (dayStemIdx + 1) % 10;
+        const adjustedDayStem = stems[adjustedDayStemIdx];
+
+        const ziHourStemMap = {
+            "甲": "甲", "己": "甲",
+            "乙": "丙", "庚": "丙",
+            "丙": "戊", "辛": "戊",
+            "丁": "庚", "壬": "庚",
+            "戊": "壬", "癸": "壬"
+        };
+
+        baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
+    }
 
     const data = await loadBaziData();
     if (!data) return;
@@ -108,9 +124,10 @@ async function queryBaziFate() {
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
     pillarsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach(key => {
+    ["hour","day","month","year"].forEach((key, idx) => {
         const stem = baziResult.stems[key];
-        const color = data.fiveColors[data.stemsElement[stem]];
+        let color = data.fiveColors[data.stemsElement[stem]];
+        if (idx === 0) color = "#8B4513";   // 第一欄（時柱）跟神煞表第一欄同色
         pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
     });
     pillarsHTML += `</tr><tr>`;
@@ -124,9 +141,31 @@ async function queryBaziFate() {
         let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
         pillarsHTML += `<td>${html}</td>`;
     });
+    pillarsHTML += `</tr>`;
+
+    // ====================== 新增：納音五行行（垂直顯示） ======================
+    pillarsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach(key => {
+        const stem = baziResult.stems[key];
+        const branch = baziResult.branches[key];
+        const naYinKey = stem + branch;
+        const naYin = data.naYin[naYinKey] || '-';
+        
+        // 垂直顯示，每個字一行，最後一個字（五行屬性）上色
+        const chars = naYin.split('');
+        let verticalHTML = chars.map((ch, i) => {
+            if (i === chars.length - 1) {
+                const color = data.fiveColors[ch] || '#555';
+                return `<span style="color:${color}; font-weight:bold;">${ch}</span>`;
+            }
+            return ch;
+        }).join('<br>');
+        
+        pillarsHTML += `<td style="font-size:0.85em; line-height:1.15; padding:6px 4px;">${verticalHTML}</td>`;
+    });
     pillarsHTML += `</tr></table>`;
 
-    // ====================== 神煞表（第一行已修正配色） ======================
+    // ====================== 十二神煞表（新增） ======================
     const dayStem = baziResult.stems.day;
     const dayBranch = data.stemToBranch[dayStem][0];
     const godsList = data.daily12Gods;
@@ -134,22 +173,38 @@ async function queryBaziFate() {
     let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
     godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
 
-    // 第一行（天干對應神煞）—— 與四柱八字表第一行完全同色
+    // ====================== 天干通地支表 ======================
+    let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
+    stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
+    stemBranchHTML += `<tr>`;
+    ["寅","卯","巳","午","戌","丑","申","酉","亥","子"].forEach(b => {
+        stemBranchHTML += `<td>${b}</td>`;
+    });
+    stemBranchHTML += `</tr></table>`;
+    
+    // ====================== 日家十二神煞表 1×12 直書 ======================
+    let fullGodsHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
+    fullGodsHTML += `<table class="gods-table" style="font-size:1em;"><tr>`;
+    data.daily12Gods.forEach(god => {
+        fullGodsHTML += `<td style="writing-mode:vertical-rl; text-orientation:mixed; padding:12px 4px;">${god}</td>`;
+    });
+    fullGodsHTML += `</tr></table>`;
+    
+    // 第一行：天干對應神煞（日柱顯示「日元」）
     godsHTML += `<tr>`;
     ["hour","day","month","year"].forEach((key, idx) => {
-        const stem = baziResult.stems[key];
-        const color = data.fiveColors[data.stemsElement[stem]];
         if (idx === 1) {
-            godsHTML += `<td style="color:${color}"><strong>日元</strong></td>`;
+            godsHTML += `<td><strong>日元</strong></td>`;
         } else {
+            const stem = baziResult.stems[key];
             const mappedBranch = data.stemToBranch[stem][0];
             const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-            godsHTML += `<td style="color:${color}">${godsList[offset]}</td>`;
+            godsHTML += `<td>${godsList[offset]}</td>`;
         }
     });
     godsHTML += `</tr>`;
 
-    // 第二行（實際地支對應神煞）
+    // 第二行：實際地支對應神煞
     godsHTML += `<tr>`;
     branches.forEach(branch => {
         const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
@@ -157,7 +212,7 @@ async function queryBaziFate() {
     });
     godsHTML += `</tr></table>`;
 
-    // ====================== 大運表（第一行已修正配色） ======================
+    // ====================== 大運表 ======================
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -168,7 +223,7 @@ async function queryBaziFate() {
     const daysForLuck = forward ? daysToNext : daysToPrev;
     let luckStart = Math.floor(daysForLuck / 3);
     if (daysForLuck % 3 === 2) luckStart += 1;
-    const luckStartYear = birthYear + luckStart - 1;
+    const luckStartYear = birthYear + luckStart - 1;   // 虛歲計算：1984年生、上運9歲 → 1992年
 
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
@@ -188,7 +243,7 @@ async function queryBaziFate() {
 
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
     daYunHTML += `<table class="daiyun"><tr>`;
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td style="color:#8B4513">${daYears[i]}</td>`;   // 第一行整行與神煞表第一行同色
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[daStems[i]]]}">${daStems[i]}</span></td>`;
     daYunHTML += `</tr><tr>`;
@@ -197,22 +252,11 @@ async function queryBaziFate() {
 
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
 
-    // ====================== 天干通地支表 + 日家十二神煞表 ======================
-    let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
-    stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
-    stemBranchHTML += `<tr><td>寅</td><td>卯</td><td>巳</td><td>午</td><td>戌</td><td>丑</td><td>申</td><td>酉</td><td>亥</td><td>子</td></tr></table>`;
-
-    let fullGodsHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
-    fullGodsHTML += `<table class="gods-table" style="font-size:1em;"><tr>`;
-    data.daily12Gods.forEach(god => {
-        fullGodsHTML += `<td style="writing-mode:vertical-rl; text-orientation:mixed; padding:12px 4px;">${god}</td>`;
-    });
-    fullGodsHTML += `</tr></table>`;
-
     const html = `
         <div class="lunar-line"><strong>農曆</strong>　${lunarLine}</div>
         ${pillarsHTML}
         ${godsHTML}
+
         <div class="current-term">現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
         <div class="days-container">
             <div class="days-box">距離上一個節令<br><strong>${prevJie.name}</strong>　${prevJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToPrev} 天</span></div>
