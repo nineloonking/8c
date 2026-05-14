@@ -126,32 +126,38 @@ async function queryBaziFate() {
     });
     pillarsHTML += `</tr></table>`;
 
-    // ====================== 神煞表 ======================
+    // ====================== 神煞表（第一行已修正配色） ======================
     const dayStem = baziResult.stems.day;
     const dayBranch = data.stemToBranch[dayStem][0];
     const godsList = data.daily12Gods;
 
     let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
     godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+
+    // 第一行（天干對應神煞）—— 與四柱八字表第一行完全同色
     godsHTML += `<tr>`;
     ["hour","day","month","year"].forEach((key, idx) => {
+        const stem = baziResult.stems[key];
+        const color = data.fiveColors[data.stemsElement[stem]];
         if (idx === 1) {
-            godsHTML += `<td><strong>日元</strong></td>`;
+            godsHTML += `<td style="color:${color}"><strong>日元</strong></td>`;
         } else {
-            const stem = baziResult.stems[key];
             const mappedBranch = data.stemToBranch[stem][0];
             const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-            godsHTML += `<td>${godsList[offset]}</td>`;
+            godsHTML += `<td style="color:${color}">${godsList[offset]}</td>`;
         }
     });
-    godsHTML += `</tr><tr>`;
+    godsHTML += `</tr>`;
+
+    // 第二行（實際地支對應神煞）
+    godsHTML += `<tr>`;
     branches.forEach(branch => {
         const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
         godsHTML += `<td>${godsList[offset]}</td>`;
     });
     godsHTML += `</tr></table>`;
 
-    // ====================== 大運表 ======================
+    // ====================== 大運表（第一行已修正配色） ======================
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -182,7 +188,7 @@ async function queryBaziFate() {
 
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
     daYunHTML += `<table class="daiyun"><tr>`;
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td style="color:#8B4513">${daYears[i]}</td>`;   // 第一行整行跟神煞表第一行同色
+    for (let i = 7; i >= 0; i--) daYunHTML += `<td style="color:#8B4513">${daYears[i]}</td>`;   // 第一行整行與神煞表第一行同色
     daYunHTML += `</tr><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[daStems[i]]]}">${daStems[i]}</span></td>`;
     daYunHTML += `</tr><tr>`;
