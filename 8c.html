@@ -111,9 +111,9 @@ async function queryBaziFate() {
     ["hour","day","month","year"].forEach((key, idx) => {
         const stem = baziResult.stems[key];
         let color = data.fiveColors[data.stemsElement[stem]];
-        if (idx === 0) color = "#8B4513";   // 時柱第一欄與神煞表同色
+        if (idx === 0) color = "#8B4513";
         pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
-    });
+    });   
     pillarsHTML += `</tr><tr>`;
     branches.forEach(branch => {
         const color = data.fiveColors[data.branchesElement[branch]];
@@ -183,11 +183,20 @@ async function queryBaziFate() {
 
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
     daYunHTML += `<table class="daiyun"><tr>`;
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
+    for (let i = 7; i >= 0; i--) {
+        const color = (i === 7) ? "#8B4513" : "#000";
+        daYunHTML += `<td><span style="color:${color}">${daYears[i]}</span></td>`;
+    }
     daYunHTML += `</tr><tr>`;
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[daStems[i]]]}">${daStems[i]}</span></td>`;
+    for (let i = 7; i >= 0; i--) {
+        const color = (i === 7) ? "#8B4513" : data.fiveColors[data.stemsElement[daStems[i]]];
+        daYunHTML += `<td><span style="color:${color}">${daStems[i]}</span></td>`;
+    }
     daYunHTML += `</tr><tr>`;
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
+    for (let i = 7; i >= 0; i--) {
+        const color = (i === 7) ? "#8B4513" : data.fiveColors[data.branchesElement[daBranches[i]]];
+        daYunHTML += `<td><span style="color:${color}">${daBranches[i]}</span></td>`;
+    }
     daYunHTML += `</tr></table>`;
 
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
