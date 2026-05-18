@@ -24,6 +24,17 @@
     .daiyun th, .daiyun td { padding: 10px 6px; border: 1px solid #D2B48C; text-align: center; }
     .daiyun th { background: #f9f7f0; }
     .source-info { margin-top: 30px; padding: 12px; background: #fffaf0; border-radius: 8px; font-size: 0.95em; color: #555; text-align: left; }
+    .memory-btn { 
+        padding: 10px 16px; 
+        font-size: 1.05em; 
+        border: 2px solid #8B4513; 
+        border-radius: 8px; 
+        margin-left: 8px; 
+        cursor: pointer; 
+    }
+    .memory-btn.green { background:#28a745; color:white; }
+    .memory-btn.red   { background:#dc3545; color:white; }
+    .memory-btn.yellow{ background:#ffc107; color:#212529; }
 </style>
 </head>
 <body>
@@ -36,6 +47,11 @@
         <option value="男">男</option>
         <option value="女">女</option>
     </select>
+    <button id="mem1" class="memory-btn" onclick="loadMemory(1)">記憶1</button>
+    <button id="mem2" class="memory-btn" onclick="loadMemory(2)">記憶2</button>
+    <button class="memory-btn" onclick="loadNow()">現在</button>
+    <button class="memory-btn" onclick="resetMemory()">重設</button>
+</div>
 </div>
 
 <div id="here" class="result-box"></div>
@@ -43,6 +59,8 @@
 <script src="bazi-calculator.js"></script>
 <script>
 let baziData = null;
+let memory1 = null;
+let memory2 = null;
 
 async function loadBaziData() {
     if (baziData) return baziData;
@@ -58,6 +76,23 @@ async function queryBaziFate() {
     const timeInput = document.getElementById('mytime').value || '00:00';
     if (!dateInput) return;
 
+    // ====================== 記憶功能變更偵測 ======================
+    const currentDate = dateInput;
+    const currentTime = timeInput;
+    const currentGender = document.getElementById('gender').value;
+
+    function updateMemoryButton(btnId, saved) {
+        const btn = document.getElementById(btnId);
+        if (!saved) {
+            btn.className = 'memory-btn';
+            return;
+        }
+        const isMatch = saved.date === currentDate && saved.time === currentTime && saved.gender === currentGender;
+        btn.className = 'memory-btn ' + (isMatch ? 'yellow' : 'red');
+    }
+
+    updateMemoryButton('mem1', memory1);
+    updateMemoryButton('mem2', memory2);
     const [yearStr, monthStr, dayStr] = dateInput.split('-');
     const year = parseInt(yearStr);
     const month = parseInt(monthStr);
@@ -270,6 +305,41 @@ async function queryBaziFate() {
         ${stemBranchHTML}
         ${fullGodsHTML}
     `;
+
+    // ====================== 記憶功能函數 ======================
+    function saveMemory(slot) {
+        const date = document.getElementById('mydate').value;
+        const time = document.getElementById('mytime').value;
+        const gender = document.getElementById('gender').value;
+        if (slot === 1) memory1 = {date, time, gender};
+        else memory2 = {date, time, gender};
+        queryBaziFate(); // 刷新顏色
+    }
+    
+    function loadMemory(slot) {
+        const mem = slot === 1 ? memory1 : memory2;
+        if (!mem) return;
+        document.getElementById('mydate').value = mem.date;
+        document.getElementById('mytime').value = mem.time;
+        document.getElementById('gender').value = mem.gender;
+        queryBaziFate();
+    }
+    
+    function loadNow() {
+        const now = new Date();
+        const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+        document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+        document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+        document.getElementById('gender').value = '男';
+        queryBaziFate();
+    }
+    
+    function resetMemory() {
+        memory1 = null;
+        memory2 = null;
+        queryBaziFate();
+    }
+    // 把 saveMemory 改成 loadMemory（因為 onclick 已經是 saveMemory）
 
     document.getElementById('here').innerHTML = html;
 }
