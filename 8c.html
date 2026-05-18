@@ -7,9 +7,21 @@
     body { text-align: center; font-family: sans-serif; background: #f9f7f0; padding: 20px; }
     h1 { color: #8B4513; margin-bottom: 15px; }
     .input-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 25px; }
-    .input-row input, .input-row select { padding: 12px; font-size: 1.1em; border: 2px solid #8B4513; border-radius: 8px; width: 160px; }
+    .input-row input, .input-row select, .input-row button { 
+        padding: 12px; 
+        font-size: 1.1em; 
+        border: 2px solid #8B4513; 
+        border-radius: 8px; 
+        width: 160px; 
+    }
+    .input-row button { 
+        background: #8B4513; 
+        color: white; 
+        cursor: pointer; 
+        font-weight: bold; 
+    }
     .result-box { max-width: 780px; margin: 0 auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    .lunar-line { font-size: 1.45em; margin-bottom: 25px; color: #8B4513; font-weight: bold; }
+    .lunar-line { font-size: 1.45em; margin-bottom: 25px; color: #8B4513; font-weight: bold; line-height: 1.6; }
     table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.35em; }
     .pillars td { padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle; }
     .hidden-stem { font-size: 0.85em; line-height: 1.1; color: #555; }
@@ -24,17 +36,6 @@
     .daiyun th, .daiyun td { padding: 10px 6px; border: 1px solid #D2B48C; text-align: center; }
     .daiyun th { background: #f9f7f0; }
     .source-info { margin-top: 30px; padding: 12px; background: #fffaf0; border-radius: 8px; font-size: 0.95em; color: #555; text-align: left; }
-    .memory-btn { 
-        padding: 10px 16px; 
-        font-size: 1.05em; 
-        border: 2px solid #8B4513; 
-        border-radius: 8px; 
-        margin-left: 8px; 
-        cursor: pointer; 
-    }
-    .memory-btn.green { background:#28a745; color:white; }
-    .memory-btn.red   { background:#dc3545; color:white; }
-    .memory-btn.yellow{ background:#ffc107; color:#212529; }
 </style>
 </head>
 <body>
@@ -47,11 +48,7 @@
         <option value="男">男</option>
         <option value="女">女</option>
     </select>
-    <button id="mem1" class="memory-btn" onclick="loadMemory(1)">記憶1</button>
-    <button id="mem2" class="memory-btn" onclick="loadMemory(2)">記憶2</button>
-    <button class="memory-btn" onclick="loadNow()">現在</button>
-    <button class="memory-btn" onclick="resetMemory()">重設</button>
-</div>
+    <button onclick="setNow()">現在</button>
 </div>
 
 <div id="here" class="result-box"></div>
@@ -59,8 +56,6 @@
 <script src="bazi-calculator.js"></script>
 <script>
 let baziData = null;
-let memory1 = null;
-let memory2 = null;
 
 async function loadBaziData() {
     if (baziData) return baziData;
@@ -71,28 +66,41 @@ async function loadBaziData() {
     } catch (e) { return null; }
 }
 
+// 記憶功能：儲存上次輸入
+function saveToLocal() {
+    const date = document.getElementById('mydate').value;
+    const time = document.getElementById('mytime').value;
+    const gender = document.getElementById('gender').value;
+    localStorage.setItem('baziLastDate', date);
+    localStorage.setItem('baziLastTime', time);
+    localStorage.setItem('baziLastGender', gender);
+}
+
+function loadFromLocal() {
+    const savedDate = localStorage.getItem('baziLastDate');
+    const savedTime = localStorage.getItem('baziLastTime');
+    const savedGender = localStorage.getItem('baziLastGender');
+    if (savedDate) document.getElementById('mydate').value = savedDate;
+    if (savedTime) document.getElementById('mytime').value = savedTime;
+    if (savedGender) document.getElementById('gender').value = savedGender;
+}
+
+// 點擊「現在」按鈕
+function setNow() {
+    const now = new Date();
+    const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+    document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+    document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+    document.getElementById('gender').value = '男';
+    saveToLocal();
+    queryBaziFate();
+}
+
 async function queryBaziFate() {
     const dateInput = document.getElementById('mydate').value;
     const timeInput = document.getElementById('mytime').value || '00:00';
     if (!dateInput) return;
 
-    // ====================== 記憶功能變更偵測 ======================
-    const currentDate = dateInput;
-    const currentTime = timeInput;
-    const currentGender = document.getElementById('gender').value;
-
-    function updateMemoryButton(btnId, saved) {
-        const btn = document.getElementById(btnId);
-        if (!saved) {
-            btn.className = 'memory-btn';
-            return;
-        }
-        const isMatch = saved.date === currentDate && saved.time === currentTime && saved.gender === currentGender;
-        btn.className = 'memory-btn ' + (isMatch ? 'yellow' : 'red');
-    }
-
-    updateMemoryButton('mem1', memory1);
-    updateMemoryButton('mem2', memory2);
     const [yearStr, monthStr, dayStr] = dateInput.split('-');
     const year = parseInt(yearStr);
     const month = parseInt(monthStr);
@@ -106,22 +114,6 @@ async function queryBaziFate() {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
         return;
     }
-    // ====================== 夜子時 (23:00~23:59) 特殊處理 ======================
-    if (hour === 23) {
-        const dayStemIdx = stems.indexOf(baziResult.stems.day);
-        const adjustedDayStemIdx = (dayStemIdx + 1) % 10;
-        const adjustedDayStem = stems[adjustedDayStemIdx];
-
-        const ziHourStemMap = {
-            "甲": "甲", "己": "甲",
-            "乙": "丙", "庚": "丙",
-            "丙": "戊", "辛": "戊",
-            "丁": "庚", "壬": "庚",
-            "戊": "壬", "癸": "壬"
-        };
-
-        baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
-    }
 
     const data = await loadBaziData();
     if (!data) return;
@@ -129,7 +121,7 @@ async function queryBaziFate() {
     let terms = await window.getSolarTerms(year);
     if (terms.error) terms = { source: 'local' };
 
-    // 節氣計算
+    // 節氣計算（略）
     const currentHK = new Date(year, month - 1, day, hour, minute, 0);
     let currentIndex = -1;
     for (let i = 0; i < terms.length; i++) {
@@ -155,13 +147,13 @@ async function queryBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // ====================== 四柱八字表 ======================
+    // ====================== 四柱八字表（已移除時柱特殊顏色） ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
     pillarsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach((key, idx) => {
+    ["hour","day","month","year"].forEach(key => {
         const stem = baziResult.stems[key];
-        let color = data.fiveColors[data.stemsElement[stem]];
+        const color = data.fiveColors[data.stemsElement[stem]];
         pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
     });
     pillarsHTML += `</tr><tr>`;
@@ -175,56 +167,15 @@ async function queryBaziFate() {
         let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
         pillarsHTML += `<td>${html}</td>`;
     });
-    pillarsHTML += `</tr>`;
-
-    // ====================== 新增：納音五行行（垂直顯示） ======================
-    pillarsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach(key => {
-        const stem = baziResult.stems[key];
-        const branch = baziResult.branches[key];
-        const naYinKey = stem + branch;
-        const naYin = data.naYin[naYinKey] || '-';
-        
-        // 垂直顯示，每個字一行，最後一個字（五行屬性）上色
-        const chars = naYin.split('');
-        let verticalHTML = chars.map((ch, i) => {
-            if (i === chars.length - 1) {
-                const color = data.fiveColors[ch] || '#555';
-                return `<span style="color:${color}; font-weight:bold;">${ch}</span>`;
-            }
-            return ch;
-        }).join('<br>');
-        
-        pillarsHTML += `<td style="font-size:0.85em; line-height:1.15; padding:6px 4px;">${verticalHTML}</td>`;
-    });
     pillarsHTML += `</tr></table>`;
 
-    // ====================== 十二神煞表（新增） ======================
+    // ====================== 神煞表 ======================
     const dayStem = baziResult.stems.day;
     const dayBranch = data.stemToBranch[dayStem][0];
     const godsList = data.daily12Gods;
 
     let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
     godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
-
-    // ====================== 天干通地支表 ======================
-    let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
-    stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
-    stemBranchHTML += `<tr>`;
-    ["寅","卯","巳","午","戌","丑","申","酉","亥","子"].forEach(b => {
-        stemBranchHTML += `<td>${b}</td>`;
-    });
-    stemBranchHTML += `</tr></table>`;
-    
-    // ====================== 日家十二神煞表 1×12 直書 ======================
-    let fullGodsHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
-    fullGodsHTML += `<table class="gods-table" style="font-size:1em;"><tr>`;
-    data.daily12Gods.forEach(god => {
-        fullGodsHTML += `<td style="writing-mode:vertical-rl; text-orientation:mixed; padding:12px 4px;">${god}</td>`;
-    });
-    fullGodsHTML += `</tr></table>`;
-    
-    // 第一行：天干對應神煞（日柱顯示「日元」）
     godsHTML += `<tr>`;
     ["hour","day","month","year"].forEach((key, idx) => {
         if (idx === 1) {
@@ -236,17 +187,14 @@ async function queryBaziFate() {
             godsHTML += `<td>${godsList[offset]}</td>`;
         }
     });
-    godsHTML += `</tr>`;
-
-    // 第二行：實際地支對應神煞
-    godsHTML += `<tr>`;
+    godsHTML += `</tr><tr>`;
     branches.forEach(branch => {
         const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
         godsHTML += `<td>${godsList[offset]}</td>`;
     });
     godsHTML += `</tr></table>`;
 
-    // ====================== 大運表 ======================
+    // 大運表（已使用實際年份）
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -257,7 +205,7 @@ async function queryBaziFate() {
     const daysForLuck = forward ? daysToNext : daysToPrev;
     let luckStart = Math.floor(daysForLuck / 3);
     if (daysForLuck % 3 === 2) luckStart += 1;
-    const luckStartYear = birthYear + luckStart - 1;   // 虛歲計算：1984年生、上運9歲 → 1992年
+    const luckStartYear = birthYear + luckStart - 1;
 
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
@@ -284,8 +232,20 @@ async function queryBaziFate() {
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
     daYunHTML += `</tr></table>`;
 
-    const gregorianLine = `${year}年  ${month}月  ${day}日  ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+    const gregorianLine = `公曆 ${year}年 ${month}月 ${day}日 ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+
+    // 天干通地支表 + 日家十二神煞表
+    let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
+    stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
+    stemBranchHTML += `<tr><td>寅</td><td>卯</td><td>巳</td><td>午</td><td>戌</td><td>丑</td><td>申</td><td>酉</td><td>亥</td><td>子</td></tr></table>`;
+
+    let fullGodsHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">日家十二神煞表</p>`;
+    fullGodsHTML += `<table class="gods-table" style="font-size:1em;"><tr>`;
+    data.daily12Gods.forEach(god => {
+        fullGodsHTML += `<td style="writing-mode:vertical-rl; text-orientation:mixed; padding:12px 4px;">${god}</td>`;
+    });
+    fullGodsHTML += `</tr></table>`;
 
     const html = `
         <div class="lunar-line">
@@ -294,7 +254,6 @@ async function queryBaziFate() {
         </div>
         ${pillarsHTML}
         ${godsHTML}
-
         <div class="current-term">現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
         <div class="days-container">
             <div class="days-box">距離上一個節令<br><strong>${prevJie.name}</strong>　${prevJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToPrev} 天</span></div>
@@ -306,52 +265,23 @@ async function queryBaziFate() {
         ${fullGodsHTML}
     `;
 
-    // ====================== 記憶功能函數 ======================
-    function saveMemory(slot) {
-        const date = document.getElementById('mydate').value;
-        const time = document.getElementById('mytime').value;
-        const gender = document.getElementById('gender').value;
-        if (slot === 1) memory1 = {date, time, gender};
-        else memory2 = {date, time, gender};
-        queryBaziFate(); // 刷新顏色
-    }
-    
-    function loadMemory(slot) {
-        const mem = slot === 1 ? memory1 : memory2;
-        if (!mem) return;
-        document.getElementById('mydate').value = mem.date;
-        document.getElementById('mytime').value = mem.time;
-        document.getElementById('gender').value = mem.gender;
-        queryBaziFate();
-    }
-    
-    function loadNow() {
+    document.getElementById('here').innerHTML = html;
+    saveToLocal();   // 每次計算後儲存
+}
+
+// 初始載入
+window.onload = () => {
+    loadFromLocal();   // 讀取上次記憶
+    if (!document.getElementById('mydate').value) {
+        // 若無記憶則使用現在時間
         const now = new Date();
         const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
         document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
         document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
         document.getElementById('gender').value = '男';
-        queryBaziFate();
     }
-    
-    function resetMemory() {
-        memory1 = null;
-        memory2 = null;
-        queryBaziFate();
-    }
-    // 把 saveMemory 改成 loadMemory（因為 onclick 已經是 saveMemory）
-
-    document.getElementById('here').innerHTML = html;
-}
-
-// 初始載入
-const now = new Date();
-const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
-document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
-document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
-document.getElementById('gender').value = '男';
-
-queryBaziFate();
+    queryBaziFate();
+};
 </script>
 </body>
 </html>
