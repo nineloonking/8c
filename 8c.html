@@ -246,7 +246,14 @@ async function queryBaziFate() {
     const godsList = data.daily12Gods;
 
     let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
-    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th><th>運</th><th>流</th></tr>`;    
+    // 運
+    const daOffset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(currentDaYunBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+    godsHTML += `<td>${godsList[daOffset]}</td>`;
+    // 流
+    const liuOffset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(currentLiuNianBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+    godsHTML += `<td>${godsList[liuOffset]}</td>`;
+    
     godsHTML += `<tr>`;
     ["hour","day","month","year"].forEach((key, idx) => {
         if (idx === 1) {
@@ -263,6 +270,14 @@ async function queryBaziFate() {
         const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
         godsHTML += `<td>${godsList[offset]}</td>`;
     });
+
+    // 運
+    const daOffset2 = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(currentDaYunBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+    godsHTML += `<td>${godsList[daOffset2]}</td>`;
+    // 流
+    const liuOffset2 = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(currentLiuNianBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+    godsHTML += `<td>${godsList[liuOffset2]}</td>`;
+    
     godsHTML += `</tr></table>`;
 
     // 大運表
