@@ -276,7 +276,7 @@ async function queryBaziFate() {
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
     daYunHTML += `</tr></table>`;
 
-    const gregorianLine = `公曆 ${year}年 ${month}月 ${day}日 ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+    const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
     const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
 
     let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
