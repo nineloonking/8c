@@ -296,13 +296,13 @@ async function queryBaziFate() {
             <strong>農曆</strong>　${lunarLine}
         </div>
         ${pillarsHTML}
+        ${daYunHTML}
         ${godsHTML}
-        <div class="current-term">現在節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
+        <div class="current-term">節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
         <div class="days-container">
             <div class="days-box">距離上一個節令<br><strong>${prevJie.name}</strong>　${prevJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToPrev} 天</span></div>
             <div class="days-box">距離下一個節令<br><strong>${nextJie.name}</strong>　${nextJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToNext} 天</span></div>
         </div>
-        ${daYunHTML}
         <div class="source-info">✅ 節氣來源：香港天文台</div>
         ${stemBranchHTML}
         ${fullGodsHTML}
