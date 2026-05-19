@@ -20,9 +20,9 @@
         cursor: pointer; 
         font-weight: bold; 
     }
-    .result-box { max-width: 780px; margin: 0 auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .result-box { max-width: 820px; margin: 0 auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .lunar-line { font-size: 1.45em; margin-bottom: 25px; color: #8B4513; font-weight: bold; line-height: 1.6; }
-    table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.35em; }
+    table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.35em; }
     .pillars td { padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle; }
     .hidden-stem { font-size: 0.85em; line-height: 1.1; color: #555; }
     .gods-table { margin: 25px auto 0; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.1em; }
@@ -66,7 +66,7 @@ async function loadBaziData() {
     } catch (e) { return null; }
 }
 
-// 記憶功能：儲存上次輸入
+// 記憶功能
 function saveToLocal() {
     const date = document.getElementById('mydate').value;
     const time = document.getElementById('mytime').value;
@@ -85,7 +85,6 @@ function loadFromLocal() {
     if (savedGender) document.getElementById('gender').value = savedGender;
 }
 
-// 點擊「現在」按鈕
 function setNow() {
     const now = new Date();
     const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
@@ -121,7 +120,7 @@ async function queryBaziFate() {
     let terms = await window.getSolarTerms(year);
     if (terms.error) terms = { source: 'local' };
 
-    // 節氣計算（略）
+    // 節氣計算
     const currentHK = new Date(year, month - 1, day, hour, minute, 0);
     let currentIndex = -1;
     for (let i = 0; i < terms.length; i++) {
@@ -147,75 +146,7 @@ async function queryBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // ====================== 四柱八字表（已移除時柱特殊顏色） ======================
-    const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
-    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
-    pillarsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach(key => {
-        const stem = baziResult.stems[key];
-        const color = data.fiveColors[data.stemsElement[stem]];
-        pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
-    });
-    pillarsHTML += `</tr><tr>`;
-    branches.forEach(branch => {
-        const color = data.fiveColors[data.branchesElement[branch]];
-        pillarsHTML += `<td><span style="color:${color}">${branch}</span></td>`;
-    });
-    pillarsHTML += `</tr><tr>`;
-    branches.forEach(branch => {
-        const hiddens = data.hiddenStems[branch] || [];
-        let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
-        pillarsHTML += `<td>${html}</td>`;
-    });
-    // ====================== 新增：運 與 流 兩欄 ======================
-    pillarsHTML += `<tr>`;
-    // 運（當前大運）
-    const luckColorStem = data.fiveColors[data.stemsElement[currentLuckStem]];
-    const luckColorBranch = data.fiveColors[data.branchesElement[currentLuckBranch]];
-    let luckHiddenHTML = currentLuckHidden.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
-    pillarsHTML += `<td><span style="color:${luckColorStem}">${currentLuckStem}</span></td>`;
-    pillarsHTML += `<td><span style="color:${luckColorBranch}">${currentLuckBranch}</span></td>`;
-    pillarsHTML += `<td>${luckHiddenHTML}</td>`;
-
-    // 流（當前流年 = 輸入年份的年柱）
-    const flowStem = baziResult.stems.year;
-    const flowBranch = baziResult.branches.year;
-    const flowColorStem = data.fiveColors[data.stemsElement[flowStem]];
-    const flowColorBranch = data.fiveColors[data.branchesElement[flowBranch]];
-    const flowHidden = data.hiddenStems[flowBranch] || [];
-    let flowHiddenHTML = flowHidden.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
-    pillarsHTML += `<td><span style="color:${flowColorStem}">${flowStem}</span></td>`;
-    pillarsHTML += `<td><span style="color:${flowColorBranch}">${flowBranch}</span></td>`;
-    pillarsHTML += `<td>${flowHiddenHTML}</td>`;
-    pillarsHTML += `</tr>`;
-    pillarsHTML += `</tr></table>`;
-
-    // ====================== 神煞表 ======================
-    const dayStem = baziResult.stems.day;
-    const dayBranch = data.stemToBranch[dayStem][0];
-    const godsList = data.daily12Gods;
-
-    let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
-    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
-    godsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach((key, idx) => {
-        if (idx === 1) {
-            godsHTML += `<td><strong>日元</strong></td>`;
-        } else {
-            const stem = baziResult.stems[key];
-            const mappedBranch = data.stemToBranch[stem][0];
-            const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-            godsHTML += `<td>${godsList[offset]}</td>`;
-        }
-    });
-    godsHTML += `</tr><tr>`;
-    branches.forEach(branch => {
-        const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
-        godsHTML += `<td>${godsList[offset]}</td>`;
-    });
-    godsHTML += `</tr></table>`;
-
-    // 大運表（已使用實際年份）
+    // ====================== 大運計算（已使用實際年份） ======================
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -244,12 +175,94 @@ async function queryBaziFate() {
         daYears.push(luckStartYear + i * 10);
     }
 
+    // ====================== 當前大運 & 當前流年 ======================
+    let currentDaYunIdx = 0;
+    for (let i = 0; i < daYears.length; i++) {
+        if (year >= daYears[i]) currentDaYunIdx = i;
+    }
+    const currentDaYunStem = daStems[currentDaYunIdx];
+    const currentDaYunBranch = daBranches[currentDaYunIdx];
+
+    const currentLiuNianStem = baziResult.stems.year;
+    const currentLiuNianBranch = baziResult.branches.year;
+
+    // ====================== 四柱八字表（新增 運 + 流 兩欄） ======================
+    const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
+    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
+
+    // 天干行
+    pillarsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach(key => {
+        const stem = baziResult.stems[key];
+        const color = data.fiveColors[data.stemsElement[stem]];
+        pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
+    });
+    // 運
+    const daStemColor = data.fiveColors[data.stemsElement[currentDaYunStem]];
+    pillarsHTML += `<td><span style="color:${daStemColor}">${currentDaYunStem}</span></td>`;
+    // 流
+    const liuStemColor = data.fiveColors[data.stemsElement[currentLiuNianStem]];
+    pillarsHTML += `<td><span style="color:${liuStemColor}">${currentLiuNianStem}</span></td>`;
+    pillarsHTML += `</tr>`;
+
+    // 地支行
+    pillarsHTML += `<tr>`;
+    branches.forEach(branch => {
+        const color = data.fiveColors[data.branchesElement[branch]];
+        pillarsHTML += `<td><span style="color:${color}">${branch}</span></td>`;
+    });
+    // 運地支
+    const daBranchColor = data.fiveColors[data.branchesElement[currentDaYunBranch]];
+    pillarsHTML += `<td><span style="color:${daBranchColor}">${currentDaYunBranch}</span></td>`;
+    // 流地支
+    const liuBranchColor = data.fiveColors[data.branchesElement[currentLiuNianBranch]];
+    pillarsHTML += `<td><span style="color:${liuBranchColor}">${currentLiuNianBranch}</span></td>`;
+    pillarsHTML += `</tr>`;
+
+    // 藏干行（顏色跟隨其他行）
+    pillarsHTML += `<tr>`;
+    branches.forEach(branch => {
+        const hiddens = data.hiddenStems[branch] || [];
+        let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+        pillarsHTML += `<td>${html}</td>`;
+    });
+    // 運藏干
+    const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
+    let daHiddenHTML = daHiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+    pillarsHTML += `<td>${daHiddenHTML}</td>`;
+    // 流藏干
+    const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
+    let liuHiddenHTML = liuHiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+    pillarsHTML += `<td>${liuHiddenHTML}</td>`;
+    pillarsHTML += `</tr></table>`;
+
+    // ====================== 神煞表 ======================
+    const dayStem = baziResult.stems.day;
+    const dayBranch = data.stemToBranch[dayStem][0];
+    const godsList = data.daily12Gods;
+
+    let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">神煞表</p>`;
+    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+    godsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach((key, idx) => {
+        if (idx === 1) {
+            godsHTML += `<td><strong>日元</strong></td>`;
+        } else {
+            const stem = baziResult.stems[key];
+            const mappedBranch = data.stemToBranch[stem][0];
+            const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+            godsHTML += `<td>${godsList[offset]}</td>`;
+        }
+    });
+    godsHTML += `</tr><tr>`;
+    branches.forEach(branch => {
+        const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+        godsHTML += `<td>${godsList[offset]}</td>`;
+    });
+    godsHTML += `</tr></table>`;
+
+    // 大運表
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
-    // ====================== 計算當前大運（運） ======================
-    const currentLuckIndex = Math.floor((year - luckStartYear) / 10);
-    const currentLuckStem = daStems[currentLuckIndex] || '-';
-    const currentLuckBranch = daBranches[currentLuckIndex] || '-';
-    const currentLuckHidden = data.hiddenStems[currentLuckBranch] || [];
     daYunHTML += `<table class="daiyun"><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
@@ -292,14 +305,13 @@ async function queryBaziFate() {
     `;
 
     document.getElementById('here').innerHTML = html;
-    saveToLocal();   // 每次計算後儲存
+    saveToLocal();
 }
 
 // 初始載入
 window.onload = () => {
-    loadFromLocal();   // 讀取上次記憶
+    loadFromLocal();
     if (!document.getElementById('mydate').value) {
-        // 若無記憶則使用現在時間
         const now = new Date();
         const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
         document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
