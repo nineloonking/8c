@@ -175,16 +175,20 @@ async function queryBaziFate() {
         daYears.push(luckStartYear + i * 10);
     }
 
-    // ====================== 當前大運 & 當前流年 ======================
+    // ====================== 當前大運 & 當前流年（以今天真實年份計算） ======================
+    const currentRealYear = new Date().getFullYear();
+
     let currentDaYunIdx = 0;
     for (let i = 0; i < daYears.length; i++) {
-        if (year >= daYears[i]) currentDaYunIdx = i;
+        if (currentRealYear >= daYears[i]) currentDaYunIdx = i;
     }
     const currentDaYunStem = daStems[currentDaYunIdx];
     const currentDaYunBranch = daBranches[currentDaYunIdx];
 
-    const currentLiuNianStem = baziResult.stems.year;
-    const currentLiuNianBranch = baziResult.branches.year;
+    // 計算當前流年的天干地支（使用今年任意日期即可）
+    const currentYearBazi = window.getBazi(currentRealYear, 6, 15, 12, 0);
+    const currentLiuNianStem = currentYearBazi.stems.year;
+    const currentLiuNianBranch = currentYearBazi.branches.year;
 
     // ====================== 四柱八字表（新增 運 + 流 兩欄） ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
