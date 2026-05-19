@@ -149,7 +149,7 @@ async function queryBaziFate() {
 
     // ====================== 四柱八字表（已移除時柱特殊顏色） ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
-    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
+    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
     pillarsHTML += `<tr>`;
     ["hour","day","month","year"].forEach(key => {
         const stem = baziResult.stems[key];
@@ -167,6 +167,27 @@ async function queryBaziFate() {
         let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
         pillarsHTML += `<td>${html}</td>`;
     });
+    // ====================== 新增：運 與 流 兩欄 ======================
+    pillarsHTML += `<tr>`;
+    // 運（當前大運）
+    const luckColorStem = data.fiveColors[data.stemsElement[currentLuckStem]];
+    const luckColorBranch = data.fiveColors[data.branchesElement[currentLuckBranch]];
+    let luckHiddenHTML = currentLuckHidden.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+    pillarsHTML += `<td><span style="color:${luckColorStem}">${currentLuckStem}</span></td>`;
+    pillarsHTML += `<td><span style="color:${luckColorBranch}">${currentLuckBranch}</span></td>`;
+    pillarsHTML += `<td>${luckHiddenHTML}</td>`;
+
+    // 流（當前流年 = 輸入年份的年柱）
+    const flowStem = baziResult.stems.year;
+    const flowBranch = baziResult.branches.year;
+    const flowColorStem = data.fiveColors[data.stemsElement[flowStem]];
+    const flowColorBranch = data.fiveColors[data.branchesElement[flowBranch]];
+    const flowHidden = data.hiddenStems[flowBranch] || [];
+    let flowHiddenHTML = flowHidden.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+    pillarsHTML += `<td><span style="color:${flowColorStem}">${flowStem}</span></td>`;
+    pillarsHTML += `<td><span style="color:${flowColorBranch}">${flowBranch}</span></td>`;
+    pillarsHTML += `<td>${flowHiddenHTML}</td>`;
+    pillarsHTML += `</tr>`;
     pillarsHTML += `</tr></table>`;
 
     // ====================== 神煞表 ======================
@@ -224,6 +245,11 @@ async function queryBaziFate() {
     }
 
     let daYunHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</p>`;
+    // ====================== 計算當前大運（運） ======================
+    const currentLuckIndex = Math.floor((year - luckStartYear) / 10);
+    const currentLuckStem = daStems[currentLuckIndex] || '-';
+    const currentLuckBranch = daBranches[currentLuckIndex] || '-';
+    const currentLuckHidden = data.hiddenStems[currentLuckBranch] || [];
     daYunHTML += `<table class="daiyun"><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td>${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
