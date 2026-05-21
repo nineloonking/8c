@@ -108,6 +108,24 @@ async function queryBaziFate() {
     const minute = parseInt(minStr);
 
     const baziResult = window.getBazi(year, month, day, hour, minute);
+    // ====================== 夜子時 (23:00~23:59) 特殊處理 ======================
+    // 規則：夜子時把「日柱加一日」來計算時柱（早子 00:00~00:59 則正常計算）
+    if (hour === 23) {
+        const dayStemIdx = stems.indexOf(baziResult.stems.day);
+        const adjustedDayStemIdx = (dayStemIdx + 1) % 10;
+        const adjustedDayStem = stems[adjustedDayStemIdx];
+
+        const ziHourStemMap = {
+            "甲": "甲", "己": "甲",
+            "乙": "丙", "庚": "丙",
+            "丙": "戊", "辛": "戊",
+            "丁": "庚", "壬": "庚",
+            "戊": "壬", "癸": "壬"
+        };
+
+        baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
+        baziResult.branches.hour = "子";
+        
     if (baziResult.error) {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
         return;
