@@ -125,6 +125,7 @@ async function queryBaziFate() {
 
         baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
         baziResult.branches.hour = "子";
+    }
         
     if (baziResult.error) {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
