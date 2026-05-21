@@ -294,9 +294,15 @@ async function queryBaziFate() {
     daYunHTML += `</tr><tr>`;
     for (let i = 7; i >= 0; i--) daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[daBranches[i]]]}">${daBranches[i]}</span></td>`;
     daYunHTML += `</tr></table>`;
-
+    
     const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
-    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+    // 子時特別標註 夜子 / 早子
+    let ziLabel = '';
+    if (baziResult.branches.hour === '子') {
+        ziLabel = (hour === 23) ? '夜子' : '早子';
+    }
+    const genderText = document.getElementById('gender').value;
+    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時${ziLabel ? '（' + ziLabel + '）' : ''}　${genderText}`;
 
     let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
     stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
