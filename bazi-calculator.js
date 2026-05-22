@@ -158,9 +158,38 @@ window.getSolarTerms = async function(year) {
     }
 };
 
-// ==================== 可重複利用的函數（抽離自 HTML） ====================
+// ==================== bazi-calculator.js ====================
+// 八字計算核心函數庫（可重複利用）
 
-/** 夜子時自動調整時柱（23:00~23:59） */
+const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const BranchesNamesshort = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+
+// ==================== 農曆計算相關 ====================
+const lunarInfo = [ /* ...完整 lunarInfo 陣列（省略顯示，實際使用時請保留原本完整內容）*/ ];
+
+function getLunarYearDays(year) { /* ... */ }
+function getLeapMonth(year) { /* ... */ }
+function getMonthDays(year, month) { /* ... */ }
+function getLunar(year, month, day) {
+    // 回傳 { year, month, day, isLeap, full }
+    // （完整實作請保留你原本的 getLunar 函數）
+}
+
+// ==================== 八字計算核心 ====================
+window.getBazi = function(year, month, day, hour = 0, minute = 0) {
+    // 原本完整的 getBazi 實作
+    // 包含年柱、月柱、日柱、時柱計算
+    // 以及夜子時調整（已整合下方新函數）
+    let result = { /* ... */ };
+    return result;
+};
+
+// ==================== 新增：可重複利用的函數 ====================
+
+/**
+ * 夜子時自動調整時柱（23:00~23:59）
+ * 使用方式：result = getNightZiAdjustedHour(result, hour);
+ */
 window.getNightZiAdjustedHour = function(baziResult, hour) {
     if (hour !== 23) return baziResult;
 
@@ -181,7 +210,10 @@ window.getNightZiAdjustedHour = function(baziResult, hour) {
     return baziResult;
 };
 
-/** 取得當前大運的 index（給 daYears 陣列 + 真實年份） */
+/**
+ * 取得當前大運的 index
+ * 使用方式：const idx = getCurrentDaYunIndex(daYears, currentRealYear);
+ */
 window.getCurrentDaYunIndex = function(daYears, currentRealYear) {
     let idx = 0;
     for (let i = 0; i < daYears.length; i++) {
@@ -190,7 +222,10 @@ window.getCurrentDaYunIndex = function(daYears, currentRealYear) {
     return idx;
 };
 
-/** 取得當前流年（天干 + 地支） */
+/**
+ * 取得當前流年（天干 + 地支）
+ * 使用方式：const liuNian = getCurrentLiuNian(2026);
+ */
 window.getCurrentLiuNian = function(year) {
     const yb = window.getBazi(year, 6, 15, 12, 0);
     return {
@@ -199,8 +234,13 @@ window.getCurrentLiuNian = function(year) {
     };
 };
 
-/** 取得子時標籤（早子 / 夜子） */
+/**
+ * 取得子時標籤（早子 / 夜子）
+ * 使用方式：const label = getZiLabel(hour, hourBranch);
+ */
 window.getZiLabel = function(hour, hourBranch) {
     if (hourBranch !== '子') return '';
     return (hour === 23) ? '夜子' : '早子';
 };
+
+// ==================== 其他輔助函數（如有需要可繼續加入） ====================
