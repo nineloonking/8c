@@ -54,8 +54,14 @@ window.getBazi = function(year, month, day, hour = 0, minute = 0) {
         let monthbranch = getinrange((last_jie_index / 2) + 2, 12);
         let solarmonth = getinrange(monthbranch - 2, 12);
         let monthstem = getinrange(((yearstem % 5) * 2) + solarmonth, 10);
+        // 【夜子時特別規則】23:00~23:59 視為「夜子」，需用「日柱 +1 日」來計算時干（早子 00:00~00:59 則正常使用當日日干）
+        let effectiveDayStemForHour = daystem;
+        if (hour === 23) {
+            effectiveDayStemForHour = getinrange(daystem + 1, 10);
+        }
+
         let hourbranch = (Math.floor((hour + 1) / 2) % 12) + 1;
-        let starting_stem = ((daystem * 2 - 1) % 10) || 10;
+        let starting_stem = ((effectiveDayStemForHour * 2 - 1) % 10) || 10;
         let hourstem = getinrange(starting_stem + hourbranch - 1, 10);
 
         let lunar = getLunar(year, month, day);
@@ -73,7 +79,8 @@ window.getBazi = function(year, month, day, hour = 0, minute = 0) {
             branches: { year: BranchesNamesshort[yearbranch], month: BranchesNamesshort[monthbranch], day: BranchesNamesshort[daybranch], hour: BranchesNamesshort[hourbranch] },
             lunar: { year: lunarYearStr, month: isLeapStr + lunarMonthStr, day: lunarDayStr, full: `${lunarYearStr}年　${isLeapStr}${lunarMonthStr}月　${lunarDayStr}`, isLeap: lunar.isLeap },
             hkTime: `${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}（香港時間）`,
-            inputDate: `${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`
+            inputDate: `${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`,
+            isNightZiHour: hour === 23   // 夜子時（23:00~23:59）已自動使用日柱+1日計算時干
         };
     } catch(e) { return { error: '計算錯誤，請檢查日期時間' }; }
 };
