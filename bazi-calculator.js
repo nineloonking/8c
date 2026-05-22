@@ -157,3 +157,50 @@ window.getSolarTerms = async function(year) {
         return { error: '節氣計算錯誤' };
     }
 };
+
+// ==================== 可重複利用的函數（抽離自 HTML） ====================
+
+/** 夜子時自動調整時柱（23:00~23:59） */
+window.getNightZiAdjustedHour = function(baziResult, hour) {
+    if (hour !== 23) return baziResult;
+
+    const dayStemIdx = stems.indexOf(baziResult.stems.day);
+    const adjustedDayStemIdx = (dayStemIdx + 1) % 10;
+    const adjustedDayStem = stems[adjustedDayStemIdx];
+
+    const ziHourStemMap = {
+        "甲": "甲", "己": "甲",
+        "乙": "丙", "庚": "丙",
+        "丙": "戊", "辛": "戊",
+        "丁": "庚", "壬": "庚",
+        "戊": "壬", "癸": "壬"
+    };
+
+    baziResult.stems.hour = ziHourStemMap[adjustedDayStem];
+    baziResult.branches.hour = "子";
+    return baziResult;
+};
+
+/** 取得當前大運的 index（給 daYears 陣列 + 真實年份） */
+window.getCurrentDaYunIndex = function(daYears, currentRealYear) {
+    let idx = 0;
+    for (let i = 0; i < daYears.length; i++) {
+        if (currentRealYear >= daYears[i]) idx = i;
+    }
+    return idx;
+};
+
+/** 取得當前流年（天干 + 地支） */
+window.getCurrentLiuNian = function(year) {
+    const yb = window.getBazi(year, 6, 15, 12, 0);
+    return {
+        stem: yb.stems.year,
+        branch: yb.branches.year
+    };
+};
+
+/** 取得子時標籤（早子 / 夜子） */
+window.getZiLabel = function(hour, hourBranch) {
+    if (hourBranch !== '子') return '';
+    return (hour === 23) ? '夜子' : '早子';
+};
