@@ -106,7 +106,7 @@ async function queryBaziFate() {
     const [hourStr, minStr] = timeInput.split(':');
     const hour = parseInt(hourStr);
     const minute = parseInt(minStr);
-
+    const gender = document.getElementById('gender').value;
     const baziResult = window.getBazi(year, month, day, hour, minute);
     if (baziResult.error) {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
