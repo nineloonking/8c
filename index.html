@@ -106,7 +106,7 @@ async function queryBaziFate() {
     const [hourStr, minStr] = timeInput.split(':');
     const hour = parseInt(hourStr);
     const minute = parseInt(minStr);
-
+    const gender = document.getElementById('gender').value;
     const baziResult = window.getBazi(year, month, day, hour, minute);
     if (baziResult.error) {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
@@ -189,21 +189,6 @@ async function queryBaziFate() {
     // ====================== 四柱八字表 ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
-
-    // === 十神行（相對於日干）===
-    const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
-    pillarsHTML += `<tr>`;
-    stemsForGods.forEach(stem => {
-        if (stem === dayStem) {
-            pillarsHTML += `<td><strong>日元</strong></td>`;
-        } else {
-            const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
-            const god = data.tenGods[dayStem][idx];
-            pillarsHTML += `<td>${god}</td>`;
-        }
-    });
-    pillarsHTML += `</tr>`;
-
     pillarsHTML += `<tr>`;
     ["hour","day","month","year"].forEach(key => {
         const stem = baziResult.stems[key];
@@ -292,7 +277,6 @@ async function queryBaziFate() {
     daYunHTML += `</tr></table>`;
 
     const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
-
     let hourLabel = baziResult.branches.hour + '時';
     if (baziResult.branches.hour === '子') {
         hourLabel = (hour === 23) ? '夜子時' : '早子時';
