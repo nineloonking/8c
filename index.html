@@ -189,6 +189,21 @@ async function queryBaziFate() {
     // ====================== 四柱八字表 ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
+
+    // === 十神行（相對於日干）===
+    const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
+    pillarsHTML += `<tr>`;
+    stemsForGods.forEach(stem => {
+        if (stem === dayStem) {
+            pillarsHTML += `<td><strong>日元</strong></td>`;
+        } else {
+            const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
+            const god = data.tenGods[dayStem][idx];
+            pillarsHTML += `<td>${god}</td>`;
+        }
+    });
+    pillarsHTML += `</tr>`;
+
     pillarsHTML += `<tr>`;
     ["hour","day","month","year"].forEach(key => {
         const stem = baziResult.stems[key];
@@ -277,7 +292,12 @@ async function queryBaziFate() {
     daYunHTML += `</tr></table>`;
 
     const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
-    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+
+    let hourLabel = baziResult.branches.hour + '時';
+    if (baziResult.branches.hour === '子') {
+        hourLabel = (hour === 23) ? '夜子時' : '早子時';
+    }
+    const lunarLine = `${baziResult.lunar.full}　${hourLabel}`;
 
     let stemBranchHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">天干通地支表</p>`;
     stemBranchHTML += `<table class="gods-table" style="font-size:1em;"><tr><th>甲</th><th>乙</th><th>丙</th><th>丁</th><th>戊</th><th>己</th><th>庚</th><th>辛</th><th>壬</th><th>癸</th></tr>`;
@@ -293,7 +313,7 @@ async function queryBaziFate() {
     const html = `
         <div class="lunar-line">
             <strong>公曆</strong>　${gregorianLine}<br>
-            <strong>農曆</strong>　${lunarLine}
+            <strong>農曆</strong>　${lunarLine}　${gender}
         </div>
         ${pillarsHTML}
         ${daYunHTML}
