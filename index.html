@@ -108,6 +108,7 @@ async function queryBaziFate() {
     const minute = parseInt(minStr);
     const gender = document.getElementById('gender').value;
     const baziResult = window.getBazi(year, month, day, hour, minute);
+    const dayStem = baziResult.stems.day;
     if (baziResult.error) {
         document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
         return;
@@ -189,6 +190,21 @@ async function queryBaziFate() {
     // ====================== 四柱八字表 ======================
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td><td>運</td><td>流</td></tr>`;
+    
+    // === 新增：十神行 ===
+    const stemOrder = ["hour","day","month","year"];
+    const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
+    pillarsHTML += `<tr>`;
+    stemsForGods.forEach((stem, i) => {
+        if (stem === dayStem) {
+            pillarsHTML += `<td><strong>日元</strong></td>`;
+        } else {
+            const god = data.tenGods[dayStem][ "甲乙丙丁戊己庚辛壬癸".indexOf(stem) ];
+            pillarsHTML += `<td>${god}</td>`;
+        }
+    });
+    pillarsHTML += `</tr>`;
+    
     pillarsHTML += `<tr>`;
     ["hour","day","month","year"].forEach(key => {
         const stem = baziResult.stems[key];
