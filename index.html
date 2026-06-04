@@ -196,7 +196,7 @@ async function queryBaziFate() {
 	const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
 	pillarsHTML += `<tr>`;
 	stemsForGods.forEach((stem, i) => {
-		if (stem === dayStem) {
+		if (i === 1) {                    // 只對「日柱」位置顯示日元
 			pillarsHTML += `<td><strong>日元</strong></td>`;
 		} else {
 			const god = data.tenGods[dayStem][ "甲乙丙丁戊己庚辛壬癸".indexOf(stem) ];
@@ -224,7 +224,31 @@ async function queryBaziFate() {
     pillarsHTML += `<td><span style="color:${daBranchColor}">${currentDaYunBranch}</span></td>`;
     const liuBranchColor = data.fiveColors[data.branchesElement[currentLiuNianBranch]];
     pillarsHTML += `<td><span style="color:${liuBranchColor}">${currentLiuNianBranch}</span></td>`;
+    pillarsHTML += `</tr>`;
+
+    // === 新增：納音五行 ===
+    pillarsHTML += `<tr>`;
+    const naYinColumns = [
+        baziResult.stems.hour + baziResult.branches.hour,
+        baziResult.stems.day + baziResult.branches.day,
+        baziResult.stems.month + baziResult.branches.month,
+        baziResult.stems.year + baziResult.branches.year,
+        currentDaYunStem + currentDaYunBranch,
+        currentLiuNianStem + currentLiuNianBranch
+    ];
+
+    naYinColumns.forEach(key => {
+        const naYin = data.naYin[key] || "——";
+        // 從納音名稱取最後一個字作為五行
+        const element = naYin.slice(-1) === "金" ? "金" :
+                       naYin.slice(-1) === "木" ? "木" :
+                       naYin.slice(-1) === "水" ? "水" :
+                       naYin.slice(-1) === "火" ? "火" : "土";
+        const color = data.fiveColors[element] || "#555";
+		pillarsHTML += `<td><span class="hidden-stem" style="color:${color}; writing-mode:vertical-rl; text-orientation:mixed; padding:8px 2px;">${naYin}</span></td>`;
+    });
     pillarsHTML += `</tr><tr>`;
+	
     branches.forEach(branch => {
         const hiddens = data.hiddenStems[branch] || [];
         let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
@@ -258,6 +282,31 @@ async function queryBaziFate() {
     });
     pillarsHTML += `</tr></table>`;
 
+    // ====================== 新增：格局表 ======================
+    const tenGodsList1 = ["比肩","食神","偏財","七殺","偏印"];
+    const tenGodsList2 = ["劫財","傷官","正財","正官","正印"];
+
+    let patternHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">格局表 
+        <button id="toggleLuck" style="margin-left:12px; padding:4px 10px; font-size:0.95em; cursor:pointer;">運流</button>
+    </p>`;
+
+    patternHTML += `<table id="patternTable" class="gods-table" style="font-size:1.1em; margin-bottom:15px;">`;
+    
+    // 第一行：比肩 ~ 偏印   
+	patternHTML += `<tr>`;
+    tenGodsList1.forEach((g, i) => {
+        patternHTML += `<td id="cell1_${i}">${g}<span id="tg1_${i}" style="margin-left:6px;">0/0</span></td>`;
+    });
+    patternHTML += `</tr>`;
+    // 第二行：劫財 ~ 正印
+	patternHTML += `<tr>`;
+    tenGodsList2.forEach((g, i) => {
+        patternHTML += `<td id="cell2_${i}">${g}<span id="tg2_${i}" style="margin-left:6px;">0/0</span></td>`;
+    });
+    patternHTML += `</tr>`;
+    patternHTML += `</table>`;
+
+    pillarsHTML += patternHTML;
 
     // ====================== 神煞表（新增 運 + 流 兩欄） ======================
     const dayBranch = data.stemToBranch[dayStem][0];
@@ -351,6 +400,106 @@ async function queryBaziFate() {
 
     document.getElementById('here').innerHTML = html;
     saveToLocal();
+	
+	// 格局表 - 運流切換功能
+    setTimeout(() => {
+        const btn = document.getElementById('toggleLuck');
+        const table = document.getElementById('patternTable');
+        let includeLuck = true;
+
+        function updatePatternTable() {
+            let tgCount = { "比肩":0, "劫財":0, "食神":0, "傷官":0, "偏財":0, "正財":0, "七殺":0, "正官":0, "偏印":0, "正印":0 };
+            let cgCount = { ...tgCount };
+
+            // 天干統計
+            let stemsList = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year];
+            if (includeLuck) stemsList.push(currentDaYunStem, currentLiuNianStem);
+            stemsList.forEach(stem => {
+                if (stem === dayStem) {
+                    tgCount["日元"] = (tgCount["日元"] || 0) + 1;
+                } else {
+                    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
+                    const god = data.tenGods[dayStem][idx];
+                    if (god) tgCount[god] = (tgCount[god] || 0) + 1;
+                }
+            });
+
+            // 藏干統計
+            let branchesList = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
+            if (includeLuck) branchesList.push(currentDaYunBranch, currentLiuNianBranch);
+            branchesList.forEach(branch => {
+                const hiddens = data.hiddenStems[branch] || [];
+                hiddens.forEach(h => {
+                    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+                    const god = data.tenGods[dayStem][idx];
+                    if (god) cgCount[god] = (cgCount[god] || 0) + 1;
+                });
+            });
+
+            const allGods = [...tenGodsList1, ...tenGodsList2];
+
+            // 更新每一格並套用樣式
+            allGods.forEach((g, idx) => {
+                const tg = tgCount[g] || 0;
+                const cg = cgCount[g] || 0;
+                const total = tg + cg;
+                const isFirstRow = idx < 5;
+                const cellId = isFirstRow ? `cell1_${idx}` : `cell2_${idx-5}`;
+                const numId  = isFirstRow ? `tg1_${idx}` : `tg2_${idx-5}`;
+
+                const cell = document.getElementById(cellId);
+                const numSpan = document.getElementById(numId);
+
+                if (!cell || !numSpan) return;
+
+                numSpan.textContent = `${tg}/${cg}`;
+
+                let fontWeight = 'normal';
+                let bgColor = 'transparent';
+                let textColor = '#333';
+
+                if (tg === 1 && cg === 1) {
+                    // 規則1: 1/1 → 粗體 + 紅色文字 + 淺金色底
+                    fontWeight = 'bold';
+                    textColor = '#d32f2f';        // 紅色
+                    bgColor = '#f9e79f';          // 淺金色
+                } 
+                else if (total >= 3 && total <= 4) {
+                    // 規則2: 3~4 → 粗體 + 灰色底
+                    fontWeight = 'bold';
+                    bgColor = '#e0e0e0';          // 灰色
+                } 
+                else if (total >= 5 && total <= 6) {
+                    // 規則3: 5~6 → 淺藍色底
+                    bgColor = '#a3d8ff';          // 淺藍色
+                } 
+                else if (total >= 7) {
+                    // 規則4: 7以上 → 粗體 + 白色文字 + 深紫色底
+                    fontWeight = 'bold';
+                    textColor = '#ffffff';        // 白色
+                    bgColor = '#6b46c0';          // 深紫色
+                }
+
+                cell.style.fontWeight = fontWeight;
+                cell.style.backgroundColor = bgColor;
+                cell.style.color = textColor;
+            });
+
+            // 按鈕顏色
+            btn.style.backgroundColor = includeLuck ? '#8B4513' : '#f9f7f0';
+            btn.style.color = includeLuck ? 'white' : '#8B4513';
+        }
+
+        btn.addEventListener('click', () => {
+            includeLuck = !includeLuck;
+            updatePatternTable();
+        });
+
+        // 初始更新
+        updatePatternTable();
+    }, 100);
+	
+	
 };
 
 window.onload = () => {
