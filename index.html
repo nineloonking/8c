@@ -12,7 +12,7 @@
         font-size: 1.1em; 
         border: 2px solid #8B4513; 
         border-radius: 8px; 
-        width: 160px; 
+        width: 120px; 
     }
     .input-row button { 
         background: #8B4513; 
@@ -39,7 +39,15 @@
 </style>
 </head>
 <body>
-<h1>八字命盤</h1>
+<div style="position:relative; width:100%; text-align:center; margin-bottom:20px;">
+    <h1 id="mainTitle" style="display:inline-block; margin:0;">子平八字命盤</h1>
+	<button onclick="toggleGamChuMode()" 
+			style="position:absolute; right:20px; top:8px; 
+				   padding:8px 18px; background:#f9e79f; color:#8B4513; 
+				   border:none; border-radius:8px; cursor:pointer; font-size:1.05em; font-weight:bold;">
+		💰 金主模式
+	</button>
+</div>
 
 <div class="input-row">
     <input type="date" id="mydate" onchange="queryBaziFate()">
@@ -48,12 +56,28 @@
         <option value="男">男</option>
         <option value="女">女</option>
     </select>
-    <button onclick="setNow()">現在</button>
+	<input type="date" id="currentYear" onchange="queryBaziFate()">
+    <button onclick="setNow()">重設</button>
 </div>
-
+<!-- 金主模式專用紀錄區 -->
+<div id="jinZhuRecordArea" style="display:none; margin:20px auto; max-width:820px; text-align:center;">
+    <div style="background:#fffaf0; padding:18px; border-radius:12px; border:2px solid #f9e79f;">
+        
+        <!-- 選擇紀錄（放在最左邊） -->
+        <select id="recordSelect" onchange="loadBaziRecord(this.value)" style="padding:10px; margin:5px; width:120px;">
+            <option value="">-- 選擇紀錄 --</option>
+        </select>
+        <input type="text" id="userName" placeholder="輸入姓名" style="width:100px; padding:10px; margin:5px;">
+        <input type="text" id="userNote" placeholder="備註（選填）" style="width:160px; padding:10px; margin:5px;">      
+        <button onclick="saveBaziRecord()" style="padding:10px 20px; background:#d4af37; color:#8B4513; border:none; border-radius:8px; margin:5px; font-weight:bold;">儲存</button>
+        <button onclick="deleteCurrentRecord()" style="padding:10px 20px; background:#ef4444; color:white; border:none; border-radius:8px; margin:5px; font-weight:bold;">刪除</button>
+        
+    </div>
+</div>
 <div id="here" class="result-box"></div>
 
 <script src="bazi-calculator.js"></script>
+<script src="GamChuMode.js"></script>
 <script>
 let baziData = null;
 
@@ -90,9 +114,11 @@ function setNow() {
     document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
     document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
     document.getElementById('gender').value = '男';
+	document.getElementById('currentYear').value = nowInHK.getFullYear();
     saveToLocal();
     queryBaziFate();
 }
+
 
 async function queryBaziFate() {
     const dateInput = document.getElementById('mydate').value;
@@ -175,7 +201,7 @@ async function queryBaziFate() {
     }
 
     // 當前大運 & 當前流年（以今天真實年份計算）
-    const currentRealYear = new Date().getFullYear();
+    let currentRealYear = parseInt(document.getElementById('currentYear').value) || new Date().getFullYear();
     let currentDaYunIdx = 0;
     for (let i = 0; i < daYears.length; i++) {
         if (currentRealYear >= daYears[i]) currentDaYunIdx = i;
@@ -206,20 +232,21 @@ async function queryBaziFate() {
 	pillarsHTML += `</tr>`;
 
     pillarsHTML += `<tr>`;
-    ["hour","day","month","year"].forEach(key => {
-        const stem = baziResult.stems[key];
-        const color = data.fiveColors[data.stemsElement[stem]];
-		pillarsHTML += `<td><span style="color:${color}; font-size:1.15em;">${stem}</span></td>`;
-    });
+	["hour","day","month","year"].forEach(key => {
+		const stem = baziResult.stems[key];
+		const color = data.fiveColors[data.stemsElement[stem]];
+		pillarsHTML += `<td style="background:#fff2cc;"><span style="color:${color}; font-size:1.15em;">${stem}</span></td>`;
+	});
+	
     const daStemColor = data.fiveColors[data.stemsElement[currentDaYunStem]];
     pillarsHTML += `<td><span style="color:${daStemColor}">${currentDaYunStem}</span></td>`;
     const liuStemColor = data.fiveColors[data.stemsElement[currentLiuNianStem]];
     pillarsHTML += `<td><span style="color:${liuStemColor}">${currentLiuNianStem}</span></td>`;
     pillarsHTML += `</tr><tr>`;
-    branches.forEach(branch => {
-        const color = data.fiveColors[data.branchesElement[branch]];
-		pillarsHTML += `<td><span style="color:${color}; font-size:1.15em;">${branch}</span></td>`;
-    });
+	branches.forEach(branch => {
+		const color = data.fiveColors[data.branchesElement[branch]];
+		pillarsHTML += `<td style="background:#fff2cc;"><span style="color:${color}; font-size:1.15em;">${branch}</span></td>`;
+	});	
     const daBranchColor = data.fiveColors[data.branchesElement[currentDaYunBranch]];
     pillarsHTML += `<td><span style="color:${daBranchColor}">${currentDaYunBranch}</span></td>`;
     const liuBranchColor = data.fiveColors[data.branchesElement[currentLiuNianBranch]];
@@ -287,8 +314,10 @@ async function queryBaziFate() {
     const tenGodsList2 = ["劫財","傷官","正財","正官","正印"];
 
     let patternHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">格局表 
-        <button id="toggleLuck" style="margin-left:12px; padding:4px 10px; font-size:0.95em; cursor:pointer;">運流</button>
+        <button id="toggleLuck" style="margin-left:12px; padding:6px 14px; font-size:0.95em; cursor:pointer; border-radius:8px; border:2px solid #8B4513;">運流</button>
     </p>`;
+
+
 
     patternHTML += `<table id="patternTable" class="gods-table" style="font-size:1.1em; margin-bottom:15px;">`;
     
@@ -511,8 +540,137 @@ window.onload = () => {
         document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
         document.getElementById('gender').value = '男';
     }
+    
+    // 恢復金主模式狀態
+    const savedMode = localStorage.getItem('gamChuMode');
+    if (savedMode === 'true') {
+        isGamChuMode = true;
+    }
+    updateMainTitleColor();
+    
+    // 顯示紀錄區（如果已開啟）
+    const recordArea = document.getElementById('jinZhuRecordArea');
+    if (recordArea && isGamChuMode) {
+        recordArea.style.display = 'block';
+    }
+    
     queryBaziFate();
 };
+
+// 金主模式 - 主標題顏色控制（放在 8c.html 內）
+function updateMainTitleColor() {
+    const title = document.getElementById('mainTitle');
+    if (title) {
+        title.style.color = isGamChuMode ? '#d4af37' : '#8B4513';
+    }
+}
+
+// 覆蓋 GamChuMode.js 中的切換函數
+window.toggleGamChuSwitch = function() {
+    isGamChuMode = !isGamChuMode;
+    localStorage.setItem('gamChuMode', isGamChuMode);
+    updateSwitchUI();
+    updateMainTitleColor();
+
+    // === 控制金主模式紀錄區顯示/隱藏 ===
+    const recordArea = document.getElementById('jinZhuRecordArea');
+    if (recordArea) {
+        recordArea.style.display = isGamChuMode ? 'block' : 'none';
+    }
+};
+
+// 金主模式 - 姓名與紀錄功能
+let currentLoadedRecordId = null;   // 記住目前載入的紀錄ID
+
+function saveBaziRecord() {
+    const name = document.getElementById('userName').value.trim();
+    if (!name) {
+        alert("請輸入姓名！");
+        return;
+    }
+
+    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+    
+    const record = {
+        id: Date.now(),
+        name: name,
+        note: document.getElementById('userNote').value.trim(),
+        date: document.getElementById('mydate').value,
+        time: document.getElementById('mytime').value,
+        gender: document.getElementById('gender').value,
+        year: document.getElementById('currentYear').value
+    };
+
+    records.unshift(record);
+    if (records.length > 30) records.pop();
+
+    localStorage.setItem('baziRecords', JSON.stringify(records));
+    loadRecordOptions();
+    alert("✅ 已儲存紀錄：" + name);
+}
+
+function loadBaziRecord(id) {
+    if (!id) return;
+    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+    const record = records.find(r => r.id == id);
+    if (!record) return;
+
+    currentLoadedRecordId = record.id;
+
+    // 載入所有欄位（包含姓名和備註）
+    document.getElementById('userName').value = record.name || '';
+    document.getElementById('userNote').value = record.note || '';
+    document.getElementById('mydate').value = record.date;
+    document.getElementById('mytime').value = record.time;
+    document.getElementById('gender').value = record.gender;
+    if (record.year) document.getElementById('currentYear').value = record.year;
+    
+    queryBaziFate();
+}
+
+function deleteCurrentRecord() {
+    if (!currentLoadedRecordId) {
+        alert("請先選擇要刪除的紀錄！");
+        return;
+    }
+
+    if (!confirm("確定要刪除這筆紀錄嗎？")) return;
+
+    let records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+    records = records.filter(r => r.id != currentLoadedRecordId);
+    localStorage.setItem('baziRecords', JSON.stringify(records));
+
+    // 清空輸入欄位並重設
+    document.getElementById('userName').value = '';
+    document.getElementById('userNote').value = '';
+    currentLoadedRecordId = null;
+
+    loadRecordOptions();
+    alert("✅ 已刪除紀錄");
+
+    // 重設頁面（回到今天）
+    setNow();
+}
+
+function loadRecordOptions() {
+    const select = document.getElementById('recordSelect');
+    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+    select.innerHTML = '<option value="">-- 選擇紀錄 --</option>';
+    
+    records.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name + (r.note ? ` (${r.note})` : '');
+        select.appendChild(opt);
+    });
+}
+
+// 頁面載入時初始化紀錄選單
+window.addEventListener('load', () => {
+    loadRecordOptions();
+});
+
+
 </script>
 </body>
 </html>
