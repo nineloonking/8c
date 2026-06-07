@@ -16,7 +16,6 @@ jobs:
       - name: Replace Firebase API Key
         run: |
           echo "🔄 正在替換 Firebase4p8c.js 中的 API Key..."
-          # 執行替換
           sed -i 's/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g' Firebase4p8c.js
           echo "✅ API Key 替換指令執行完畢"
           
