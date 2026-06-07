@@ -215,24 +215,19 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
+<!-- Firebase 配置（已抽離） -->
+<script src="Firebase4p8c.js"></script>
+
 <script>
 // 初始化 Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyD1Yv2IpVxsYHhMDrpVFUMr3c9qjrS2HjQ",
-  authDomain: "p8c-d1673.firebaseapp.com",
-  projectId: "p8c-d1673",
-  storageBucket: "p8c-d1673.firebasestorage.app",
-  messagingSenderId: "352251453242",
-  appId: "1:352251453242:web:37cfd6e5bd12f05c10fa03",
-  measurementId: "G-S89P64PXQE"
-};
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(window.firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 // 設定持久化
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => console.log("✅ Firebase Auth 持久化設定完成"))
+    .catch(err => console.error("持久化設定失敗", err));
 </script>
 
 <script src="GamChuMode.js"></script>
