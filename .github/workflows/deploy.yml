@@ -5,19 +5,19 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: write   # 關鍵：給予寫入權限
+  contents: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Replace Firebase API Key
         run: |
+          echo "Replacing API Key..."
           sed -i 's/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g' 8c.html
+          echo "API Key replaced successfully."
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
