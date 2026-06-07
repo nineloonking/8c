@@ -16,7 +16,7 @@ jobs:
       - name: Replace Firebase API Key
         run: |
           echo "🔄 正在替換 API Key..."
-          sed -i 's/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g' 8c.html
+          sed -i "s/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g" 8c.html
           echo "✅ API Key 替換完成"
 
       - name: Deploy to GitHub Pages
