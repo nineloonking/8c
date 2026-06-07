@@ -11,19 +11,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5  # 順便更新到 v5
 
       - name: Replace Firebase API Key
         run: |
-          echo "🔄 正在替換 API Key..."
-          sed -i 's|apiKey: ".*"|apiKey: "${{ secrets.FIREBASE4P8C }}"|g' Firebase4p8c.js
-          echo "✅ API Key 替換完成"
-          cat Firebase4p8c.js | head -n 25   # 顯示檢查
+          echo "🔄 正在替換 Firebase4p8c.js 中的 API Key..."
+          sed -i "s/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g" Firebase4p8c.js
+          echo "✅ API Key 替換指令執行完畢"
+          
+          echo "🔍 再次確認修改後的內容 (前 15 行)："
+          head -n 15 Firebase4p8c.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_dir: .       # 確保不帶斜線，指向當前修改後的根目錄
           publish_branch: gh-pages
+          force_orphan: true   # 🌟 強制重置 gh-pages 分支歷史，清除一切舊檔案殘留
           allow_empty_commit: true
