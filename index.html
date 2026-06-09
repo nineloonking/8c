@@ -366,6 +366,31 @@ function showGodDetail(godName) {
 }
 window.showGodDetail = showGodDetail;
 
+// 點擊格局表十神 → 顯示詳細歌訣
+function showTenGodDetail(godName) {
+    const data = window.baziData;
+    if (!data || !data.tenGodsMeaning) {
+        alert("十神歌訣資料尚未載入");
+        return;
+    }
+
+    const info = data.tenGodsMeaning[godName];
+    if (!info) {
+        alert(`尚無「${godName}」的詳細歌訣`);
+        return;
+    }
+
+    const contentHTML = `
+        <div style="white-space: pre-line; line-height: 1.7; color: #333;">
+            ${info.content}
+        </div>
+    `;
+
+    showMessageBox(info.title || godName, contentHTML);
+}
+
+window.showTenGodDetail = showTenGodDetail;
+
 </script>
 
 </body>

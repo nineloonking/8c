@@ -214,19 +214,29 @@ async function renderBaziFate() {
     });
     pillarsHTML += `</tr></table>`;
     
+    // ====================== 格局表 ======================
     const tenGodsList1 = ["比肩","食神","偏財","七殺","偏印"];
     const tenGodsList2 = ["劫財","傷官","正財","正官","正印"];
 
     let patternHTML = `<p style="margin:25px 0 8px; color:#666; font-size:1.05em;">格局表 
         <button id="toggleLuck" style="margin-left:12px; padding:6px 14px; font-size:0.95em; cursor:pointer; border-radius:8px; border:2px solid #8B4513;">運流</button>
     </p>`;
-    patternHTML += `<table id="patternTable" class="gods-table" style="font-size:1.1em; margin-bottom:15px;">`;
+
+    patternHTML += `<table id="patternTable" class="gods-table" style="font-size:1.1em; margin-bottom:15px; cursor:pointer;">`;
+    
     patternHTML += `<tr>`;
-    tenGodsList1.forEach((g, i) => { patternHTML += `<td id="cell1_${i}">${g}<span id="tg1_${i}" style="margin-left:6px;">0/0</span></td>`; });
+    tenGodsList1.forEach((g, i) => {
+        patternHTML += `<td id="cell1_${i}" data-god="${g}">${g}<span id="tg1_${i}" style="margin-left:6px;">0/0</span></td>`;
+    });
     patternHTML += `</tr>`;
+    
     patternHTML += `<tr>`;
-    tenGodsList2.forEach((g, i) => { patternHTML += `<td id="cell2_${i}">${g}<span id="tg2_${i}" style="margin-left:6px;">0/0</span></td>`; });
-    patternHTML += `</tr></table>`;
+    tenGodsList2.forEach((g, i) => {
+        patternHTML += `<td id="cell2_${i}" data-god="${g}">${g}<span id="tg2_${i}" style="margin-left:6px;">0/0</span></td>`;
+    });
+    patternHTML += `</tr>`;
+    patternHTML += `</table>`;
+
     pillarsHTML += patternHTML;
 
     const dayBranch = data.stemToBranch[dayStem][0];
@@ -391,14 +401,27 @@ async function renderBaziFate() {
             btn.style.backgroundColor = includeLuck ? '#8B4513' : '#f9f7f0';
             btn.style.color = includeLuck ? 'white' : '#8B4513';
         }
-
-        btn.addEventListener('click', () => {
+		
+		btn.addEventListener('click', () => {
             includeLuck = !includeLuck;
             updatePatternTable();
         });
 
+        // 初始更新
         updatePatternTable();
+
+        // === 新增：格局表點擊事件委派（解決手機無法點擊問題）===
+        const patternTable = document.getElementById('patternTable');
+        if (patternTable) {
+            patternTable.addEventListener('click', function(e) {
+                const td = e.target.closest('td');
+                if (td && td.dataset.god) {
+                    showTenGodDetail(td.dataset.god);
+                }
+            });
+        }
     }, 100);
 }
 
 window.renderBaziFate = renderBaziFate;
+

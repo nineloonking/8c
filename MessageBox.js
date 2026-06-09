@@ -16,7 +16,7 @@ function showMessageBox(title, contentHTML, options = {}) {
                 </div>
 
                 <!-- Content -->
-                <div style="padding:24px; line-height:1.7; color:#333;">
+                <div style="padding:24px; line-height:1.2; color:#333;">
                     ${contentHTML}
                 </div>
 
