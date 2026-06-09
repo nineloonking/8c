@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小六壬速查</title>
+<style>
+    body { 
+        text-align: center; 
+        font-family: sans-serif; 
+        background: #f9f7f0;
+        padding: 20px;
+    }
+    h1 { color: #8B4513; margin-bottom: 10px; }
+    .inputs { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        margin-bottom: 25px; 
+    }
+    .inputs input { 
+        margin: 6px 0; 
+        width: 80%; 
+        max-width: 320px; 
+        padding: 10px; 
+        font-size: 1.1em; 
+        border: 2px solid #8B4513; 
+        border-radius: 8px;
+    }
+    .result-box {
+        max-width: 700px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .date-info {
+        font-size: 1.35em;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+    .lunar {
+        color: #8B4513;
+        font-weight: bold;
+    }
+    table { 
+        margin: 25px auto; 
+        border-collapse: collapse; 
+        width: 100%;
+        max-width: 480px;
+        font-size: 1.35em;
+    }
+    td { 
+        padding: 14px 10px; 
+        border: 2px solid #D2B48C; 
+        text-align: center;
+    }
+    .god-name {
+        font-size: 1.45em;
+        font-weight: bold;
+        color: #8B4513;
+    }
+    #hourGodCell {
+        cursor: pointer;
+    }
+    #json { 
+        margin-top: 30px; 
+        text-align: left; 
+        max-width: 700px; 
+        margin-left: auto; 
+        margin-right: auto; 
+        background: #f8f8f8; 
+        padding: 15px; 
+        border-radius: 8px; 
+        white-space: pre-wrap; 
+        font-family: monospace;
+        font-size: 0.95em;
+        display: none;
+    }
+    /* 彈出視窗 */
+    #hourModal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        z-index: 10000;
+        width: 320px;
+        text-align: center;
+    }
+    #hourModal h3 {
+        margin: 0 0 15px 0;
+        color: #8B4513;
+    }
+</style>
+</head>
+<body>
+<h1>小六壬速查</h1>
+
+<div class="inputs">
+    <input type="date" id="mydate" onchange="queryLiuren()">
+    <input type="time" id="mytime" value="00:00" onchange="queryLiuren()">
+</div>
+
+<div id="here" class="result-box"></div>
+<div id="json"></div>
+
+<!-- 手動推算時神彈出視窗 -->
+<div id="hourModal">
+    <h3>手動推算 時神</h3>
+    <p style="margin:10px 0 15px 0;">輸入時辰序號<br>(1 = 子時　…　12 = 亥時)</p>
+    <input type="number" id="manualHour" min="1" max="12" value="9" style="width:100px; padding:8px; font-size:1.3em; text-align:center; border:2px solid #8B4513; border-radius:8px;">
+    <br><br>
+    <button onclick="calculateManualHourGod()" style="padding:12px 30px; background:#8B4513; color:white; border:none; border-radius:8px; font-size:1.1em; margin-right:8px;">推算</button>
+    <button onclick="hideHourModal()" style="padding:12px 30px; background:#ddd; color:#333; border:none; border-radius:8px; font-size:1.1em;">取消</button>
+</div>
+
+<script src="bazi-calculator.js"></script>
+<script>
+// 小六壬六神順序（固定循環）
+const liurenGods = ["大安", "留連", "速喜", "赤口", "小吉", "空亡"];
+
+// 農曆月份轉數字對照
+const chineseMonthToNum = {
+    "正":1, "二":2, "三":3, "四":4, "五":5, "六":6,
+    "七":7, "八":8, "九":9, "十":10, "十一":11, "十二":12
+};
+
+// 十二時辰對應數字
+const branchToPos = {
+    "子":1, "丑":2, "寅":3, "卯":4, "辰":5, "巳":6,
+    "午":7, "未":8, "申":9, "酉":10, "戌":11, "亥":12
+};
+
+let currentDayGodIndex = 0;   // 用來手動推算時神時保留當前日神位置
+
+function queryLiuren() {
+    const dateInput = document.getElementById('mydate').value;
+    const timeInput = document.getElementById('mytime').value || '00:00';
+    if (!dateInput) return;
+
+    const [yearStr, monthStr, dayStr] = dateInput.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const day = parseInt(dayStr);
+    const [hourStr, minStr] = timeInput.split(':');
+    const hour = parseInt(hourStr);
+    const minute = parseInt(minStr);
+
+    // 呼叫 bazi-calculator.js
+    const result = window.getBazi(year, month, day, hour, minute);
+
+    if (result.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red; font-size:1.2em;">${result.error}</p>`;
+        document.getElementById('json').style.display = 'none';
+        return;
+    }
+
+    // ==================== 小六壬核心計算 ====================
+    let monthDisplay = result.lunar.month;
+    let monthNumStr = monthDisplay.replace('閏', '');
+    const lunarMonthNum = chineseMonthToNum[monthNumStr];
+
+    const chineseDayList = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                            "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                            "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    const lunarDayNum = chineseDayList.indexOf(result.lunar.day) + 1;
+
+    // 月神（正月起大安）
+    let monthGodIndex = (lunarMonthNum - 1) % 6;
+    const monthGod = liurenGods[monthGodIndex];
+
+    // 日神（從月神起初一）
+    let dayGodIndex = (monthGodIndex + (lunarDayNum - 1)) % 6;
+    const dayGod = liurenGods[dayGodIndex];
+    currentDayGodIndex = dayGodIndex;   // 保留給手動推算使用
+
+    // 時神（從日神起子時）
+    const hourBranch = result.branches.hour;
+    const hourPos = branchToPos[hourBranch];
+    let hourGodIndex = (dayGodIndex + (hourPos - 1)) % 6;
+    const hourGod = liurenGods[hourGodIndex];
+
+    // ==================== 顯示畫面 ====================
+    const gregorian = `${year}-${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')} ${hourStr.padStart(2,'0')}:${minStr.padStart(2,'0')}`;
+    const lunarTime = `${result.lunar.full}　${hourBranch}時`;
+
+    const html = `
+        <div class="date-info">
+            ${gregorian}<br><br>
+            <strong class="lunar">農曆</strong><br>
+            ${lunarTime}
+        </div>
+
+        <table>
+            <tr>
+                <td>月神</td>
+                <td>日神</td>
+                <td style="color: gold;">時神</td>
+            </tr>
+            <tr>
+                <td class="god-name">${monthGod}</td>
+                <td class="god-name">${dayGod}</td>
+                <td id="hourGodCell" class="god-name" style="color: gold;" onclick="showHourModal()">${hourGod}</td>
+            </tr>
+        </table>
+
+        <p style="margin-top:15px; color:#666; font-size:0.95em;">
+            月上起日　日上起時　六神順時針循環
+        </p>
+    `;
+
+    document.getElementById('here').innerHTML = html;
+
+    // 完整 JSON
+    const fullResult = {
+        ...result,
+        xiaoliuren: {
+            monthGod: monthGod,
+            dayGod: dayGod,
+            hourGod: hourGod,
+            monthIndex: monthGodIndex,
+            dayIndex: dayGodIndex,
+            hourIndex: hourGodIndex
+        }
+    };
+    document.getElementById('json').innerHTML = '<strong>完整 JSON（可直接複製給其他程式使用）：</strong><br>' + JSON.stringify(fullResult, null, 2);
+    document.getElementById('json').style.display = 'block';
+}
+
+// ==================== 手動推算時神 ====================
+function showHourModal() {
+    document.getElementById('hourModal').style.display = 'block';
+}
+
+function hideHourModal() {
+    document.getElementById('hourModal').style.display = 'none';
+}
+
+function calculateManualHourGod() {
+    const hourPos = parseInt(document.getElementById('manualHour').value);
+    if (isNaN(hourPos) || hourPos < 1 || hourPos > 12) {
+        alert('請輸入 1 到 12 的數字');
+        return;
+    }
+
+    const hourGodIndex = (currentDayGodIndex + (hourPos - 1)) % 6;
+    const newHourGod = liurenGods[hourGodIndex];
+
+    const cell = document.getElementById('hourGodCell');
+    if (cell) {
+        cell.textContent = newHourGod;
+    }
+
+    hideHourModal();
+}
+
+// 初始載入現在香港時間並直接起課
+const now = new Date();
+const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+queryLiuren();
+</script>
+</body>
+</html>
