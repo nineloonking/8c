@@ -164,3 +164,82 @@ window.getSolarTerms = async function(year) {
         return { error: '節氣計算錯誤' };
     }
 };
+
+// ====================== 反向推算功能：由四柱反推日期時間 ======================
+function parsePillar(pillar) {
+    if (!pillar || pillar.length !== 2) return null;
+    const stemChar = pillar[0];
+    const branchChar = pillar[1];
+    const stemIdx = stems.indexOf(stemChar);
+    const branchIdx = BranchesNamesshort.indexOf(branchChar);
+    if (stemIdx < 1 || branchIdx < 1) return null;
+    return {
+        stem: stemChar,
+        branch: branchChar,
+        stemIdx: stemIdx,
+        branchIdx: branchIdx,
+        str: pillar
+    };
+}
+
+// ====================== 優化後的反向推算（大幅加速） ======================
+window.findDatesFromPillars = function(yearPillarStr, monthPillarStr, dayPillarStr, hourPillarStr, 
+    startYear = 1950, endYear = 2050, maxResults = 20) {
+
+    const yearP = parsePillar(yearPillarStr);
+    const monthP = parsePillar(monthPillarStr);
+    const dayP = parsePillar(dayPillarStr);
+    const hourP = parsePillar(hourPillarStr);
+
+    if (!yearP || !monthP || !dayP || !hourP) {
+        return { error: '四柱格式錯誤！請輸入如「甲子」「乙丑」這種格式' };
+    }
+
+    const results = [];
+    const startTime = Date.now();
+
+    // 優化策略：先固定年份找日柱（日柱變化最快）
+    for (let y = startYear; y <= endYear; y++) {
+        // 檢查年柱
+        const yearBazi = window.getBazi(y, 6, 15, 12, 0);
+        if (yearBazi.pillars.year !== yearPillarStr) continue;
+
+        for (let m = 1; m <= 12; m++) {
+            const maxD = new Date(y, m, 0).getDate();
+            for (let d = 1; d <= maxD; d++) {
+                // 只檢查日柱和時柱（大幅減少計算量）
+                const dayBazi = window.getBazi(y, m, d, 12, 30);
+                
+                if (dayBazi.pillars.day === dayPillarStr && 
+                    dayBazi.pillars.month === monthPillarStr) {
+
+                    // 找到符合日柱和月柱，再檢查時柱
+                    for (let h = 0; h < 24; h += 2) {
+                        const bazi = window.getBazi(y, m, d, h, 30);
+                        if (bazi.pillars.hour === hourPillarStr) {
+                            results.push({
+                                year: y,
+                                month: m,
+                                day: d,
+                                hour: h,
+                                minute: 30,
+                                timeRange: `${h.toString().padStart(2,'0')}:00 ~ ${(h+2).toString().padStart(2,'0')}:00`,
+                                pillars: bazi.pillars,
+                                baziString: bazi.baziString,
+                                lunar: bazi.lunar ? bazi.lunar.full : ''
+                            });
+
+                            if (results.length >= maxResults) {
+                                console.log(`反向推算完成，耗時 ${Date.now() - startTime}ms`);
+                                return results.sort((a,b) => a.year - b.year || a.month - b.month || a.day - b.day);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    console.log(`反向推算完成，耗時 ${Date.now() - startTime}ms`);
+    return results.sort((a,b) => a.year - b.year || a.month - b.month || a.day - b.day);
+};
