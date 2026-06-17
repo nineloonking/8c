@@ -78,6 +78,74 @@
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importRecords(event)">
         </label>
     </div>
+
+
+	<!-- 反向推算區（直書按鍵版） -->
+	<div style="margin: 18px auto; max-width: 820px; background: #fffaf0; padding: 20px; border-radius: 16px; border: 2px solid #D2B48C;">
+		<div style="display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; margin: 25px 0;">
+			
+			<!-- 時柱 -->
+			<div style="text-align: center;">
+				<div style="margin-bottom: 8px; font-weight: bold; color: #8B4513;">時柱</div>
+				<button id="btnHour" onclick="showPillarSelector('hour', 'btnHour')"
+						style="writing-mode: vertical-rl; text-orientation: mixed; 
+							   padding: 8px 6px; font-size: 1.0em; min-height: 72px; min-width: 32px;
+							   border: 2px solid #8B4513; border-radius: 12px; background: white; 
+							   cursor: pointer; transition: all 0.2s;">
+					選擇
+				</button>
+			</div>
+
+			<!-- 日柱 -->
+			<div style="text-align: center;">
+				<div style="margin-bottom: 8px; font-weight: bold; color: #8B4513;">日柱</div>
+				<button id="btnDay" onclick="showPillarSelector('day', 'btnDay')"
+						style="writing-mode: vertical-rl; text-orientation: mixed; 
+							   padding: 8px 6px; font-size: 1.0em; min-height: 72px; min-width: 32px;
+							   border: 2px solid #8B4513; border-radius: 12px; background: white; 
+							   cursor: pointer; transition: all 0.2s;">
+					選擇
+				</button>
+			</div>
+
+			<!-- 月柱 -->
+			<div style="text-align: center;">
+				<div style="margin-bottom: 8px; font-weight: bold; color: #8B4513;">月柱</div>
+				<button id="btnMonth" onclick="showPillarSelector('month', 'btnMonth')"
+						style="writing-mode: vertical-rl; text-orientation: mixed; 
+							   padding: 8px 6px; font-size: 1.0em; min-height: 72px; min-width: 32px;
+							   border: 2px solid #8B4513; border-radius: 12px; background: white; 
+							   cursor: pointer; transition: all 0.2s;">
+					選擇
+				</button>
+			</div>
+
+			<!-- 年柱 -->
+			<div style="text-align: center;">
+				<div style="margin-bottom: 8px; font-weight: bold; color: #8B4513;">年柱</div>
+				<button id="btnYear" onclick="showPillarSelector('year', 'btnYear')"
+						style="writing-mode: vertical-rl; text-orientation: mixed; 
+							   padding: 8px 6px; font-size: 1.0em; min-height: 72px; min-width: 32px;
+							   border: 2px solid #8B4513; border-radius: 12px; background: white; 
+							   cursor: pointer; transition: all 0.2s;">
+					選擇
+				</button>
+			</div>
+		</div>
+
+		<button onclick="doReverseBaziWithSelector()" 
+				style="width: 100%; padding: 14px; background: #d4af37; color: #8B4513; 
+					   border: none; border-radius: 12px; font-size: 1.15em; font-weight: bold; cursor: pointer;">
+			開始反向推算
+		</button>
+
+		<div id="reverseResult" style="margin-top: 20px; min-height: 80px; background: white; 
+			 padding: 18px; border-radius: 10px; border: 1px solid #D2B48C;"></div>
+	</div>
+
+
+
+
 </div>
 
 <div id="here" class="result-box"></div>
@@ -391,6 +459,161 @@ function showTenGodDetail(godName) {
 
 window.showTenGodDetail = showTenGodDetail;
 
+async function doReverseBazi() {
+    const y = document.getElementById('revYear').value.trim();
+    const m = document.getElementById('revMonth').value.trim();
+    const d = document.getElementById('revDay').value.trim();
+    const h = document.getElementById('revHour').value.trim();
+
+    if (!y || !m || !d || !h) {
+        alert("請輸入完整四柱！");
+        return;
+    }
+
+    const resultBox = document.getElementById('reverseResult');
+    resultBox.innerHTML = "計算中...";
+
+    // 呼叫反向函數（預設搜尋 1900~2100 年，最多 30 筆）
+    const results = window.findDatesFromPillars(y, m, d, h, 1900, 2100, 30);
+
+    if (results.error) {
+        resultBox.innerHTML = `<span style="color:red;">${results.error}</span>`;
+        return;
+    }
+
+    if (results.length === 0) {
+        resultBox.innerHTML = "在 1900~2100 年範圍內找不到符合的日期。";
+        return;
+    }
+
+    let html = `<strong>找到 ${results.length} 筆可能日期：</strong><br><br>`;
+    results.forEach((r, i) => {
+        html += `${i+1}. ${r.year}年${r.month}月${r.day}日　${r.timeRange}<br>`;
+        html += `　　四柱：${r.baziString}　農曆：${r.lunar}<br><br>`;
+    });
+
+    resultBox.innerHTML = html;
+}
+
+// ====================== 反向推算 - 60甲子選擇器 ======================
+const stemsList = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const branchesList = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+
+// 產生 60 甲子
+function getAllJiaZi() {
+    const jiazi = [];
+    for (let i = 0; i < 60; i++) {
+        const stem = stemsList[i % 10];
+        const branch = branchesList[i % 12];
+        jiazi.push(stem + branch);
+    }
+    return jiazi;
+}
+
+let selectedPillars = {
+    year: "",
+    month: "",
+    day: "",
+    hour: ""
+};
+
+// ====================== 反向推算 - 60甲子選擇器（直書版） ======================
+function showPillarSelector(type, buttonId) {
+    const allJiaZi = getAllJiaZi();
+    
+    let gridHTML = `<div style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; max-height: 360px; overflow-y: auto; padding: 8px;">`;
+    
+    allJiaZi.forEach(jz => {
+        gridHTML += `
+            <button onclick="selectJiaZi('${type}', '${jz}', '${buttonId}')" 
+                    style="padding: 6px 3px; font-size: 0.8em; border: 1px solid #D2B48C; 
+                           border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s;">
+                ${jz}
+            </button>`;
+    });
+    
+    gridHTML += `</div>`;
+
+    const titleMap = {
+        year: "選擇年柱",
+        month: "選擇月柱",
+        day: "選擇日柱",
+        hour: "選擇時柱"
+    };
+
+    showMessageBox(titleMap[type], gridHTML);
+}
+
+function selectJiaZi(type, jiazi, buttonId) {
+    // 關閉 MessageBox
+    const modal = document.getElementById('customMessageBox');
+    if (modal) modal.remove();
+
+    // 更新按鍵文字
+    const btn = document.getElementById(buttonId);
+    if (btn) {
+        btn.innerHTML = jiazi;
+        btn.style.fontWeight = 'bold';
+        btn.style.color = '#8B4513';
+    }
+
+    // 儲存選擇
+    selectedPillars[type] = jiazi;
+}
+
+// 執行反向推算
+function doReverseBaziWithSelector() {
+    // 從按鍵文字讀取四柱
+    const yearBtn = document.getElementById('btnYear');
+    const monthBtn = document.getElementById('btnMonth');
+    const dayBtn = document.getElementById('btnDay');
+    const hourBtn = document.getElementById('btnHour');
+
+    const year = yearBtn ? yearBtn.innerText.trim() : '';
+    const month = monthBtn ? monthBtn.innerText.trim() : '';
+    const day = dayBtn ? dayBtn.innerText.trim() : '';
+    const hour = hourBtn ? hourBtn.innerText.trim() : '';
+
+    // 檢查是否都已選擇
+    if (!year || year === '選擇' || 
+        !month || month === '選擇' || 
+        !day || day === '選擇' || 
+        !hour || hour === '選擇') {
+        alert("請先把四柱全部選擇完畢！");
+        return;
+    }
+
+    const resultBox = document.getElementById('reverseResult');
+    resultBox.innerHTML = "正在反向推算中，請稍候...";
+
+    // 執行反向推算
+    //const results = window.findDatesFromPillars(year, month, day, hour, 1900, 2100, 40);
+	// 在 doReverseBaziWithSelector() 中
+	const results = window.findDatesFromPillars(year, month, day, hour, 1940, 2060, 25);
+
+    if (results.error) {
+        resultBox.innerHTML = `<span style="color:red;">${results.error}</span>`;
+        return;
+    }
+
+    if (results.length === 0) {
+        resultBox.innerHTML = "在 1900~2100 年範圍內找不到符合的日期。";
+        return;
+    }
+
+    // 顯示結果
+    let html = `<strong>共找到 ${results.length} 筆可能日期：</strong><br><br>`;
+    
+    results.forEach((r, i) => {
+        html += `<div style="margin-bottom:12px; padding:10px; background:white; border-radius:8px; border:1px solid #D2B48C;">`;
+        html += `<strong>${i+1}. ${r.year}年${r.month}月${r.day}日　${r.timeRange}</strong><br>`;
+        html += `四柱：${r.baziString}<br>`;
+        if (r.lunar) html += `農曆：${r.lunar}`;
+        html += `</div>`;
+    });
+
+    resultBox.innerHTML = html;
+}
 </script>
 
 </body>
