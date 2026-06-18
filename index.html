@@ -23,6 +23,24 @@
     table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.35em; }
     .pillars td { padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle; }
     .hidden-stem { font-size: 0.70em; line-height: 1.05; color: #555; margin: 1px 0; }
+	
+/* 陽干/陽支：極淺金色背景 + 白色邊框 + 圓角 */
+    .yang-stem, .yang-branch { 
+        background: #fffdf0; 
+        padding: 1px 3px; 
+        border-radius: 18px;
+        border: 1px solid #222222;     /* 白色邊框 */
+        box-shadow: 0 0 3px rgba(255,255,255,0.8);
+    }
+
+    /* 陰干/陰支：較深灰色背景 + 黑色邊框 + 圓角 */
+    .yin-stem, .yin-branch { 
+        background: #c1c1c1; 
+        padding: 1px 3px; 
+        border-radius: 18px;
+        border: 1px solid #ffffff;     /* 黑色邊框 */
+        box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
 
     .gods-table { margin: 25px auto 0; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.0em; }
     .gods-table th, .gods-table td { padding: 10px 8px; border: 1px solid #D2B48C; text-align: center; }
