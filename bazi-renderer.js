@@ -98,10 +98,10 @@ async function renderBaziFate() {
 
     // 年份參考行
     pillarsHTML += `<tr style="font-size:0.6em;">`;
-    pillarsHTML += `<td>${birthYear + 105}<br>${birthYear + 45}</td>`;
-    pillarsHTML += `<td>${birthYear + 90}<br>${birthYear + 30}</td>`;
-    pillarsHTML += `<td>${birthYear + 75}<br>${birthYear + 15}</td>`;
-    pillarsHTML += `<td>${birthYear + 60}<br>${birthYear}</td>`;
+    pillarsHTML += `<td>${birthYear + 105}<br>${birthYear + 45}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.hour + baziResult.branches.hour)}</span></td>`;
+    pillarsHTML += `<td>${birthYear + 90}<br>${birthYear + 30}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.day + baziResult.branches.day)}</span></td>`;
+    pillarsHTML += `<td>${birthYear + 75}<br>${birthYear + 15}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.month + baziResult.branches.month)}</span></td>`;
+    pillarsHTML += `<td>${birthYear + 60}<br>${birthYear}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.year + baziResult.branches.year)}</span></td>`;
     
     // 運的怕X
     let luckStemText = '';
@@ -120,9 +120,12 @@ async function renderBaziFate() {
     } else {
         luckStemText = isMale ? '怕交' : '怕脫';
     }
-    pillarsHTML += `<td>${luckStemText}<br>${daYunYear || ''}</td>`;
-    pillarsHTML += `<td>${currentRealYear - birthYear + 1}歲<br>${currentRealYear}</td>`;
+    pillarsHTML += `<td>${luckStemText}<br>${daYunYear || ''}<br><span class="jiazi-number">${getJiaZiNumber(currentDaYunStem + currentDaYunBranch)}</span></td>`;
+    pillarsHTML += `<td>${currentRealYear - birthYear + 1}歲<br>${currentRealYear}<br><span class="jiazi-number">${getJiaZiNumber(currentLiuNianStem + currentLiuNianBranch)}</span></td>`;
     pillarsHTML += `</tr>`;
+
+	
+	
 
     // 柱位含義行
     pillarsHTML += `<tr style="font-size:0.72em; background:#f9f7f0; line-height:1.3;">`;
@@ -184,7 +187,7 @@ async function renderBaziFate() {
     pillarsHTML += `<td><span style="color:${liuBranchColor}" class="${isYangLiuBranch ? 'yang-branch' : 'yin-branch'}">${currentLiuNianBranch}</span></td>`;
     pillarsHTML += `</tr>`;
 
-    // 納音五行（已加上點擊 MessageBox 功能）
+    // 納音五行 + 五勝六忌標記
     pillarsHTML += `<tr>`;
     const naYinColumns = [
         baziResult.stems.hour + baziResult.branches.hour,
@@ -199,54 +202,76 @@ async function renderBaziFate() {
         const naYin = data.naYin[key] || "——";
         const element = naYin.slice(-1) === "金" ? "金" : naYin.slice(-1) === "木" ? "木" : naYin.slice(-1) === "水" ? "水" : naYin.slice(-1) === "火" ? "火" : "土";
         const color = data.fiveColors[element] || "#555";
-        
-        // 取得柱位名稱（時日月年運流）
-        const pillarNames = ["時", "日", "月", "年", "運", "流"];
-        const pillarName = pillarNames[index];
 
-		pillarsHTML += `<td onclick="showNaYinDetail('${naYin}')" style="cursor:pointer;">`;
-        pillarsHTML += `<span class="hidden-stem" style="color:${color}; writing-mode:vertical-rl; text-orientation:mixed; padding: 0px 2px; min-height:46px;">${naYin}</span>`;
+        // 五勝六忌標記
+        let markHTML = "";
+        const relations = data.naYinRelations || { fiveWins: [], sixTaboos: [] };
+
+        const isWinner = relations.fiveWins.some(r => r.winner === naYin);
+        const isLoser = relations.fiveWins.some(r => r.loser === naYin);
+        const isAvoider = relations.sixTaboos.some(r => r.avoider === naYin);
+        const isAvoided = relations.sixTaboos.some(r => r.avoided === naYin);
+
+        if (isWinner) markHTML += `<span style="color:#006400; font-size:0.65em;">勝</span> `;
+        if (isLoser) markHTML += `<span style="color:#8B0000; font-size:0.65em;">負</span> `;
+        if (isAvoider) markHTML += `<span style="color:#8B0000; font-size:0.65em;">忌</span> `;
+        if (isAvoided) markHTML += `<span style="color:#006400; font-size:0.65em;">宜</span> `;
+
+        pillarsHTML += `<td onclick="showNaYinDetail('${naYin}')" style="cursor:pointer; vertical-align:top;">`;
+        pillarsHTML += `<span class="naYin-text" style="color:${color}; writing-mode:vertical-rl; text-orientation:mixed; padding: 0px 2px; min-height:46px;">${naYin}</span>`;
+        if (markHTML) {
+            pillarsHTML += `<br>${markHTML}`;
+        }
         pillarsHTML += `</td>`;
     });
     pillarsHTML += `</tr><tr>`;
 
-    // 支藏（已修正 color 錯誤 + 加陰陽陰影）
-    branches.forEach(branch => {
-        const hiddens = data.hiddenStems[branch] || [];
-        let html = hiddens.map(h => {
-            const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-            const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-            return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>`;
-        }).join('<br>');
-        pillarsHTML += `<td style="padding:2px 4px;">${html}</td>`;
-    });
-    const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
-    let daHiddenHTML = daHiddens.map(h => {
-        const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-        const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-        return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>`;
-    }).join('<br>');
-    pillarsHTML += `<td style="padding:2px 4px;">${daHiddenHTML}</td>`;
-    const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
-    let liuHiddenHTML = liuHiddens.map(h => {
-        const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-        const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-        return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>`;
-    }).join('<br>');
-    pillarsHTML += `<td style="padding:2px 4px;">${liuHiddenHTML}</td>`;
+
+
+
+
+	// 支藏（藏干） + 右邊加上對應十神（保留 hidden-stem 風格）
+	branches.forEach(branch => {
+		const hiddens = data.hiddenStems[branch] || [];
+		let html = hiddens.map(h => {
+			const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+			const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+			const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+			const tenGod = data.tenGods[dayStem][idx] || "——";
+			
+			return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+					<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
+		}).join('<br>');
+		pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${html}</td>`;
+	});
+
+	// 當前大運支藏 + 十神
+	const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
+	let daHiddenHTML = daHiddens.map(h => {
+		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+		const tenGod = data.tenGods[dayStem][idx] || "——";
+		
+		return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+				<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
+	}).join('<br>');
+	pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${daHiddenHTML}</td>`;
+
+	// 當前流年支藏 + 十神
+	const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
+	let liuHiddenHTML = liuHiddens.map(h => {
+		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+		const tenGod = data.tenGods[dayStem][idx] || "——";
+		
+		return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+				<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
+	}).join('<br>');
+	pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${liuHiddenHTML}</td>`;
     pillarsHTML += `</tr>`;
 
-    // 藏干十神行
-    pillarsHTML += `<tr>`;
-    const hiddenGodsColumns = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year, currentDaYunBranch, currentLiuNianBranch];
-    hiddenGodsColumns.forEach(branch => {
-        const hiddens = data.hiddenStems[branch] || [];
-        let html = hiddens.map(h => {
-            const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-            return `<span class="hidden-stem" style="color:black;">${data.tenGods[dayStem][idx]}</span>`;
-        }).join('<br>');
-        pillarsHTML += `<td style="padding:2px 4px;">${html}</td>`;
-    });
     pillarsHTML += `</tr></table>`;
 
     // 格局表（保持原樣）
@@ -537,3 +562,21 @@ function showNaYinDetail(naYinName) {
 }
 
 window.showNaYinDetail = showNaYinDetail;
+
+// 取得六十甲子號碼 (1~60) - 正確版
+function getJiaZiNumber(pillar) {
+    if (!pillar || pillar.length !== 2) return "—";
+    
+    const stems = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+    const branches = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+    
+    const allJiaZi = [];
+    for (let i = 0; i < 60; i++) {
+        const s = stems[i % 10];
+        const b = branches[i % 12];
+        allJiaZi.push(s + b);
+    }
+    
+    const index = allJiaZi.indexOf(pillar);
+    return index !== -1 ? index + 1 : "—";
+}
