@@ -22,7 +22,7 @@
     
     table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.35em; }
     .pillars td { padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle; }
-    .hidden-stem { font-size: 0.70em; line-height: 1.05; color: #555; margin: 1px 0; }
+    .hidden-stem { font-size: 0.35em; line-height: 1.0; color: #555; margin: 1px 0; }
 	
 /* 陽干/陽支：極淺金色背景 + 白色邊框 + 圓角 */
     .yang-stem, .yang-branch { 
@@ -40,6 +40,24 @@
         border-radius: 18px;
         border: 1px solid #ffffff;     /* 黑色邊框 */
         box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    }
+	/* 納音專用字型風格 */
+    .naYin-text {
+        font-size: 0.65em;           /* 可自行調整大小 */
+        font-weight: normal;
+        color: #8B4513;              /* 納音專用顏色 */
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        letter-spacing: 1px;
+        text-shadow: 0 1px 20px rgba(0,0,0,0.2);  /* 輕微陰影 */
+    }
+	/* 六十甲子號碼專用樣式 */
+    .jiazi-number {
+        font-size: 0.75em;
+        color: #888;
+        font-weight: normal;
+        display: block;
+        margin-top: 2px;
     }
 
     .gods-table { margin: 25px auto 0; border-collapse: collapse; width: 100%; max-width: 680px; font-size: 1.0em; }
@@ -95,11 +113,16 @@
             <button onclick="document.getElementById('importFile').click()" style="padding:10px 15px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold;">匯入</button>
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importRecords(event)">
         </label>
+		<!-- 新增：反推 ON/OFF 按鍵 -->
+        <button id="reverseToggleBtn" onclick="toggleReverseBazi()" 
+                style="padding:10px 15px; background:#e5e7eb; color:#374151; border:none; border-radius:8px; margin:5px; font-weight:bold;">
+            反推 Off
+        </button>
     </div>
 
 
 	<!-- 反向推算區（直書按鍵版） -->
-	<div style="margin: 18px auto; max-width: 820px; background: #fffaf0; padding: 20px; border-radius: 16px; border: 2px solid #D2B48C;">
+	<div id="reverseBaziArea" style="margin: 18px auto; max-width: 820px; background: #fffaf0; padding: 20px; border-radius: 16px; border: 2px solid #D2B48C;">
 		<div style="display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; margin: 25px 0;">
 			
 			<!-- 時柱 -->
@@ -375,9 +398,28 @@ function loadRecordOptions() {
     });
 }
 
+// 頁面載入時初始化
 window.addEventListener('load', () => {
     loadRecordOptions();
+    initReverseBazi();     // 新增這一行
 });
+
+// 初始化反推區（獨立函數，類似 loadRecordOptions）
+function initReverseBazi() {
+    reverseBaziEnabled = false;   // 預設 Off
+    
+    const btn = document.getElementById('reverseToggleBtn');
+    if (btn) {
+        btn.textContent = '反推 Off';
+        btn.style.backgroundColor = '#e5e7eb';
+        btn.style.color = '#374151';
+    }
+
+    const reverseArea = document.getElementById('reverseBaziArea');
+    if (reverseArea) {
+        reverseArea.style.display = 'none';
+    }
+}
 
 function exportRecords() {
     const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
@@ -579,59 +621,98 @@ function selectJiaZi(type, jiazi, buttonId) {
     selectedPillars[type] = jiazi;
 }
 
-// 執行反向推算
-function doReverseBaziWithSelector() {
-    // 從按鍵文字讀取四柱
-    const yearBtn = document.getElementById('btnYear');
-    const monthBtn = document.getElementById('btnMonth');
-    const dayBtn = document.getElementById('btnDay');
-    const hourBtn = document.getElementById('btnHour');
+	// 執行反向推算
+	function doReverseBaziWithSelector() {
+		// 從按鍵文字讀取四柱
+		const yearBtn = document.getElementById('btnYear');
+		const monthBtn = document.getElementById('btnMonth');
+		const dayBtn = document.getElementById('btnDay');
+		const hourBtn = document.getElementById('btnHour');
 
-    const year = yearBtn ? yearBtn.innerText.trim() : '';
-    const month = monthBtn ? monthBtn.innerText.trim() : '';
-    const day = dayBtn ? dayBtn.innerText.trim() : '';
-    const hour = hourBtn ? hourBtn.innerText.trim() : '';
+		const year = yearBtn ? yearBtn.innerText.trim() : '';
+		const month = monthBtn ? monthBtn.innerText.trim() : '';
+		const day = dayBtn ? dayBtn.innerText.trim() : '';
+		const hour = hourBtn ? hourBtn.innerText.trim() : '';
 
-    // 檢查是否都已選擇
-    if (!year || year === '選擇' || 
-        !month || month === '選擇' || 
-        !day || day === '選擇' || 
-        !hour || hour === '選擇') {
-        alert("請先把四柱全部選擇完畢！");
-        return;
-    }
+		// 檢查是否都已選擇
+		if (!year || year === '選擇' || 
+			!month || month === '選擇' || 
+			!day || day === '選擇' || 
+			!hour || hour === '選擇') {
+			alert("請先把四柱全部選擇完畢！");
+			return;
+		}
 
-    const resultBox = document.getElementById('reverseResult');
-    resultBox.innerHTML = "正在反向推算中，請稍候...";
+		const resultBox = document.getElementById('reverseResult');
+		resultBox.innerHTML = "正在反向推算中，請稍候...";
 
-    // 執行反向推算
-    //const results = window.findDatesFromPillars(year, month, day, hour, 1900, 2100, 40);
-	// 在 doReverseBaziWithSelector() 中
-	const results = window.findDatesFromPillars(year, month, day, hour, 1940, 2060, 25);
+		// 執行反向推算
+		//const results = window.findDatesFromPillars(year, month, day, hour, 1900, 2100, 40);
+		// 在 doReverseBaziWithSelector() 中
+		const results = window.findDatesFromPillars(year, month, day, hour, 1940, 2060, 25);
 
-    if (results.error) {
-        resultBox.innerHTML = `<span style="color:red;">${results.error}</span>`;
-        return;
-    }
+		if (results.error) {
+			resultBox.innerHTML = `<span style="color:red;">${results.error}</span>`;
+			return;
+		}
 
-    if (results.length === 0) {
-        resultBox.innerHTML = "在 1900~2100 年範圍內找不到符合的日期。";
-        return;
-    }
+		if (results.length === 0) {
+			resultBox.innerHTML = "在 1900~2100 年範圍內找不到符合的日期。";
+			return;
+		}
 
-    // 顯示結果
-    let html = `<strong>共找到 ${results.length} 筆可能日期：</strong><br><br>`;
-    
-    results.forEach((r, i) => {
-        html += `<div style="margin-bottom:12px; padding:10px; background:white; border-radius:8px; border:1px solid #D2B48C;">`;
-        html += `<strong>${i+1}. ${r.year}年${r.month}月${r.day}日　${r.timeRange}</strong><br>`;
-        html += `四柱：${r.baziString}<br>`;
-        if (r.lunar) html += `農曆：${r.lunar}`;
-        html += `</div>`;
-    });
+		// 顯示結果
+		let html = `<strong>共找到 ${results.length} 筆可能日期：</strong><br><br>`;
+		
+		results.forEach((r, i) => {
+			const dateStr = `${r.year}-${r.month.toString().padStart(2,'0')}-${r.day.toString().padStart(2,'0')}`;
+			const timeStr = `${r.hour.toString().padStart(2,'0')}:00`;
+			
+			html += `<div onclick="fillBaziDate('${dateStr}', '${timeStr}')" 
+						 style="margin-bottom:12px; padding:10px; background:white; border-radius:8px; border:1px solid #D2B48C; cursor:pointer; transition: all 0.2s;"
+						 onmouseover="this.style.backgroundColor='#f0f8ff'" 
+						 onmouseout="this.style.backgroundColor='white'">
+				<strong>${i+1}. ${r.year}年${r.month}月${r.day}日　${r.timeRange}</strong><br>`;
+			html += `四柱：${r.baziString}<br>`;
+			if (r.lunar) html += `農曆：${r.lunar}`;
+			html += `</div>`;
+		});
 
-    resultBox.innerHTML = html;
-}
+		resultBox.innerHTML = html;
+	}
+
+	// 點擊反推結果 → 自動填入日期時間並重新計算
+	function fillBaziDate(dateStr, timeStr) {
+		document.getElementById('mydate').value = dateStr;
+		document.getElementById('mytime').value = timeStr;
+		
+		// 自動重新計算八字
+		queryBaziFate();
+		
+		// 可選：捲動到頂部
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+
+	// 反推功能 ON/OFF 切換（預設 Off + 不記住）
+	let reverseBaziEnabled = false;   // 預設 Off
+
+	function toggleReverseBazi() {
+		reverseBaziEnabled = !reverseBaziEnabled;
+
+		const btn = document.getElementById('reverseToggleBtn');
+		if (btn) {
+			btn.textContent = reverseBaziEnabled ? '反推 On' : '反推 Off';
+			btn.style.backgroundColor = reverseBaziEnabled ? '#10b981' : '#e5e7eb';
+			btn.style.color = reverseBaziEnabled ? 'white' : '#374151';
+		}
+
+		// 控制反向推算區顯示
+		const reverseArea = document.getElementById('reverseBaziArea');
+		if (reverseArea) {
+			reverseArea.style.display = reverseBaziEnabled ? 'block' : 'none';
+		}
+	}
+
 </script>
 
 </body>
