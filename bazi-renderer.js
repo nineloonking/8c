@@ -165,26 +165,33 @@ async function renderBaziFate() {
         const isYang = ["甲","丙","戊","庚","壬"].includes(stem);
         pillarsHTML += `<td style="background:#fff2cc;"><span style="color:${color}; font-size:1.15em;" class="${isYang ? 'yang-stem' : 'yin-stem'}">${stem}</span></td>`;
     });
-    const daStemColor = data.fiveColors[data.stemsElement[currentDaYunStem]];
-    const isYangDaStem = ["甲","丙","戊","庚","壬"].includes(currentDaYunStem);
-    pillarsHTML += `<td><span style="color:${daStemColor}" class="${isYangDaStem ? 'yang-stem' : 'yin-stem'}">${currentDaYunStem}</span></td>`;
-    const liuStemColor = data.fiveColors[data.stemsElement[currentLiuNianStem]];
-    const isYangLiuStem = ["甲","丙","戊","庚","壬"].includes(currentLiuNianStem);
-    pillarsHTML += `<td><span style="color:${liuStemColor}" class="${isYangLiuStem ? 'yang-stem' : 'yin-stem'}">${currentLiuNianStem}</span></td>`;
+	// 當前大運天干
+	const daStemColor = data.fiveColors[data.stemsElement[currentDaYunStem]];
+	const isYangDaStem = ["甲","丙","戊","庚","壬"].includes(currentDaYunStem);
+	pillarsHTML += `<td><span style="color:${daStemColor}; font-size:1.15em;" class="${isYangDaStem ? 'yang-stem' : 'yin-stem'}">${currentDaYunStem}</span></td>`;
+
+	// 當前流年天干
+	const liuStemColor = data.fiveColors[data.stemsElement[currentLiuNianStem]];
+	const isYangLiuStem = ["甲","丙","戊","庚","壬"].includes(currentLiuNianStem);
+	pillarsHTML += `<td><span style="color:${liuStemColor}; font-size:1.15em;" class="${isYangLiuStem ? 'yang-stem' : 'yin-stem'}">${currentLiuNianStem}</span></td>`;
     pillarsHTML += `</tr><tr>`;
 
-    // 地支行（已加陰陽陰影）
-    branches.forEach(branch => {
-        const color = data.fiveColors[data.branchesElement[branch]];
-        const isYang = ["子","寅","辰","午","申","戌"].includes(branch);
-        pillarsHTML += `<td style="background:#fff2cc;"><span style="color:${color}; font-size:1.15em;" class="${isYang ? 'yang-branch' : 'yin-branch'}">${branch}</span></td>`;
-    });    
-    const daBranchColor = data.fiveColors[data.branchesElement[currentDaYunBranch]];
-    const isYangDaBranch = ["子","寅","辰","午","申","戌"].includes(currentDaYunBranch);
-    pillarsHTML += `<td><span style="color:${daBranchColor}" class="${isYangDaBranch ? 'yang-branch' : 'yin-branch'}">${currentDaYunBranch}</span></td>`;
-    const liuBranchColor = data.fiveColors[data.branchesElement[currentLiuNianBranch]];
-    const isYangLiuBranch = ["子","寅","辰","午","申","戌"].includes(currentLiuNianBranch);
-    pillarsHTML += `<td><span style="color:${liuBranchColor}" class="${isYangLiuBranch ? 'yang-branch' : 'yin-branch'}">${currentLiuNianBranch}</span></td>`;
+	// 地支行（已加上 branch class）
+	branches.forEach(branch => {
+		const color = data.fiveColors[data.branchesElement[branch]];
+		const isYang = ["子","寅","辰","午","申","戌"].includes(branch);
+		pillarsHTML += `<td style="background:#fff2cc;"><span style="color:${color}; font-size:1.15em;" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${branch}</span></td>`;
+	});	
+
+	// 當前大運地支
+	const daBranchColor = data.fiveColors[data.branchesElement[currentDaYunBranch]];
+	const isYangDaBranch = ["子","寅","辰","午","申","戌"].includes(currentDaYunBranch);
+	pillarsHTML += `<td><span style="color:${daBranchColor}; font-size:1.15em;" class="branch ${isYangDaBranch ? 'yang-branch' : 'yin-branch'}">${currentDaYunBranch}</span></td>`;
+
+	// 當前流年地支
+	const liuBranchColor = data.fiveColors[data.branchesElement[currentLiuNianBranch]];
+	const isYangLiuBranch = ["子","寅","辰","午","申","戌"].includes(currentLiuNianBranch);
+	pillarsHTML += `<td><span style="color:${liuBranchColor}; font-size:1.15em;" class="branch ${isYangLiuBranch ? 'yang-branch' : 'yin-branch'}">${currentLiuNianBranch}</span></td>`;
     pillarsHTML += `</tr>`;
 
     // 納音五行 + 五勝六忌標記
@@ -212,10 +219,10 @@ async function renderBaziFate() {
         const isAvoider = relations.sixTaboos.some(r => r.avoider === naYin);
         const isAvoided = relations.sixTaboos.some(r => r.avoided === naYin);
 
-        if (isWinner) markHTML += `<span style="color:#006400; font-size:0.65em;">勝</span> `;
-        if (isLoser) markHTML += `<span style="color:#8B0000; font-size:0.65em;">負</span> `;
-        if (isAvoider) markHTML += `<span style="color:#8B0000; font-size:0.65em;">忌</span> `;
-        if (isAvoided) markHTML += `<span style="color:#006400; font-size:0.65em;">宜</span> `;
+        if (isWinner) markHTML += `<span style="color:#006400; font-size:0.6em;">勝</span> `;
+        if (isLoser) markHTML += `<span style="color:#8B0000; font-size:0.6em;">負</span> `;
+        if (isAvoider) markHTML += `<span style="color:#8B0000; font-size:0.6em;">忌</span> `;
+        if (isAvoided) markHTML += `<span style="color:#8B0000; font-size:0.6em;">忌</span> `;
 
         pillarsHTML += `<td onclick="showNaYinDetail('${naYin}')" style="cursor:pointer; vertical-align:top;">`;
         pillarsHTML += `<span class="naYin-text" style="color:${color}; writing-mode:vertical-rl; text-orientation:mixed; padding: 0px 2px; min-height:46px;">${naYin}</span>`;
@@ -347,11 +354,11 @@ async function renderBaziFate() {
         daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[s]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${s}</span></td>`;
     }
     daYunHTML += `</tr><tr>`;
-    for (let i = 7; i >= 0; i--) {
-        const b = daBranches[i];
-        const isYang = ["子","寅","辰","午","申","戌"].includes(b);
-        daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
-    }
+	for (let i = 7; i >= 0; i--) {
+		const b = daBranches[i];
+		const isYang = ["子","寅","辰","午","申","戌"].includes(b);
+		daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
+	}
     daYunHTML += `</tr></table>`;
 
     const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
@@ -407,17 +414,20 @@ async function renderBaziFate() {
             let tgCount = { "比肩":0, "劫財":0, "食神":0, "傷官":0, "偏財":0, "正財":0, "七殺":0, "正官":0, "偏印":0, "正印":0 };
             let cgCount = { ...tgCount };
 
-            let stemsList = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year];
-            if (includeLuck) stemsList.push(currentDaYunStem, currentLiuNianStem);
-            stemsList.forEach(stem => {
-                if (stem === dayStem) {
-                    tgCount["日元"] = (tgCount["日元"] || 0) + 1;
-                } else {
-                    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
-                    const god = data.tenGods[dayStem][idx];
-                    if (god) tgCount[god] = (tgCount[god] || 0) + 1;
-                }
-            });
+			// 天干統計（自己日干不計入比肩，其他位置的比肩要計入）
+			let stemsList = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year];
+			if (includeLuck) stemsList.push(currentDaYunStem, currentLiuNianStem);
+
+			stemsList.forEach((stem, idx) => {
+				if (idx === 1) {
+					// 自己日干（日元）不計入比肩
+					tgCount["日元"] = (tgCount["日元"] || 0) + 1;
+				} else {
+					const godIdx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
+					const god = data.tenGods[dayStem][godIdx];
+					if (god) tgCount[god] = (tgCount[god] || 0) + 1;
+				}
+			});
 
             let branchesList = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
             if (includeLuck) branchesList.push(currentDaYunBranch, currentLiuNianBranch);
@@ -498,7 +508,7 @@ async function renderBaziFate() {
 window.renderBaziFate = renderBaziFate;
 
 
-// 點擊納音 → MessageBox 詳細解釋（已加入納音五行解釋）
+// 點擊納音 → MessageBox 詳細解釋（已加入大運流年五勝六忌）
 function showNaYinDetail(naYinName) {
     const data = window.baziData;
     if (!data) {
@@ -512,18 +522,14 @@ function showNaYinDetail(naYinName) {
 
     // 取得六十甲子
     let jiaZiStr = meaning && meaning.pillars ? meaning.pillars.join("、") : "";
-
-    // 標題
     let title = naYinName;
     if (jiaZiStr) title += ` (${jiaZiStr})`;
 
     let contentHTML = "";
 
-    // === 第一行開始：納音五行解釋 ===
-    // 從納音名稱取最後一個字作為五行
+    // 五行屬性
     const element = naYinName.slice(-1);
     const five = fiveElements[element];
-
     if (five) {
         contentHTML += `<div style="background:#f9f7f0; padding:12px; border-radius:8px; margin-bottom:15px;">`;
         contentHTML += `<p style="margin:4px 0;"><strong>五音：</strong>${five.wuYin}</p>`;
@@ -537,7 +543,7 @@ function showNaYinDetail(naYinName) {
 
     // 納音本義
     if (meaning && meaning.content) {
-        contentHTML += `<p style="color:#444; line-height:1.7;">${meaning.content}</p>`;
+        contentHTML += `<p style="color:#444; line-height:1.7;">${meaning.content}</p><br>`;
     }
 
     // 五勝
@@ -557,6 +563,47 @@ function showNaYinDetail(naYinName) {
             contentHTML += `<p style="margin:3px 0;">${r.avoider} 忌 ${r.avoided}</p>`;
         });
     }
+
+    // ====================== 新增：出生至120歲的大運流年 ======================
+    const dateInput = document.getElementById('mydate').value;
+    const birthYear = dateInput ? parseInt(dateInput.split('-')[0]) : 1980;
+    const endYear = birthYear + 120;
+
+    let relatedHTML = `<p style="margin-top:18px; color:#8B4513; font-weight:bold;">出生至120歲會遇到的五勝六忌：</p>`;
+    let hasRelated = false;
+
+    // 收集所有相關納音
+    const relatedNaYins = new Set();
+    wins.forEach(r => { relatedNaYins.add(r.winner); relatedNaYins.add(r.loser); });
+    taboos.forEach(r => { relatedNaYins.add(r.avoider); relatedNaYins.add(r.avoided); });
+
+    for (let y = birthYear; y <= endYear; y++) {
+        const yearBazi = window.getBazi(y, 6, 15, 12, 0);
+        if (yearBazi.error) continue;
+
+        const yearPillar = yearBazi.stems.year + yearBazi.branches.year;
+        const yearNaYin = data.naYin[yearPillar];
+        if (!yearNaYin) continue;
+
+        if (relatedNaYins.has(yearNaYin)) {
+            hasRelated = true;
+            const isWin = wins.some(r => r.winner === yearNaYin || r.loser === yearNaYin);
+            const isTaboo = taboos.some(r => r.avoider === yearNaYin || r.avoided === yearNaYin);
+
+            let tag = "";
+            if (isWin) tag += `<span style="color:#006400;">勝</span>`;
+            if (isTaboo) tag += `<span style="color:#8B0000;">忌</span>`;
+
+            relatedHTML += `<p style="margin:3px 0;">${y}年　${yearNaYin}　${tag}</p>`;
+        }
+    }
+
+    if (hasRelated) {
+        contentHTML += relatedHTML;
+    } else {
+        contentHTML += `<p style="color:#666; margin-top:12px;">出生至120歲內無相關五勝六忌。</p>`;
+    }
+    // ====================== 新增結束 ======================
 
     showMessageBox(title, contentHTML);
 }
