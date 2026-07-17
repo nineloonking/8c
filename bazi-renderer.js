@@ -52,7 +52,7 @@ async function renderBaziFate() {
     const daysToNext = Math.floor((nextDateOnly - currentDateOnly) / 86400000) + 1;
     const daysToPrev = Math.floor((currentDateOnly - prevDateOnly) / 86400000) + 1;
 
-    // 大運計算
+    // 大運計算（改為12個）
     const birthYear = year;
     const yearStemIdx = stems.indexOf(baziResult.stems.year);
     const monthStemIdx = stems.indexOf(baziResult.stems.month);
@@ -68,7 +68,7 @@ async function renderBaziFate() {
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
     let curBranch = monthBranchIdx;
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 12; i++) {   // ← 改成 12
         if (forward) {
             curStem = (curStem % 10) + 1;
             curBranch = (curBranch % 12) + 1;
@@ -150,16 +150,20 @@ async function renderBaziFate() {
     
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     
-    // 十神行
+    // 十神行（已使用統一顏色邏輯）
     const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
-    pillarsHTML += `<tr>`;
+    const stemsListForCount = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
+    const branchesListForCount = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year, currentDaYunBranch, currentLiuNianBranch];
+
+	pillarsHTML += `<tr>`;
     stemsForGods.forEach((stem, i) => {
         if (i === 1) {
             const yuanText = isMale ? '元男' : '元女';
             pillarsHTML += `<td><span class="godsformat">${yuanText}</span></td>`;
         } else {
-            const god = data.tenGods[dayStem]["甲乙丙丁戊己庚辛壬癸".indexOf(stem)];
-            pillarsHTML += `<td><span class="godsformat">${god || '——'}</span></td>`;
+            const god = data.tenGods[dayStem]["甲乙丙丁戊己庚辛壬癸".indexOf(stem)] || '——';
+            const style = getTenGodStyle(god, dayStem, data, stemsListForCount, branchesListForCount);
+            pillarsHTML += `<td onclick="showTenGodDetail('${god}')" style="cursor:pointer;"><span class="godsformat" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${god}</span></td>`;
         }
     });
     pillarsHTML += `</tr>`;
@@ -295,47 +299,70 @@ async function renderBaziFate() {
     pillarsHTML += `</tr>`;
 
 
-	// 支藏（藏干） + 右邊加上對應十神（保留 hidden-stem 風格）
-	branches.forEach(branch => {
-		const hiddens = data.hiddenStems[branch] || [];
-		let html = hiddens.map(h => {
-			const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-			const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-			const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-			const tenGod = data.tenGods[dayStem][idx] || "——";
-			
-			return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-					<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
-		}).join('<br>');
-		pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${html}</td>`;
-	});
+// 支藏（藏干） + 右邊加上對應十神（已套用顏色邏輯）
+branches.forEach(branch => {
+    const hiddens = data.hiddenStems[branch] || [];
+    let html = hiddens.map(h => {
+        const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+        const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+        const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+        const tenGod = data.tenGods[dayStem][idx] || "——";
+        const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);  // 套用顏色
 
-	// 當前大運支藏 + 十神
-	const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
-	let daHiddenHTML = daHiddens.map(h => {
-		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-		const tenGod = data.tenGods[dayStem][idx] || "——";
-		
-		return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-				<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
-	}).join('<br>');
-	pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${daHiddenHTML}</td>`;
+        return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+                <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
+    }).join('<br>');
+    pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${html}</td>`;
+});
 
-	// 當前流年支藏 + 十神
-	const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
-	let liuHiddenHTML = liuHiddens.map(h => {
-		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-		const tenGod = data.tenGods[dayStem][idx] || "——";
-		
-		return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-				<span class="hidden-stem" style="color:black;">${tenGod}</span>`;
-	}).join('<br>');
-	pillarsHTML += `<td style="padding:0px 0px; line-height:1.0;">${liuHiddenHTML}</td>`;
+// 當前大運支藏 + 十神
+const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
+let daHiddenHTML = daHiddens.map(h => {
+    const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+    const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+    const tenGod = data.tenGods[dayStem][idx] || "——";
+    const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);
+
+    return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+            <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
+}).join('<br>');
+pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${daHiddenHTML}</td>`;
+
+// 當前流年支藏 + 十神
+const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
+let liuHiddenHTML = liuHiddens.map(h => {
+    const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+    const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+    const tenGod = data.tenGods[dayStem][idx] || "——";
+    const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);
+
+    return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
+            <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
+}).join('<br>');
+pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</td>`;
+
+    // ====================== 新增：神煞行（空亡） ======================
+    pillarsHTML += `<tr style="font-size:0.75em; background:#f9f7f0;">`;
+    const dayPillar = baziResult.stems.day + baziResult.branches.day;
+    const kongWangBranches = data.kongWang[dayPillar] || [];
+    
+    const allBranches = [
+        baziResult.branches.hour,
+        baziResult.branches.day,
+        baziResult.branches.month,
+        baziResult.branches.year,
+        currentDaYunBranch,
+        currentLiuNianBranch
+    ];
+
+    allBranches.forEach(branch => {
+        const isKongWang = kongWangBranches.includes(branch);
+        pillarsHTML += `<td style="color:${isKongWang ? '#8B0000' : '#666'};">${isKongWang ? '空亡' : '——'}</td>`;
+    });
     pillarsHTML += `</tr>`;
+
 
     pillarsHTML += `</tr></table>`;
 
@@ -359,19 +386,19 @@ async function renderBaziFate() {
     patternHTML += `</tr></table>`;
     //pillarsHTML += patternHTML;
 
-    // 大運表（已加陰陽陰影）
+    // 大運表（12個）
 	let daYunHTML = `<table class="daiyun">
-	<tr><td colspan="8" style="color:#666; font-size:0.8em; border-left: none; border-top: none; border-right: none; text-align: center;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
+	<tr><td colspan="12" style="color:#666; font-size:1.0em; border-left: none; border-top: none; border-right: none; text-align: center;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
 	
-    for (let i = 7; i >= 0; i--) daYunHTML += `<td style="font-size:0.6em;">${daYears[i]}</td>`;
+    for (let i = 11; i >= 0; i--) daYunHTML += `<td style="font-size:0.5em;">${daYears[i]}</td>`;
     daYunHTML += `</tr><tr>`;
-    for (let i = 7; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
         const s = daStems[i];
         const isYang = ["甲","丙","戊","庚","壬"].includes(s);
         daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[s]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${s}</span></td>`;
     }
     daYunHTML += `</tr><tr>`;
-	for (let i = 7; i >= 0; i--) {
+	for (let i = 11; i >= 0; i--) {
 		const b = daBranches[i];
 		const isYang = ["子","寅","辰","午","申","戌"].includes(b);
 		daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
@@ -414,17 +441,19 @@ async function renderBaziFate() {
             ${gregorianLine}<br>
             ${lunarLine}
         </div>
+
 		${pillarsHTML}           <!-- 四柱表 -->
         ${daYunHTML}             <!-- 大運表 -->
 
-        ${patternHTML}           <!-- 格局表（移到這裡） -->
+
         <div class="current-term">節氣：${currentTerm.name}　<span style="font-size:0.7em; color:#666;">（${currentTerm.type}）</span></div>
         <div class="days-container">
             <div class="days-box">距離上一個節令<br><strong>${prevJie.name}</strong>　${prevJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToPrev} 天</span></div>
             <div class="days-box">距離下一個節令<br><strong>${nextJie.name}</strong>　${nextJie.date}<br><span style="font-size:1.3em; color:#8B4513;">${daysToNext} 天</span></div>
         </div>
         <div class="source-info">✅ 節氣來源：香港天文台</div>
-        ${baziDataTable}
+		${patternHTML}           <!-- 格局表（移到這裡） -->
+		${baziDataTable}
     `;
 
 
@@ -483,27 +512,42 @@ async function renderBaziFate() {
                 numSpan.textContent = `${tg}/${cg}`;
 
                 let fontWeight = 'normal';
-                let bgColor = 'transparent';
                 let textColor = '#333';
+                let textShadow = 'none';
 
-                if (tg === 1 && cg === 1) {
+                // 計算有多少個十神達到 1/1，以及是否有其他強格
+                let oneOneCount = 0;
+                let hasStrongPattern = false;
+
+                allGods.forEach(g2 => {
+                    const t = tgCount[g2] || 0;
+                    const c = cgCount[g2] || 0;
+                    const tot = t + c;
+                    if (t === 1 && c === 1) oneOneCount++;
+                    if (tot >= 3) hasStrongPattern = true;
+                });
+
+                if (tg === 1 && cg === 1 && oneOneCount === 1 && !hasStrongPattern) {
+                    // 剛好只有一個 1/1 且沒有其他強格 → 紅色 + 黃色陰影
                     fontWeight = 'bold';
                     textColor = '#d32f2f';
-                    bgColor = '#f9e79f';
-                } else if (total >= 3 && total <= 4) {
-                    fontWeight = 'bold';
-                    bgColor = '#e0e0e0';
+                    textShadow = '0 0 6px #ffeb3b, 0 0 12px #ffeb3b';
+                } else if (total >= 3 && total <= 4 || (tg === 1 && cg === 1 && (oneOneCount > 1 || hasStrongPattern))) {
+                    // 3~4 或有多個 1/1 或有其他強格 → 灰色陰影（不用粗體）
+                    textShadow = '0 0 4px #888, 0 0 8px #666';
                 } else if (total >= 5 && total <= 6) {
-                    bgColor = '#a3d8ff';
+                    // 5~6 → 藍色陰影（不用粗體）
+                    textShadow = '0 0 5px #4da6ff, 0 0 10px #3399ff';
                 } else if (total >= 7) {
                     fontWeight = 'bold';
                     textColor = '#ffffff';
-                    bgColor = '#6b46c0';
+                    textShadow = '0 0 6px #6b46c0, 0 0 12px #8b5cf6';
                 }
 
                 cell.style.fontWeight = fontWeight;
-                cell.style.backgroundColor = bgColor;
                 cell.style.color = textColor;
+                cell.style.textShadow = textShadow;
+                cell.style.backgroundColor = 'transparent';
             });
 
             btn.style.backgroundColor = includeLuck ? '#8B4513' : '#f9f7f0';
@@ -652,4 +696,62 @@ function getJiaZiNumber(pillar) {
     
     const index = allJiaZi.indexOf(pillar);
     return index !== -1 ? index + 1 : "—";
+}
+
+// 十神顏色邏輯（完整版，可重用）
+function getTenGodStyle(god, dayStem, data, stemsList, branchesList) {
+    let tgCount = { "比肩":0, "劫財":0, "食神":0, "傷官":0, "偏財":0, "正財":0, "七殺":0, "正官":0, "偏印":0, "正印":0 };
+    let cgCount = { ...tgCount };
+
+    // 天干計數
+    stemsList.forEach((stem, idx) => {
+        if (idx === 1) {
+            tgCount["日元"] = (tgCount["日元"] || 0) + 1;
+        } else {
+            const godIdx = "甲乙丙丁戊己庚辛壬癸".indexOf(stem);
+            const g = data.tenGods[dayStem][godIdx];
+            if (g) tgCount[g] = (tgCount[g] || 0) + 1;
+        }
+    });
+
+    // 藏干計數
+    branchesList.forEach(branch => {
+        const hiddens = data.hiddenStems[branch] || [];
+        hiddens.forEach(h => {
+            const godIdx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+            const g = data.tenGods[dayStem][godIdx];
+            if (g) cgCount[g] = (cgCount[g] || 0) + 1;
+        });
+    });
+
+    const tg = tgCount[god] || 0;
+    const cg = cgCount[god] || 0;
+    const total = tg + cg;
+
+    let fontWeight = 'normal';
+    let textColor = '#333';
+    let textShadow = 'none';
+
+    let oneOneCount = 0;
+    Object.keys(tgCount).forEach(g2 => {
+        if ((tgCount[g2]||0) === 1 && (cgCount[g2]||0) === 1) oneOneCount++;
+    });
+
+    let hasStrongPattern = Object.keys(tgCount).some(g2 => (tgCount[g2]||0) + (cgCount[g2]||0) >= 3);
+
+    if (tg === 1 && cg === 1 && oneOneCount === 1 && !hasStrongPattern) {
+        fontWeight = 'bold';
+        textColor = '#d32f2f';
+        textShadow = '0 0 6px #ffeb3b, 0 0 12px #ffeb3b';
+    } else if (total >= 3 && total <= 4 || (tg === 1 && cg === 1 && (oneOneCount > 1 || hasStrongPattern))) {
+        textShadow = '0 0 4px #888, 0 0 8px #666';
+    } else if (total >= 5 && total <= 6) {
+        textShadow = '0 0 5px #4da6ff, 0 0 10px #3399ff';
+    } else if (total >= 7) {
+        fontWeight = 'bold';
+        textColor = '#ffffff';
+        textShadow = '0 0 6px #6b46c0, 0 0 12px #8b5cf6';
+    }
+
+    return { fontWeight, textColor, textShadow };
 }
