@@ -63,7 +63,12 @@ async function renderBaziFate() {
     const daysForLuck = forward ? daysToNext : daysToPrev;
     let luckStart = Math.floor(daysForLuck / 3);
     if (daysForLuck % 3 === 2) luckStart += 1;
-    const luckStartYear = birthYear + luckStart - 1;
+	// 加強保護：luckStart 最少為 1（避免 0 年就交運的邊界問題）
+    if (daysForLuck > 0) {
+        luckStart = Math.max(1, luckStart);
+    }
+    
+    const luckStartYear = birthYear + luckStart - 1;   // 保留你原本的 -1
 
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
@@ -386,23 +391,64 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
     patternHTML += `</tr></table>`;
     //pillarsHTML += patternHTML;
 
-    // 大運表（12個）
+    // 大運表（12 個 + 連續流年 3 行，從目前正在行的大運開始）
 	let daYunHTML = `<table class="daiyun">
-	<tr><td colspan="12" style="color:#666; font-size:1.0em; border-left: none; border-top: none; border-right: none; text-align: center;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
+	<tr><td colspan="12" style="color:#666; font-size:0.8em; border-left: none; border-top: none; border-right: none; text-align: center;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
 	
-    for (let i = 11; i >= 0; i--) daYunHTML += `<td style="font-size:0.5em;">${daYears[i]}</td>`;
+    // 第1行：大運年份（每隔10年）
+    for (let i = 11; i >= 0; i--) {
+        const y = daYears[i];
+        daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer; font-size:0.6em;">${y}</td>`;
+    }
     daYunHTML += `</tr><tr>`;
+    
+    // 第2行：大運天干（點擊切換對應年份）
     for (let i = 11; i >= 0; i--) {
         const s = daStems[i];
         const isYang = ["甲","丙","戊","庚","壬"].includes(s);
-        daYunHTML += `<td><span style="color:${data.fiveColors[data.stemsElement[s]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${s}</span></td>`;
+        const y = daYears[i];
+        daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.stemsElement[s]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${s}</span></td>`;
     }
     daYunHTML += `</tr><tr>`;
+    
+    // 第3行：大運地支（點擊切換對應年份）
 	for (let i = 11; i >= 0; i--) {
 		const b = daBranches[i];
 		const isYang = ["子","寅","辰","午","申","戌"].includes(b);
-		daYunHTML += `<td><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
+        const y = daYears[i];
+		daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
 	}
+    daYunHTML += `</tr>`;
+
+    // ========== 第4行：連續流年年份 ==========
+    const currentDaYunStartYear = daYears[currentDaYunIdx];
+    daYunHTML += `<tr style="background:#f9f7f0; font-size:0.6em;">`;
+    for (let i = 11; i >= 0; i--) {
+        const liuYear = currentDaYunStartYear + i;
+        daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;">${liuYear}</td>`;
+    }
+    daYunHTML += `</tr>`;
+
+    // ========== 第5行：連續流年年干 ==========
+    daYunHTML += `<tr>`;
+    for (let i = 11; i >= 0; i--) {
+        const liuYear = currentDaYunStartYear + i;
+        const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
+        const yStem = yBazi.stems.year;
+        const isYang = ["甲","丙","戊","庚","壬"].includes(yStem);
+        daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.stemsElement[yStem]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${yStem}</span></td>`;
+    }
+    daYunHTML += `</tr>`;
+
+    // ========== 第6行：連續流年年支 ==========
+    daYunHTML += `<tr>`;
+    for (let i = 11; i >= 0; i--) {
+        const liuYear = currentDaYunStartYear + i;
+        const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
+        const yBranch = yBazi.branches.year;
+        const isYang = ["子","寅","辰","午","申","戌"].includes(yBranch);
+        daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.branchesElement[yBranch]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${yBranch}</span></td>`;
+    }
     daYunHTML += `</tr></table>`;
 
     const gregorianLine = `${year}年　${month}月　${day}日　${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
@@ -754,4 +800,10 @@ function getTenGodStyle(god, dayStem, data, stemsList, branchesList) {
     }
 
     return { fontWeight, textColor, textShadow };
+}
+
+// 點擊大運/流年 → 切換 currentYear 並重新計算
+function setCurrentYear(year) {
+    document.getElementById('currentYear').value = `${year}-01-01`;   // 補上月日
+    queryBaziFate();   // 重新計算命盤
 }
