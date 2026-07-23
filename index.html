@@ -4,18 +4,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>子平八字命盤</title>
 <style>
-    body { text-align: center; font-family: sans-serif; background: #f9f7f0; padding: 5px; }
+    body { text-align: center; font-family: sans-serif; background: #f9f7f0; padding: 4px; }
     h1 { color: #8B4513; margin-bottom: 15px; }
     
-    .input-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 10px; }
-    .input-row input, .input-row select, .input-row button { 
-        padding: 12px; font-size: 1.0em; border: 2px solid #8B4513; border-radius: 8px; width: 120px; 
-    }
+    .input-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1px; margin-bottom: 6px; }
     .input-row button { background: #8B4513; color: white; cursor: pointer; font-weight: bold; }
-
-    #gender { width: 60px !important; }
-    #currentYear { width: 120px !important; }
-    button[onclick="setNow()"] { width: 70px !important; }
+	.input-row input, .input-row select, .input-row button { 
+        padding: 4px; font-size: 0.6em; border: 2px solid #8B4513; border-radius: 8px; width: 80px; 
+    }
+	#mydate, #mytime { width: 80px !important; }   /* ← 新增這行 */
+    #gender { width: 40px !important; }
+	#currentYear { 
+    width: 40px !important; 
+    border: 1px solid #10b981 !important;   /* 綠色邊框 */
+}
+    button[onclick="setNow()"] { width: 40px !important; }
 
     .result-box { max-width: 820px; margin: 0 auto; padding: 10px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .lunar-line { font-size: 1.0em; margin-bottom: 10px; color: #8B4513; font-weight: bold; line-height: 1.2; }
@@ -63,12 +66,12 @@
     }
 	/* 納音專用字型風格 */
     .naYin-text {
-        font-size: 0.65em;           /* 可自行調整大小 */
+        font-size: 0.6em;           /* 可自行調整大小 */
         font-weight: normal;
         color: #8B4513;              /* 納音專用顏色 */
-        writing-mode: vertical-rl;
+		writing-mode: horizontal-tb;  /* ← 改為橫書 */
         text-orientation: mixed;
-        letter-spacing: 1px;
+        letter-spacing: 0px;
         text-shadow: 0 1px 20px rgba(0,0,0,0.2);  /* 輕微陰影 */
     }
 	/* 六十甲子號碼專用樣式 */
@@ -113,29 +116,29 @@
         <option value="男">男</option>
         <option value="女">女</option>
     </select>
-    <input type="date" id="currentYear" onchange="queryBaziFate()">
     <button onclick="setNow()">重設</button>
+	<input type="date" id="currentYear" onchange="queryBaziFate()" title="調整現在時間">
 </div>
 
 <!-- 金主模式專用紀錄區 -->
-<div id="jinZhuRecordArea" style="display:none; margin:20px auto; max-width:820px; text-align:center;">
-    <div style="background:#fffaf0; padding:18px; border-radius:12px; border:2px solid #f9e79f;">
-        <input type="text" id="userName" placeholder="姓名" style="width:50px; padding:10px; margin:5px;">
-        <input type="text" id="userNote" placeholder="備註（選填）" style="width:160px; padding:10px; margin:5px;">
+<div id="jinZhuRecordArea" style="display:none; margin:10px auto; max-width:820px; text-align:center;">
+    <div style="background:#fffaf0; padding:4px; border-radius:12px; border:2px solid #f9e79f;">
+        <input type="text" id="userName" placeholder="姓名" style="width:50px; padding:8px; margin:2px;">
+        <input type="text" id="userNote" placeholder="備註（選填）" style="width:180px; padding:8px; margin:2px;">
         
-        <button onclick="saveBaziRecord()" style="padding:10px 15px; background:#d4af37; color:#8B4513; border:none; border-radius:8px; margin:5px; font-weight:bold;">儲存</button>
-        <select id="recordSelect" onchange="loadBaziRecord(this.value)" style="padding:10px; margin:5px; width:120px;">
-            <option value="">-- 選擇紀錄 --</option>
+        <button onclick="saveBaziRecord()" style="padding:8px 10px; background:#d4af37; color:#8B4513; border:none; border-radius:8px; margin:2px; font-weight:bold;">儲存</button>
+        <select id="recordSelect" onchange="loadBaziRecord(this.value)" style="padding:8px; margin:2px; width:100px;">
+            <option value="">- 選擇紀錄 -</option>
         </select>
-        <button onclick="deleteCurrentRecord()" style="padding:10px 15px; background:#ef4444; color:white; border:none; border-radius:8px; margin:5px; font-weight:bold;">刪除</button>
-        <button onclick="exportRecords()" style="padding:10px 15px; background:#3b82f6; color:white; border:none; border-radius:8px; margin:5px; font-weight:bold;">匯出</button>
-        <label style="margin:5px;">
-            <button onclick="document.getElementById('importFile').click()" style="padding:10px 15px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold;">匯入</button>
+        <button onclick="deleteCurrentRecord()" style="padding:8px 10px; background:#ef4444; color:white; border:none; border-radius:8px; margin:2px; font-weight:bold;">刪除</button>
+        <button onclick="exportRecords()" style="padding:8px 10px; background:#3b82f6; color:white; border:none; border-radius:8px; margin:1px; font-weight:bold;">匯出</button>
+        <label style="margin:1px;">
+            <button onclick="document.getElementById('importFile').click()" style="padding:8px 10px; background:#10b981; color:white; border:none; border-radius:8px; margin:1px; font-weight:bold;">匯入</button>
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importRecords(event)">
         </label>
 		<!-- 新增：反推 ON/OFF 按鍵 -->
         <button id="reverseToggleBtn" onclick="toggleReverseBazi()" 
-                style="padding:10px 15px; background:#e5e7eb; color:#374151; border:none; border-radius:8px; margin:5px; font-weight:bold;">
+                style="padding:8px 10px; background:#e5e7eb; color:#374151; border:none; border-radius:8px; margin:1px; font-weight:bold;">
             反推 Off
         </button>
     </div>
@@ -350,7 +353,7 @@ function saveBaziRecord() {
     };
 
     records.unshift(record);
-    if (records.length > 30) records.pop();
+    if (records.length > 120) records.pop();
 
     localStorage.setItem('baziRecords', JSON.stringify(records));
     loadRecordOptions();
