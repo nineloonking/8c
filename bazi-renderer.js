@@ -282,7 +282,7 @@ async function renderBaziFate() {
         if (isAvoided) markHTML += `<span style="color:#8B0000; font-size:0.6em;">忌</span> `;
 
         pillarsHTML += `<td onclick="showNaYinDetail('${naYin}')" style="cursor:pointer; vertical-align:top;">`;
-        pillarsHTML += `<span class="naYin-text" style="color:${color}; writing-mode:vertical-rl; text-orientation:mixed; padding: 0px 2px; min-height:46px;">${naYin}</span>`;
+        pillarsHTML += `<span class="naYin-text" style="color:${color}; text-orientation:mixed; padding: 0px 2px; min-height:46px;">${naYin}</span>`;
         if (markHTML) {
             pillarsHTML += `<br>${markHTML}`;
         }
@@ -348,11 +348,38 @@ let liuHiddenHTML = liuHiddens.map(h => {
 }).join('<br>');
 pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</td>`;
 
-    // ====================== 新增：神煞行（空亡） ======================
-    pillarsHTML += `<tr style="font-size:0.75em; background:#f9f7f0;">`;
+    // ====================== 神煞行（空亡 + 鐵蛇關 + 將軍箭） ======================
+    pillarsHTML += `<tr style="font-size:0.72em; background:#f9f7f0;">`;
+    
+    // 空亡
     const dayPillar = baziResult.stems.day + baziResult.branches.day;
     const kongWangBranches = data.kongWang[dayPillar] || [];
     
+    // 鐵蛇關（根據日柱納音）
+    const dayNaYin = data.naYin[dayPillar] || "";
+    const dayNaYinElement = dayNaYin.slice(-1);
+    const tieSheMap = {
+        "金": ["戌"],
+        "火": ["未", "申"],
+        "木": ["辰"],
+        "水": ["丑", "寅"],
+        "土": ["丑", "寅"]
+    };
+    const tieSheBranches = tieSheMap[dayNaYinElement] || [];
+
+    // 將軍箭（根據月支）
+    const monthBranch = baziResult.branches.month;
+    let jiangJunBranches = [];
+    if (["寅", "卯", "辰"].includes(monthBranch)) {
+        jiangJunBranches = ["酉", "戌", "辰"].filter(b => b !== monthBranch); // 月支辰不算
+    } else if (["巳", "午", "未"].includes(monthBranch)) {
+        jiangJunBranches = ["未", "卯", "子"].filter(b => b !== monthBranch); // 月支未不算
+    } else if (["申", "酉", "戌"].includes(monthBranch)) {
+        jiangJunBranches = ["寅", "午", "丑"];
+    } else if (["亥", "子", "丑"].includes(monthBranch)) {
+        jiangJunBranches = ["亥", "申", "巳"].filter(b => b !== monthBranch); // 月支亥不算
+    }
+
     const allBranches = [
         baziResult.branches.hour,
         baziResult.branches.day,
@@ -364,7 +391,23 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
 
     allBranches.forEach(branch => {
         const isKongWang = kongWangBranches.includes(branch);
-        pillarsHTML += `<td style="color:${isKongWang ? '#8B0000' : '#666'};">${isKongWang ? '空亡' : '——'}</td>`;
+        const isTieShe = tieSheBranches.includes(branch);
+        const isJiangJun = jiangJunBranches.includes(branch);
+        
+        let texts = [];
+        if (isKongWang) texts.push("空亡");
+        if (isTieShe) texts.push("鐵蛇關");
+        if (isJiangJun) texts.push("將軍箭");
+
+        if (texts.length === 0) {
+            pillarsHTML += `<td style="color:#666;">——</td>`;
+        } else {
+            const text = texts.join("<br>");
+            // 優先顯示空亡點擊，其次鐵蛇關，最後將軍箭
+            let onclickGod = isKongWang ? "空亡" : (isTieShe ? "鐵蛇關" : "將軍箭");
+            pillarsHTML += `<td onclick="showSpecialGodDetail('${onclickGod}')" 
+                                 style="cursor:pointer; color:#8B0000; line-height:1.2;">${text}</td>`;
+        }
     });
     pillarsHTML += `</tr>`;
 
@@ -393,7 +436,7 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
 
     // 大運表（12 個 + 連續流年 3 行，從目前正在行的大運開始）
 	let daYunHTML = `<table class="daiyun">
-	<tr><td colspan="12" style="color:#666; font-size:0.8em; border-left: none; border-top: none; border-right: none; text-align: center;">大運表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
+	<tr><td colspan="12" style="color:#666; font-size:0.8em; border-left: none; border-top: none; border-right: none; text-align: center;">大運流年表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
 	
     // 第1行：大運年份（每隔10年）
     for (let i = 11; i >= 0; i--) {
@@ -807,3 +850,27 @@ function setCurrentYear(year) {
     document.getElementById('currentYear').value = `${year}-01-01`;   // 補上月日
     queryBaziFate();   // 重新計算命盤
 }
+
+// 特殊神煞詳細說明（空亡、鐵蛇關、將軍箭）
+function showSpecialGodDetail(godName) {
+    const data = window.baziData;
+    if (!data || !data.specialGodsMeaning) {
+        alert("資料尚未載入");
+        return;
+    }
+
+    const info = data.specialGodsMeaning[godName];
+    if (!info) {
+        alert(`尚無「${godName}」的詳細資料`);
+        return;
+    }
+
+    const contentHTML = `
+        <p><strong>吉兇：</strong>${info.luck}</p>
+        <p><strong>星性：</strong>${info.nature}</p>
+        <p style="margin-top:16px; color:#444; white-space:pre-line; line-height:1.7;">${info.detail}</p>
+    `;
+
+    showMessageBox(info.title || godName, contentHTML);
+}
+window.showSpecialGodDetail = showSpecialGodDetail;
