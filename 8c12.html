@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字十二神煞</title>
+<style>
+    body { text-align: center; font-family: sans-serif; background: #f9f7f0; padding: 20px; }
+    h1 { color: #8B4513; margin-bottom: 15px; }
+    .input-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 25px; }
+    .input-row input, .input-row select { padding: 12px; font-size: 1.1em; border: 2px solid #8B4513; border-radius: 8px; width: 220px; }
+    .result-box { max-width: 720px; margin: 0 auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .lunar-line { font-size: 1.45em; margin-bottom: 25px; color: #8B4513; font-weight: bold; }
+    table.pillars { margin: 20px auto; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.35em; }
+    .pillars td { padding: 8px 6px; border: 2px solid #D2B48C; text-align: center; vertical-align: middle; }
+    .hidden-stem { font-size: 0.85em; line-height: 1.1; color: #555; }
+    .gods-table { margin: 30px auto 0; border-collapse: collapse; width: 100%; max-width: 520px; font-size: 1.15em; }
+    .gods-table th, .gods-table td { padding: 12px 8px; border: 1px solid #D2B48C; text-align: center; }
+    .gods-table th { background: #f9f7f0; font-weight: bold; }
+    .gods-table td { font-size: 1.05em; }
+</style>
+</head>
+<body>
+<h1>八字十二神煞</h1>
+
+<div class="input-row">
+    <input type="date" id="mydate" onchange="queryGods()">
+    <input type="time" id="mytime" value="00:00" onchange="queryGods()">
+    <select id="gender" onchange="queryGods()">
+        <option value="男">男</option>
+        <option value="女">女</option>
+    </select>
+</div>
+
+<div id="here" class="result-box"></div>
+
+<script src="bazi-calculator.js"></script>
+<script>
+let baziData = null;
+
+async function loadBaziData() {
+    if (baziData) return baziData;
+    try {
+        const res = await fetch('bazi-data.json');
+        baziData = await res.json();
+        return baziData;
+    } catch (e) { return null; }
+}
+
+async function queryGods() {
+    const dateInput = document.getElementById('mydate').value;
+    const timeInput = document.getElementById('mytime').value || '00:00';
+    if (!dateInput) return;
+
+    const [yearStr, monthStr, dayStr] = dateInput.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const day = parseInt(dayStr);
+    const [hourStr, minStr] = timeInput.split(':');
+    const hour = parseInt(hourStr);
+    const minute = parseInt(minStr);
+
+    const baziResult = window.getBazi(year, month, day, hour, minute);
+    if (baziResult.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red;">${baziResult.error}</p>`;
+        return;
+    }
+
+    const data = await loadBaziData();
+    if (!data) return;
+
+    // ====================== 十二神煞計算 ======================
+    const dayStem = baziResult.stems.day;
+    const dayBranch = data.stemToBranch[dayStem][0];           // 日干對應的地支（太歲位）
+    const godsList = data.daily12Gods;                         // 固定12神煞順序
+
+    const pillarsBranches = [
+        baziResult.branches.year,
+        baziResult.branches.month,
+        baziResult.branches.day,
+        baziResult.branches.hour
+    ];
+
+    let godsHTML = `<p style="margin:15px 0 8px; color:#666; font-size:1.05em;">十二神煞表</p>`;
+    godsHTML += `<table class="gods-table"><tr><th>時</th><th>日</th><th>月</th><th>年</th></tr>`;
+
+    // 第一行：以各柱天干查出的地支對應神煞（日柱顯示「日元」）
+    godsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach((key, idx) => {
+        if (idx === 1) {
+            godsHTML += `<td><strong>日元</strong></td>`;
+        } else {
+            const stem = baziResult.stems[key];
+            const mappedBranch = data.stemToBranch[stem][0];
+            const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(mappedBranch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+            godsHTML += `<td>${godsList[offset]}</td>`;
+        }
+    });
+    godsHTML += `</tr>`;
+
+    // 第二行：實際地支對應神煞
+    godsHTML += `<tr>`;
+    pillarsBranches.forEach(branch => {
+        const offset = (["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(branch) - ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"].indexOf(dayBranch) + 12) % 12;
+        godsHTML += `<td>${godsList[offset]}</td>`;
+    });
+    godsHTML += `</tr></table>`;
+
+    // ====================== 四柱八字表 ======================
+    const branches = pillarsBranches;
+    let pillarsHTML = `<table class="pillars"><tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>`;
+    pillarsHTML += `<tr>`;
+    ["hour","day","month","year"].forEach(key => {
+        const stem = baziResult.stems[key];
+        const color = data.fiveColors[data.stemsElement[stem]];
+        pillarsHTML += `<td><span style="color:${color}">${stem}</span></td>`;
+    });
+    pillarsHTML += `</tr><tr>`;
+    branches.forEach(branch => {
+        const color = data.fiveColors[data.branchesElement[branch]];
+        pillarsHTML += `<td><span style="color:${color}">${branch}</span></td>`;
+    });
+    pillarsHTML += `</tr><tr>`;
+    branches.forEach(branch => {
+        const hiddens = data.hiddenStems[branch] || [];
+        let html = hiddens.map(h => `<span class="hidden-stem" style="color:${data.fiveColors[data.stemsElement[h]]}">${h}</span>`).join('<br>');
+        pillarsHTML += `<td>${html}</td>`;
+    });
+    pillarsHTML += `</tr></table>`;
+
+    const lunarLine = `${baziResult.lunar.full}　${baziResult.branches.hour}時`;
+
+    const html = `
+        <div class="lunar-line"><strong>農曆</strong>　${lunarLine}</div>
+        ${pillarsHTML}
+        ${godsHTML}
+    `;
+
+    document.getElementById('here').innerHTML = html;
+}
+
+// 初始載入現在香港時間
+const now = new Date();
+const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+document.getElementById('gender').value = '男';
+
+queryGods();
+</script>
+</body>
+</html>

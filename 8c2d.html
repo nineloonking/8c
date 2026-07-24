@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字速查</title>
+<style>
+body { text-align: center; font-family: sans-serif; }
+.inputs { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.inputs input { margin: 5px 0; width: 80%; max-width: 300px; }
+table { margin: auto; border-collapse: collapse; }
+td { padding: 8px; border: 1px solid #ddd; }
+#lunar { margin-top: 20px; font-size: 1.1em; color: #333; }
+</style>
+</head>
+<body>
+<div class="inputs">
+    <input type="date" id="mydate" onchange="datechanged()">
+    <input type="time" id="mytime" onchange="datechanged()">
+</div>
+<div id="here"></div>
+
+<script>
+const sTermInfo = [0,21208,42467,63836,85337,107014,128867,150921,173149,195551,218072,240693,263343,285989,308563,331033,353350,375494,397447,419210,440795,462224,483532,504758];
+
+function generateSolarTerms(year) {
+    const base = Date.UTC(1900, 0, 6, 2, 5);
+    let terms = [];
+    for (let i = 0; i < 24; i++) {
+        let offset = 31556925974.7 * (year - 1900) + sTermInfo[i] * 60000;
+        let termTime = base + offset;
+        terms.push(new Date(termTime).toISOString());
+    }
+    return terms;
+}
+
+const colorMap = {
+    '甲': 'green', '乙': 'green', '寅': 'green', '卯': 'green',
+    '丙': 'red', '丁': 'red', '巳': 'red', '午': 'red',
+    '戊': 'khaki', '己': 'khaki', '丑': 'khaki', '辰': 'khaki', '未': 'khaki', '戌': 'khaki',
+    '庚': 'gray', '辛': 'gray', '申': 'gray', '酉': 'gray',
+    '壬': 'black', '癸': 'black', '子': 'black', '亥': 'black'
+};
+
+const lunarInfo = [
+0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+0x06ca0,0x0b550,0x15355,0x04da0,0x0a5d0,0x14573,0x052d0,0x0a9a8,0x0e950,0x06aa0,
+0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b5a0,0x195a6,
+0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+0x05aa0,0x076a3,0x096d0,0x04bd7,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+0x0d520
+];
+
+const chineseMonth = ["正","二","三","四","五","六","七","八","九","十","十一","十二"];
+const chineseDay = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+
+const stems = ["", "甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const BranchesNamesshort = ["","子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+
+function getLunarYearDays(year) {
+    let sum = 348;
+    for (let i = 0x8000; i > 0x8; i >>= 1) sum += (lunarInfo[year - 1900] & i) ? 1 : 0;
+    return sum + getLeapDays(year);
+}
+function getLeapMonth(year) { return lunarInfo[year - 1900] & 0xf; }
+function getLeapDays(year) {
+    if (getLeapMonth(year)) return (lunarInfo[year - 1900] & 0x10000) ? 30 : 29;
+    return 0;
+}
+function getMonthDays(year, month) {
+    return (lunarInfo[year - 1900] & (0x10000 >> month)) ? 30 : 29;
+}
+function getLunar(sy, sm, sd) {
+    let base = Date.UTC(1900, 0, 31);
+    let target = Date.UTC(sy, sm - 1, sd);
+    let diff = Math.floor((target - base) / 86400000);
+    let year = 1900;
+    while (diff > 0) {
+        let days = getLunarYearDays(year);
+        if (diff < days) break;
+        diff -= days;
+        year++;
+    }
+    let lunarYear = year;
+    let leap = getLeapMonth(lunarYear);
+    let isLeap = false;
+    let month = 1;
+    let temp = 0;
+    for (month = 1; month <= 12; month++) {
+        if (leap > 0 && month === leap + 1 && !isLeap) {
+            month--; isLeap = true; temp = getLeapDays(lunarYear);
+        } else {
+            temp = getMonthDays(lunarYear, month);
+        }
+        if (diff < temp) break;
+        diff -= temp;
+        if (isLeap && month === leap) isLeap = false;
+    }
+    return { year: lunarYear, month: month, day: diff + 1, isLeap: isLeap };
+}
+
+function getinrange(number, range) {
+    while (number > range) number -= range;
+    while (number <= 0) number += range;
+    return number;
+}
+function finddifference(StartDate, EndDate) {
+    let enddatetemp = new Date(EndDate);
+    const oneDay = 24 * 60 * 60 * 1000;
+    enddatetemp.setHours(0,0,0,0); StartDate.setHours(0,0,0,0);
+    return Math.round(Math.abs((enddatetemp - StartDate) / oneDay));
+}
+function findSurroundingDates(dateArray, targetDate) {
+    const target = new Date(targetDate).getTime();
+    let low = 0, high = dateArray.length - 1;
+    if (target < new Date(dateArray[0]).getTime()) return { beforeIndex: null, afterIndex: 0 };
+    if (target > new Date(dateArray[high]).getTime()) return { beforeIndex: high, afterIndex: null };
+    while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const midTime = new Date(dateArray[mid]).getTime();
+        if (midTime === target) return { beforeIndex: mid, afterIndex: mid };
+        else if (midTime < target) low = mid + 1;
+        else high = mid - 1;
+    }
+    return { beforeIndex: high, afterIndex: low };
+}
+
+function datechanged() {
+    try {
+        let dateInput = document.getElementById('mydate').value;
+        let timeInput = document.getElementById('mytime').value || '00:00';
+        if (!dateInput) return;
+
+        let [yearStr, monthStr, dayStr] = dateInput.split('-');
+        let year = parseInt(yearStr);
+        let month = parseInt(monthStr) - 1;
+        let day = parseInt(dayStr);
+        let [hourStr, minStr] = timeInput.split(':');
+        let hours = parseInt(hourStr);
+        let minutes = parseInt(minStr);
+
+        if (year < 1900 || year > 2100) {
+            document.getElementById('here').innerHTML = '目前支援 1900～2100 年';
+            return;
+        }
+
+        let workingdates = generateSolarTerms(year);
+
+        let comparedate = new Date(); comparedate.setFullYear(1); comparedate.setDate(1); comparedate.setMonth(0);
+        let dateafteradjustment = new Date(Date.UTC(year, month, day, 0, 0, 0));
+        let datediff = finddifference(comparedate, dateafteradjustment);
+        let daystem = getinrange((datediff % 10) + 6, 10);
+        let daybranch = getinrange((datediff % 12) + 4, 12);
+
+        let utcTimestamp = Date.UTC(year, month, day, hours, minutes, 0) - (8 * 3600 * 1000);
+        let utcDate = new Date(utcTimestamp);
+
+        let surroundingindex = findSurroundingDates(workingdates, utcDate.toISOString());
+        let previoussolartermindex = surroundingindex.beforeIndex ?? -1;
+
+        let yearstem = ((year - 3) % 10) || 10;
+        let yearbranch = ((year - 3) % 12) || 12;
+        if (previoussolartermindex < 2) {
+            yearstem = getinrange(yearstem - 1, 10);
+            yearbranch = getinrange(yearbranch - 1, 12);
+        }
+
+        let last_jie_index = (previoussolartermindex === -1) ? 22 : (previoussolartermindex % 2 === 1 ? previoussolartermindex - 1 : previoussolartermindex);
+        let monthbranch = getinrange((last_jie_index / 2) + 2, 12);
+        let solarmonth = getinrange(monthbranch - 2, 12);
+        let monthstem = getinrange(((yearstem % 5) * 2) + solarmonth, 10);
+
+        let hourbranch = (Math.floor((hours + 1) / 2) % 12) + 1;
+        let starting_stem = ((daystem * 2 - 1) % 10) || 10;
+        let hourstem = getinrange(starting_stem + hourbranch - 1, 10);
+
+        let lunar = getLunar(year, month + 1, day);
+        let lunarYearStem = ((lunar.year - 3) % 10) || 10;
+        let lunarYearBranch = ((lunar.year - 3) % 12) || 12;
+        let lunarYearStr = stems[lunarYearStem] + BranchesNamesshort[lunarYearBranch];
+        let isLeapStr = lunar.isLeap ? '閏' : '';
+        let lunarMonthStr = chineseMonth[lunar.month - 1];
+        let lunarDayStr = chineseDay[lunar.day - 1];
+
+        document.getElementById('here').innerHTML = `
+            <table>
+                <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
+                <tr>
+                    <td><span style="color: ${colorMap[stems[hourstem]] || 'black'}">${stems[hourstem]}</span></td>
+                    <td><span style="color: ${colorMap[stems[daystem]] || 'black'}">${stems[daystem]}</span></td>
+                    <td><span style="color: ${colorMap[stems[monthstem]] || 'black'}">${stems[monthstem]}</span></td>
+                    <td><span style="color: ${colorMap[stems[yearstem]] || 'black'}">${stems[yearstem]}</span></td>
+                </tr>
+                <tr>
+                    <td><span style="color: ${colorMap[BranchesNamesshort[hourbranch]] || 'black'}">${BranchesNamesshort[hourbranch]}</span></td>
+                    <td><span style="color: ${colorMap[BranchesNamesshort[daybranch]] || 'black'}">${BranchesNamesshort[daybranch]}</span></td>
+                    <td><span style="color: ${colorMap[BranchesNamesshort[monthbranch]] || 'black'}">${BranchesNamesshort[monthbranch]}</span></td>
+                    <td><span style="color: ${colorMap[BranchesNamesshort[yearbranch]] || 'black'}">${BranchesNamesshort[yearbranch]}</span></td>
+                </tr>
+            </table>
+            <div id="lunar">
+                <strong>農曆日期時間：</strong><br>
+                ${lunarYearStr}年　${isLeapStr}${lunarMonthStr}月　${lunarDayStr}<br>
+                ${timeInput}（香港時間）
+            </div>
+        `;
+    } catch(e) {
+        document.getElementById('here').innerHTML = '計算錯誤，請重新整理頁面或告訴我錯誤訊息';
+        console.error(e);
+    }
+}
+
+// 初始載入現在香港時間
+let nowUtcMs = Date.now();
+let nowInZone = new Date(nowUtcMs + 8 * 3600 * 1000);
+document.getElementById('mydate').value = nowInZone.toISOString().split('T')[0];
+document.getElementById('mytime').value = nowInZone.toISOString().split('T')[1].slice(0,5);
+datechanged();
+</script>
+</body>
+</html>
