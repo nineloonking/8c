@@ -348,14 +348,14 @@ let liuHiddenHTML = liuHiddens.map(h => {
 }).join('<br>');
 pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</td>`;
 
-    // ====================== 神煞行（空亡 + 鐵蛇關 + 將軍箭） ======================
+    // ====================== 神煞行（空亡 + 連空 + 祿神 + 鐵蛇關 + 將軍箭） ======================
     pillarsHTML += `<tr style="font-size:0.72em; background:#f9f7f0;">`;
     
     // 空亡
     const dayPillar = baziResult.stems.day + baziResult.branches.day;
     const kongWangBranches = data.kongWang[dayPillar] || [];
     
-    // 鐵蛇關（根據日柱納音）
+    // 鐵蛇關
     const dayNaYin = data.naYin[dayPillar] || "";
     const dayNaYinElement = dayNaYin.slice(-1);
     const tieSheMap = {
@@ -367,46 +367,76 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
     };
     const tieSheBranches = tieSheMap[dayNaYinElement] || [];
 
-    // 將軍箭（根據月支）
+    // 將軍箭
     const monthBranch = baziResult.branches.month;
     let jiangJunBranches = [];
     if (["寅", "卯", "辰"].includes(monthBranch)) {
-        jiangJunBranches = ["酉", "戌", "辰"].filter(b => b !== monthBranch); // 月支辰不算
+        jiangJunBranches = ["酉", "戌", "辰"].filter(b => b !== monthBranch);
     } else if (["巳", "午", "未"].includes(monthBranch)) {
-        jiangJunBranches = ["未", "卯", "子"].filter(b => b !== monthBranch); // 月支未不算
+        jiangJunBranches = ["未", "卯", "子"].filter(b => b !== monthBranch);
     } else if (["申", "酉", "戌"].includes(monthBranch)) {
         jiangJunBranches = ["寅", "午", "丑"];
     } else if (["亥", "子", "丑"].includes(monthBranch)) {
-        jiangJunBranches = ["亥", "申", "巳"].filter(b => b !== monthBranch); // 月支亥不算
+        jiangJunBranches = ["亥", "申", "巳"].filter(b => b !== monthBranch);
     }
 
+    // 祿神
+    const luShenMap = {
+        "甲": "寅", "乙": "卯",
+        "丙": "巳", "戊": "巳",
+        "丁": "午", "己": "午",
+        "庚": "申", "辛": "酉",
+        "壬": "亥", "癸": "子"
+    };
+
+    const allStems = [
+        baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year,
+        currentDaYunStem, currentLiuNianStem
+    ];
     const allBranches = [
-        baziResult.branches.hour,
-        baziResult.branches.day,
-        baziResult.branches.month,
-        baziResult.branches.year,
-        currentDaYunBranch,
-        currentLiuNianBranch
+        baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year,
+        currentDaYunBranch, currentLiuNianBranch
     ];
 
-    allBranches.forEach(branch => {
+    // === 先找出所有「直接連空」的天干（只限原命四柱） ===
+    const lianKongStems = new Set();
+    for (let i = 0; i < 4; i++) {
+        if (kongWangBranches.includes(allBranches[i])) {
+            lianKongStems.add(allStems[i]);
+        }
+    }
+
+    allBranches.forEach((branch, idx) => {
         const isKongWang = kongWangBranches.includes(branch);
         const isTieShe = tieSheBranches.includes(branch);
         const isJiangJun = jiangJunBranches.includes(branch);
-        
-        let texts = [];
-        if (isKongWang) texts.push("空亡");
-        if (isTieShe) texts.push("鐵蛇關");
-        if (isJiangJun) texts.push("將軍箭");
+        const isLuShen = luShenMap[allStems[idx]] === branch;
 
-        if (texts.length === 0) {
+        // 連空：原命四柱中，該柱天干屬於連空天干
+        const isLianKong = (idx <= 3) && lianKongStems.has(allStems[idx]);
+
+        // 顯示順序：空亡 → 連空 → 祿神 → 鐵蛇關 → 將軍箭
+        let parts = [];
+        if (isKongWang) {
+            parts.push(`<span onclick="showSpecialGodDetail('空亡')" style="color:#8B0000; cursor:pointer;">空亡</span>`);
+        }
+        if (isLianKong) {
+            parts.push(`<span onclick="showSpecialGodDetail('連空')" style="color:#8B0000; cursor:pointer;">連空</span>`);
+        }
+        if (isLuShen) {
+            parts.push(`<span onclick="showSpecialGodDetail('祿神')" style="color:#006400; cursor:pointer;">祿神</span>`);
+        }
+        if (isTieShe) {
+            parts.push(`<span onclick="showSpecialGodDetail('鐵蛇關')" style="color:#8B0000; cursor:pointer;">鐵蛇關</span>`);
+        }
+        if (isJiangJun) {
+            parts.push(`<span onclick="showSpecialGodDetail('將軍箭')" style="color:#8B0000; cursor:pointer;">將軍箭</span>`);
+        }
+
+        if (parts.length === 0) {
             pillarsHTML += `<td style="color:#666;">——</td>`;
         } else {
-            const text = texts.join("<br>");
-            // 優先顯示空亡點擊，其次鐵蛇關，最後將軍箭
-            let onclickGod = isKongWang ? "空亡" : (isTieShe ? "鐵蛇關" : "將軍箭");
-            pillarsHTML += `<td onclick="showSpecialGodDetail('${onclickGod}')" 
-                                 style="cursor:pointer; color:#8B0000; line-height:1.2;">${text}</td>`;
+            pillarsHTML += `<td style="line-height:1.3;">${parts.join('<br>')}</td>`;
         }
     });
     pillarsHTML += `</tr>`;
@@ -866,9 +896,13 @@ function showSpecialGodDetail(godName) {
     }
 
     const contentHTML = `
-        <p><strong>吉兇：</strong>${info.luck}</p>
-        <p><strong>星性：</strong>${info.nature}</p>
-        <p style="margin-top:16px; color:#444; white-space:pre-line; line-height:1.7;">${info.detail}</p>
+        <div style="text-align:left;">
+            <p><strong>吉兇：</strong>${info.luck}</p>
+            <p><strong>星性：</strong>${info.nature}</p>
+            <p style="margin-top:14px;"><strong>歌訣：</strong></p>
+            <p style="color:#8B4513; white-space:pre-line; line-height:1.6; text-align:left;">${info.verse || ''}</p>
+            <p style="margin-top:16px; color:#444; white-space:pre-line; line-height:1.7; text-align:left;">${info.detail || ''}</p>
+        </div>
     `;
 
     showMessageBox(info.title || godName, contentHTML);
