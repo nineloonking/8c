@@ -108,13 +108,7 @@ async function renderBaziFate() {
     // ====================== 四柱八字表 ======================
     let pillarsHTML = `<table class="pillars">`;
 
-    // 年份參考行
-    pillarsHTML += `<tr style="font-size:0.6em;">`;
-    pillarsHTML += `<td>${birthYear + 105}<br>${birthYear + 45}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.hour + baziResult.branches.hour)}</span></td>`;
-    pillarsHTML += `<td>${birthYear + 90}<br>${birthYear + 30}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.day + baziResult.branches.day)}</span></td>`;
-    pillarsHTML += `<td>${birthYear + 75}<br>${birthYear + 15}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.month + baziResult.branches.month)}</span></td>`;
-    pillarsHTML += `<td>${birthYear + 60}<br>${birthYear}<br><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.year + baziResult.branches.year)}</span></td>`;
-    
+
     // 運的怕X
     let luckStemText = '';
     const daYunYear = daYears[currentDaYunIdx];
@@ -132,35 +126,71 @@ async function renderBaziFate() {
     } else {
         luckStemText = isMale ? '怕交' : '怕脫';
     }
-    pillarsHTML += `<td>${luckStemText}<br>${daYunYear || ''}<br><span class="jiazi-number">${getJiaZiNumber(currentDaYunStem + currentDaYunBranch)}</span></td>`;
-    pillarsHTML += `<td>${currentRealYear - birthYear + 1}歲<br>${currentRealYear}<br><span class="jiazi-number">${getJiaZiNumber(currentLiuNianStem + currentLiuNianBranch)}</span></td>`;
-    pillarsHTML += `</tr>`;
 
-	
+	// 年份參考行
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">年號</td>`;
+	pillarsHTML += `<td><span class="year-ref">${String(birthYear + 105).slice(-2)}|${String(birthYear + 45).slice(-2)}</span><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.hour + baziResult.branches.hour)}</span></td>`;
+	pillarsHTML += `<td><span class="year-ref">${String(birthYear + 90).slice(-2)}|${String(birthYear + 30).slice(-2)}</span><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.day + baziResult.branches.day)}</span></td>`;
+	pillarsHTML += `<td><span class="year-ref">${String(birthYear + 75).slice(-2)}|${String(birthYear + 15).slice(-2)}</span><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.month + baziResult.branches.month)}</span></td>`;
+	pillarsHTML += `<td><span class="year-ref">${String(birthYear + 60).slice(-2)}|${String(birthYear).slice(-2)}</span><span class="jiazi-number">${getJiaZiNumber(baziResult.stems.year + baziResult.branches.year)}</span></td>`;
+	pillarsHTML += `<td><span class="year-ref">${daYunYear ? String(daYunYear) : ''}</span><span class="jiazi-number">${getJiaZiNumber(currentDaYunStem + currentDaYunBranch)}</span></td>`;
+	pillarsHTML += `<td><span class="year-ref">${String(currentRealYear)}</span><span class="jiazi-number">${getJiaZiNumber(currentLiuNianStem + currentLiuNianBranch)}</span></td>`;
+	pillarsHTML += `</tr>`;
 	
 
-    // 柱位含義行
-    pillarsHTML += `<tr style="font-size:0.72em; background:#f9f7f0; line-height:1.3;">`;
-    const pillarKeys = ["hour", "day", "month", "year", "luck", "flow"];
-    pillarKeys.forEach(key => {
-        const m = data && data.pillarMeaning ? data.pillarMeaning[key] : null;
-        if (m) {
-            pillarsHTML += `<td style="padding: 2px; line-height: 0.7;">
-                <span style="display: block; font-weight: normal; font-size: 0.6em; color:#555;">${m.relation}</span><br>
-                <span style="display: block; font-weight: bold; padding: 0; font-size: 1.5em;">${key === "hour" ? "時" : key === "day" ? "日" : key === "month" ? "月" : key === "year" ? "年" : key === "luck" ? "運" : "流"}</span><br>
-                <span style="display: block; font-weight: normal; font-size: 0.6em; color:#555;">${m.body}</span></td>`;
-        }
-    });
-    pillarsHTML += `</tr>`;
+	// 柱位含義行
+	pillarsHTML += `<tr class="pillar-meaning">`;
+	pillarsHTML += `<td class="pillar-label">柱</td>`;
+
+	const pillarKeys = ["hour", "day", "month", "year", "luck", "flow"];
+	pillarKeys.forEach(key => {
+		const m = data && data.pillarMeaning ? data.pillarMeaning[key] : null;
+		if (m) {
+			let relationText = m.relation;
+			let bodyText = m.body;
+
+			// 特別處理「運」柱
+			if (key === "luck") {
+				relationText = `${forward ? '順行' : '逆行'}|${luckStemText}`;
+				bodyText = `${luckStartYear}始`;
+			}
+
+			// 特別處理「流」柱
+			if (key === "flow") {
+				const currentYearVal = document.getElementById('currentYear').value || `${currentRealYear}-01-01`;
+				const [cy, cm, cd] = currentYearVal.split('-').map(Number);
+				let realAge = cy - year;
+				if (cm < month || (cm === month && cd < day)) {
+					realAge -= 1;
+				}
+				relationText = `${realAge}實歲`;
+				bodyText = `${String(cm || 1).padStart(2,'0')}-${String(cd || 1).padStart(2,'0')}`;
+			}
+
+			const titleMap = {
+				hour: "時", day: "日", month: "月",
+				year: "年", luck: "運", flow: "流"
+			};
+
+			pillarsHTML += `<td>
+				<span class="pillar-relation">${relationText}</span>
+				<span class="pillar-title">${titleMap[key]}</span>
+				<span class="pillar-body">${bodyText}</span>
+			</td>`;
+		}
+	});
+	pillarsHTML += `</tr>`;
     
     const branches = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year];
     
-    // 十神行（已使用統一顏色邏輯）
+    //天干十神 （已使用統一顏色邏輯）
     const stemsForGods = [baziResult.stems.hour, dayStem, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
     const stemsListForCount = [baziResult.stems.hour, baziResult.stems.day, baziResult.stems.month, baziResult.stems.year, currentDaYunStem, currentLiuNianStem];
     const branchesListForCount = [baziResult.branches.hour, baziResult.branches.day, baziResult.branches.month, baziResult.branches.year, currentDaYunBranch, currentLiuNianBranch];
 
 	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">天干<br>十神</td>`;
     stemsForGods.forEach((stem, i) => {
         if (i === 1) {
             const yuanText = isMale ? '元男' : '元女';
@@ -174,8 +204,9 @@ async function renderBaziFate() {
     pillarsHTML += `</tr>`;
 
 
-	//神煞表 天干
+	//天干十二神煞
     pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">天干<br>十二</td>`;
     ["hour","day","month","year"].forEach((key, idx) => {
         if (idx === 1) {
             pillarsHTML += `<td><span class="godsformat"><strong>日元</strong></span></td>`;
@@ -209,6 +240,7 @@ async function renderBaziFate() {
     }[dayElement] || { dark: baseColor, medium: baseColor, light: baseColor, light2: baseColor };
 
     pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">天干</td>`;
     ["hour","day","month","year"].forEach((key, idx) => {
         const stem = baziResult.stems[key];
         const color = data.fiveColors[data.stemsElement[stem]];
@@ -227,9 +259,14 @@ async function renderBaziFate() {
 	const liuStemColor = data.fiveColors[data.stemsElement[currentLiuNianStem]];
 	const isYangLiuStem = ["甲","丙","戊","庚","壬"].includes(currentLiuNianStem);
 	pillarsHTML += `<td><span style="color:${liuStemColor}; font-size:1.15em;" class="${isYangLiuStem ? 'yang-stem' : 'yin-stem'}">${currentLiuNianStem}</span></td>`;
-    pillarsHTML += `</tr><tr>`;
-
+    pillarsHTML += `</tr>`;
+	
+	
+	
 	// 地支行（已依位置調整深淺）
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">地支</td>`;
+	
 	branches.forEach((branch, idx) => {
 		const color = data.fiveColors[data.branchesElement[branch]];
 		const isYang = ["子","寅","辰","午","申","戌"].includes(branch);
@@ -253,6 +290,7 @@ async function renderBaziFate() {
 
     // 納音五行 + 五勝六忌標記
     pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">納音</td>`;
     const naYinColumns = [
         baziResult.stems.hour + baziResult.branches.hour,
         baziResult.stems.day + baziResult.branches.day,
@@ -290,8 +328,9 @@ async function renderBaziFate() {
     });
     pillarsHTML += `</tr><tr>`;
 
-	//神煞表 地干
-    pillarsHTML += `<tr>`;
+	//地干十二神煞
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">地支<br>十二</td>`;
     branches.forEach(branch => {
         const offset = (branchesOrder.indexOf(branch) - branchesOrder.indexOf(dayBranch) + 12) % 12;
         const godName = godsList[offset];
@@ -304,52 +343,62 @@ async function renderBaziFate() {
     pillarsHTML += `</tr>`;
 
 
-// 支藏（藏干） + 右邊加上對應十神（已套用顏色邏輯）
-branches.forEach(branch => {
-    const hiddens = data.hiddenStems[branch] || [];
-    let html = hiddens.map(h => {
-        const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-        const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-        const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-        const tenGod = data.tenGods[dayStem][idx] || "——";
-        const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);  // 套用顏色
+	//藏干十神 支藏（藏干） + 右邊加上對應十神（已套用顏色邏輯）
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">藏干<br>十神</td>`;
+	
+	// 支藏（藏干） + 十神（上下間距減至 0）
+	branches.forEach(branch => {
+		const hiddens = data.hiddenStems[branch] || [];
+		let html = hiddens.map(h => {
+			const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+			const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+			const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+			const tenGod = data.tenGods[dayStem][idx] || "——";
+			
+			return `<div style="line-height:0.7; margin:0; padding:0;">
+						<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>
+						<span class="hidden-stem" style="color:black;">${tenGod}</span>
+					</div>`;
+		}).join('');
+		
+		pillarsHTML += `<td style="padding:1px 2px; line-height:0.7;">${html}</td>`;
+	});
 
-        return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-                <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
-    }).join('<br>');
-    pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${html}</td>`;
-});
+	// 當前大運支藏 + 十神
+	const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
+	let daHiddenHTML = daHiddens.map(h => {
+		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+		const tenGod = data.tenGods[dayStem][idx] || "——";
+		
+		return `<div style="line-height:0.7; margin:0; padding:0;">
+					<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>
+					<span class="hidden-stem" style="color:black;">${tenGod}</span>
+				</div>`;
+	}).join('');
+	pillarsHTML += `<td style="padding:1px 2px; line-height:0.7;">${daHiddenHTML}</td>`;
 
-// 當前大運支藏 + 十神
-const daHiddens = data.hiddenStems[currentDaYunBranch] || [];
-let daHiddenHTML = daHiddens.map(h => {
-    const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-    const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-    const tenGod = data.tenGods[dayStem][idx] || "——";
-    const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);
-
-    return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-            <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
-}).join('<br>');
-pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${daHiddenHTML}</td>`;
-
-// 當前流年支藏 + 十神
-const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
-let liuHiddenHTML = liuHiddens.map(h => {
-    const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
-    const isYang = ["甲","丙","戊","庚","壬"].includes(h);
-    const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
-    const tenGod = data.tenGods[dayStem][idx] || "——";
-    const style = getTenGodStyle(tenGod, dayStem, data, stemsListForCount, branchesListForCount);
-
-    return `<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span> 
-            <span class="hidden-stem" style="font-weight:${style.fontWeight}; color:${style.textColor}; text-shadow:${style.textShadow};">${tenGod}</span>`;
-}).join('<br>');
-pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</td>`;
+	// 當前流年支藏 + 十神
+	const liuHiddens = data.hiddenStems[currentLiuNianBranch] || [];
+	let liuHiddenHTML = liuHiddens.map(h => {
+		const hColor = data.fiveColors[data.stemsElement[h]] || "#555";
+		const isYang = ["甲","丙","戊","庚","壬"].includes(h);
+		const idx = "甲乙丙丁戊己庚辛壬癸".indexOf(h);
+		const tenGod = data.tenGods[dayStem][idx] || "——";
+		
+		return `<div style="line-height:0.7; margin:0; padding:0;">
+					<span class="hidden-stem ${isYang ? 'yang-stem' : 'yin-stem'}" style="color:${hColor}">${h}</span>
+					<span class="hidden-stem" style="color:black;">${tenGod}</span>
+				</div>`;
+	}).join('');
+	pillarsHTML += `<td style="padding:1px 2px; line-height:0.7;">${liuHiddenHTML}</td>`;
+	pillarsHTML += `</tr>`;
 
     // ====================== 神煞行（空亡 + 連空 + 祿神 + 鐵蛇關 + 將軍箭） ======================
-    pillarsHTML += `<tr style="font-size:0.72em; background:#f9f7f0;">`;
+    pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">神煞</td>`;
     
     // 空亡
     const dayPillar = baziResult.stems.day + baziResult.branches.day;
@@ -418,26 +467,26 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
         // 顯示順序：空亡 → 連空 → 祿神 → 鐵蛇關 → 將軍箭
         let parts = [];
         if (isKongWang) {
-            parts.push(`<span onclick="showSpecialGodDetail('空亡')" style="color:#8B0000; cursor:pointer;">空亡</span>`);
+			parts.push(`<span onclick="showSpecialGodDetail('空亡')" class="god-sha">空亡</span>`);
         }
         if (isLianKong) {
-            parts.push(`<span onclick="showSpecialGodDetail('連空')" style="color:#8B0000; cursor:pointer;">連空</span>`);
+            parts.push(`<span onclick="showSpecialGodDetail('連空')" class="god-sha">連空</span>`);
         }
         if (isLuShen) {
-            parts.push(`<span onclick="showSpecialGodDetail('祿神')" style="color:#006400; cursor:pointer;">祿神</span>`);
+			parts.push(`<span onclick="showSpecialGodDetail('祿神')" class="god-sha-lu">祿神</span>`);
         }
         if (isTieShe) {
-            parts.push(`<span onclick="showSpecialGodDetail('鐵蛇關')" style="color:#8B0000; cursor:pointer;">鐵蛇關</span>`);
+            parts.push(`<span onclick="showSpecialGodDetail('鐵蛇關')" class="god-sha">鐵蛇關</span>`);
         }
         if (isJiangJun) {
-            parts.push(`<span onclick="showSpecialGodDetail('將軍箭')" style="color:#8B0000; cursor:pointer;">將軍箭</span>`);
+            parts.push(`<span onclick="showSpecialGodDetail('將軍箭')" class="god-sha">將軍箭</span>`);
         }
 
-        if (parts.length === 0) {
-            pillarsHTML += `<td style="color:#666;">——</td>`;
-        } else {
-            pillarsHTML += `<td style="line-height:1.3;">${parts.join('<br>')}</td>`;
-        }
+		if (parts.length === 0) {
+			pillarsHTML += `<td style="color:#666;">——</td>`;
+		} else {
+			pillarsHTML += `<td style="line-height:1.05; padding:1px 2px;">${parts.join('')}</td>`;
+		}
     });
     pillarsHTML += `</tr>`;
 
@@ -464,46 +513,53 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
     patternHTML += `</tr></table>`;
     //pillarsHTML += patternHTML;
 
-    // 大運表（12 個 + 連續流年 3 行，從目前正在行的大運開始）
-	let daYunHTML = `<table class="daiyun">
-	<tr><td colspan="12" style="color:#666; font-size:0.8em; border-left: none; border-top: none; border-right: none; text-align: center;">大運流年表（${forward ? '順行' : '逆行'} • 上運 ${luckStartYear} 年）</td></tr><tr style="background:#f9f7f0; font-weight:bold;">`;
-	
-    // 第1行：大運年份（每隔10年）
+    // 大運流年表（12 個 + 左側標籤）
+    let daYunHTML = `<table class="daiyun">`;
+    
+    // 第1行：運年
+    daYunHTML += `<tr style="background:#f9f7f0; font-weight:bold;">`;
+    daYunHTML += `<td class="daiyun-label">運年</td>`;
     for (let i = 11; i >= 0; i--) {
         const y = daYears[i];
         daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer; font-size:0.6em;">${y}</td>`;
     }
-    daYunHTML += `</tr><tr>`;
+    daYunHTML += `</tr>`;
     
-    // 第2行：大運天干（點擊切換對應年份）
+    // 第2行：運干
+    daYunHTML += `<tr>`;
+    daYunHTML += `<td class="daiyun-label">運干</td>`;
     for (let i = 11; i >= 0; i--) {
         const s = daStems[i];
         const isYang = ["甲","丙","戊","庚","壬"].includes(s);
         const y = daYears[i];
         daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.stemsElement[s]]}" class="${isYang ? 'yang-stem' : 'yin-stem'}">${s}</span></td>`;
     }
-    daYunHTML += `</tr><tr>`;
+    daYunHTML += `</tr>`;
     
-    // 第3行：大運地支（點擊切換對應年份）
-	for (let i = 11; i >= 0; i--) {
-		const b = daBranches[i];
-		const isYang = ["子","寅","辰","午","申","戌"].includes(b);
+    // 第3行：運支
+    daYunHTML += `<tr>`;
+    daYunHTML += `<td class="daiyun-label">運支</td>`;
+    for (let i = 11; i >= 0; i--) {
+        const b = daBranches[i];
+        const isYang = ["子","寅","辰","午","申","戌"].includes(b);
         const y = daYears[i];
-		daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
-	}
+        daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.branchesElement[b]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${b}</span></td>`;
+    }
     daYunHTML += `</tr>`;
 
-    // ========== 第4行：連續流年年份 ==========
+    // 第4行：流年
     const currentDaYunStartYear = daYears[currentDaYunIdx];
-    daYunHTML += `<tr style="background:#f9f7f0; font-size:0.6em;">`;
+    daYunHTML += `<tr style="background:#f9f7f0; font-size:0.5em; font-weight: bold;">`;
+    daYunHTML += `<td class="daiyun-label">流年</td>`;
     for (let i = 11; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;">${liuYear}</td>`;
     }
     daYunHTML += `</tr>`;
 
-    // ========== 第5行：連續流年年干 ==========
+    // 第5行：流干
     daYunHTML += `<tr>`;
+    daYunHTML += `<td class="daiyun-label">流干</td>`;
     for (let i = 11; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
@@ -513,8 +569,9 @@ pillarsHTML += `<td style="padding:2px 4px; line-height:1.1;">${liuHiddenHTML}</
     }
     daYunHTML += `</tr>`;
 
-    // ========== 第6行：連續流年年支 ==========
+    // 第6行：流支
     daYunHTML += `<tr>`;
+    daYunHTML += `<td class="daiyun-label">流支</td>`;
     for (let i = 11; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
