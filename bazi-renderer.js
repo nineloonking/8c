@@ -173,11 +173,11 @@ async function renderBaziFate() {
 				year: "年", luck: "運", flow: "流"
 			};
 
-			pillarsHTML += `<td>
-				<span class="pillar-relation">${relationText}</span>
-				<span class="pillar-title">${titleMap[key]}</span>
-				<span class="pillar-body">${bodyText}</span>
-			</td>`;
+			pillarsHTML += `<td onclick="showPillarMeaningDetail('${key}')" style="cursor:pointer;">
+						<span class="pillar-relation">${relationText}</span>
+						<span class="pillar-title">${titleMap[key]}</span>
+						<span class="pillar-body">${bodyText}</span>
+					</td>`;
 		}
 	});
 	pillarsHTML += `</tr>`;
@@ -965,3 +965,37 @@ function showSpecialGodDetail(godName) {
     showMessageBox(info.title || godName, contentHTML);
 }
 window.showSpecialGodDetail = showSpecialGodDetail;
+
+// 點擊柱位含義 → 顯示詳細說明
+function showPillarMeaningDetail(key) {
+    const data = window.baziData;
+    if (!data || !data.pillarMeaning) {
+        alert("資料尚未載入");
+        return;
+    }
+
+    const m = data.pillarMeaning[key];
+    if (!m) {
+        alert("找不到此柱位資料");
+        return;
+    }
+
+    const titleMap = {
+        hour: "時柱",
+        day: "日柱",
+        month: "月柱",
+        year: "年柱",
+        luck: "大運",
+        flow: "流年"
+    };
+
+    const title = titleMap[key] || key;
+    const contentHTML = `
+        <strong>關係：</strong>${m.relation || ''}<br>
+        <strong>身體：</strong>${m.body || ''}<br>
+        <p style="margin-top:16px; color:#444; white-space:pre-line; line-height:1.7; text-align:left;">${m.detail || '（尚未填寫詳細說明）'}</p>
+    `;
+
+    showMessageBox(title, contentHTML);
+}
+window.showPillarMeaningDetail = showPillarMeaningDetail;
