@@ -100,8 +100,9 @@
 <!-- 金主模式專用紀錄區 -->
 <div id="jinZhuRecordArea" style="display:none; margin:10px auto; max-width:820px; text-align:center;">
     <div style="background:#fffaf0; padding:4px; border-radius:12px; border:2px solid #f9e79f;">
-        <input type="text" id="userName" placeholder="姓名" style="width:50px; padding:8px; margin:2px;">
-        <input type="text" id="userNote" placeholder="備註（選填）" style="width:180px; padding:8px; margin:2px;">
+		<input type="text" id="userCode" placeholder="編號" style="width:30px; padding:8px; margin:1px;">
+        <input type="text" id="userName" placeholder="姓名" style="width:50px; padding:8px; margin:1px;">
+        <input type="text" id="userNote" placeholder="備註（選填）" style="width:130px; padding:8px; margin:1px;">
         
         <button onclick="saveBaziRecord()" style="padding:8px 10px; background:#d4af37; color:#8B4513; border:none; border-radius:8px; margin:2px; font-weight:bold;">儲存</button>
         <select id="recordSelect" onchange="loadBaziRecord(this.value)" style="padding:8px; margin:2px; width:100px;">
@@ -322,15 +323,18 @@ let currentLoadedRecordId = null;
 
 function saveBaziRecord() {
     const name = document.getElementById('userName').value.trim();
+    const code = document.getElementById('userCode').value.trim();
+
     if (!name) {
         alert("請輸入姓名！");
         return;
     }
 
-    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
-    
-    const record = {
+    let records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+
+    const newRecord = {
         id: Date.now(),
+        code: code,
         name: name,
         note: document.getElementById('userNote').value.trim(),
         date: document.getElementById('mydate').value,
@@ -339,15 +343,40 @@ function saveBaziRecord() {
         year: document.getElementById('currentYear').value
     };
 
-    records.unshift(record);
+    // 檢查是否有相同 code
+    if (code) {
+        const existIndex = records.findIndex(r => r.code === code);
+
+        if (existIndex !== -1) {
+            const oldName = records[existIndex].name || '';
+
+            // 名字不一樣 → 先確認
+            if (oldName !== name) {
+                const ok = confirm(`編號「${code}」已存在，原本名字是「${oldName}」，確定要覆蓋成「${name}」嗎？`);
+                if (!ok) return;   // 使用者取消就不儲存
+            }
+
+            // 覆蓋舊資料（保留原本 id）
+            newRecord.id = records[existIndex].id;
+            records[existIndex] = newRecord;
+        } else {
+            records.unshift(newRecord);
+        }
+    } else {
+        // 沒填 code 直接新增
+        records.unshift(newRecord);
+    }
+
     if (records.length > 120) records.pop();
 
     localStorage.setItem('baziRecords', JSON.stringify(records));
     loadRecordOptions();
+
     if (currentUser) {
         saveToCloud();
     }
-    alert("✅ 已儲存紀錄：" + name);
+
+    alert("✅ 已儲存紀錄：" + (code ? code + " " : "") + name);
 }
 
 function loadBaziRecord(id) {
@@ -358,8 +387,9 @@ function loadBaziRecord(id) {
 
     currentLoadedRecordId = record.id;
 
-    document.getElementById('userName').value = record.name || '';
-    document.getElementById('userNote').value = record.note || '';
+	document.getElementById('userCode').value = record.code || '';
+	document.getElementById('userName').value = record.name || '';
+	document.getElementById('userNote').value = record.note || '';
     document.getElementById('mydate').value = record.date;
     document.getElementById('mytime').value = record.time;
     document.getElementById('gender').value = record.gender;
@@ -397,13 +427,24 @@ function deleteCurrentRecord() {
 
 function loadRecordOptions() {
     const select = document.getElementById('recordSelect');
-    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+    let records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
+
+    // 依 code 降序排序（沒有 code 的排最後）
+    records.sort((a, b) => {
+        const codeA = a.code || '';
+        const codeB = b.code || '';
+        if (codeA === codeB) return 0;
+        if (codeA === '') return 1;
+        if (codeB === '') return -1;
+        return codeB.localeCompare(codeA, 'zh-Hant', { numeric: true });
+    });
+
     select.innerHTML = '<option value="">-- 選擇紀錄 --</option>';
-    
+
     records.forEach(r => {
         const opt = document.createElement('option');
         opt.value = r.id;
-        opt.textContent = r.name + (r.note ? ` (${r.note})` : '');
+        opt.textContent = (r.code ? `${r.code} ` : '') + r.name + (r.note ? ` (${r.note})` : '');
         select.appendChild(opt);
     });
 }
