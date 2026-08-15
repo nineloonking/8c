@@ -27,7 +27,75 @@ function getLunarYearDays(year) { let sum = 348; for (let i = 0x8000; i > 0x8; i
 function getLeapMonth(year) { return lunarInfo[year - 1900] & 0xf; }
 function getLeapDays(year) { if (getLeapMonth(year)) return (lunarInfo[year - 1900] & 0x10000) ? 30 : 29; return 0; }
 function getMonthDays(year, month) { return (lunarInfo[year - 1900] & (0x10000 >> month)) ? 30 : 29; }
-function getLunar(sy, sm, sd) { /* 你的原有 getLunar 完整程式碼 */ let base = Date.UTC(1900, 0, 31); let target = Date.UTC(sy, sm - 1, sd); let diff = Math.floor((target - base) / 86400000); let year = 1900; while (diff > 0) { let days = getLunarYearDays(year); if (diff < days) break; diff -= days; year++; } let lunarYear = year; let leap = getLeapMonth(lunarYear); let isLeap = false; let month = 1; let temp = 0; for (month = 1; month <= 12; month++) { if (leap > 0 && month === leap + 1 && !isLeap) { month--; isLeap = true; temp = getLeapDays(lunarYear); } else { temp = getMonthDays(lunarYear, month); } if (diff < temp) break; diff -= temp; if (isLeap && month === leap) isLeap = false; } return { year: lunarYear, month: month, day: diff + 1, isLeap: isLeap }; }
+
+// ====================== 農曆工具函數 ======================
+function getLunarYearDays(year) {
+    let sum = 348;
+    const info = lunarInfo[year - 1900];
+    for (let i = 0x8000; i > 0x8; i >>= 1) sum += (info & i) ? 1 : 0;
+    return sum + getLeapDays(year);
+}
+
+function getLeapMonth(year) {
+    return lunarInfo[year - 1900] & 0xf;
+}
+
+function getLeapDays(year) {
+    return getLeapMonth(year) ? ((lunarInfo[year - 1900] & 0x10000) ? 30 : 29) : 0;
+}
+
+function getMonthDays(year, month) {
+    return (lunarInfo[year - 1900] & (0x10000 >> month)) ? 30 : 29;
+}
+
+function getLunar(sy, sm, sd) {
+    const baseDate = new Date(1900, 0, 31);
+    const objDate = new Date(sy, sm - 1, sd);
+    let offset = Math.floor((objDate - baseDate) / 86400000);
+
+    let year = 1900, temp = 0;
+    for (; year < 2101 && offset > 0; year++) {
+        temp = getLunarYearDays(year);
+        offset -= temp;
+    }
+    if (offset < 0) {
+        offset += temp;
+        year--;
+    }
+
+    const leap = getLeapMonth(year);
+    let isLeap = false, month = 1;
+
+    for (; month < 13 && offset > 0; month++) {
+        if (leap > 0 && month === leap + 1 && !isLeap) {
+            --month;
+            isLeap = true;
+            temp = getLeapDays(year);
+        } else {
+            temp = getMonthDays(year, month);
+        }
+
+        if (isLeap && month === leap + 1) isLeap = false;
+        offset -= temp;
+    }
+
+    if (offset === 0 && leap > 0 && month === leap + 1) {
+        if (isLeap) isLeap = false;
+        else { isLeap = true; --month; }
+    }
+    if (offset < 0) {
+        offset += temp;
+        --month;
+    }
+
+    return {
+        year,
+        month,
+        day: offset + 1,
+        isLeap
+    };
+}
+
 function getinrange(number, range) { while (number > range) number -= range; while (number <= 0) number += range; return number; }
 function finddifference(StartDate, EndDate) { let enddatetemp = new Date(EndDate); const oneDay = 86400000; enddatetemp.setHours(0,0,0,0); StartDate.setHours(0,0,0,0); return Math.round(Math.abs((enddatetemp - StartDate) / oneDay)); }
 function findSurroundingDates(dateArray, targetDate) { const target = new Date(targetDate).getTime(); let low = 0, high = dateArray.length - 1; if (target < new Date(dateArray[0]).getTime()) return { beforeIndex: null, afterIndex: 0 }; if (target > new Date(dateArray[high]).getTime()) return { beforeIndex: high, afterIndex: null }; while (low <= high) { const mid = Math.floor((low + high) / 2); const midTime = new Date(dateArray[mid]).getTime(); if (midTime === target) return { beforeIndex: mid, afterIndex: mid }; else if (midTime < target) low = mid + 1; else high = mid - 1; } return { beforeIndex: high, afterIndex: low }; }
@@ -245,3 +313,52 @@ window.findDatesFromPillars = function(yearPillarStr, monthPillarStr, dayPillarS
     console.log(`反向推算完成，耗時 ${Date.now() - startTime}ms，找到 ${results.length} 筆`);
     return results.sort((a,b) => a.year - b.year || a.month - b.month || a.day - b.day);
 };
+
+/**
+ * 計算實歲與虛歲
+ * 回傳：
+ * - realAge：實歲
+ * - xuAge：虛歲
+ * - isBirthYearXu2：出生年是否已過立春而變成 2 虛歲
+ */
+async function getAges(birthYear, birthMonth, birthDay, currentYear, currentMonth, currentDay) {
+    // ===== 實歲 =====
+    let realAge = currentYear - birthYear;
+    if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+        realAge -= 1;
+    }
+    if (realAge < 0) realAge = 0;
+
+    // ===== 虛歲 =====
+    let xuAge = 1;
+    let isBirthYearXu2 = false;
+
+    for (let y = birthYear; y <= currentYear; y++) {
+        const terms = await window.getSolarTerms(y);
+        const liChun = terms.find(t => t.name === '立春');
+        if (!liChun) continue;
+
+        const [ly, lm, ld] = liChun.date.split('-').map(Number);
+        const liChunDate = new Date(ly, lm - 1, ld);
+        const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+        const currentDate = new Date(currentYear, currentMonth - 1, currentDay);
+
+        // 立春在出生之後，且在當前日期之前（或當天）
+        if (liChunDate > birthDate && liChunDate <= currentDate) {
+            xuAge += 1;
+
+            // 如果這個立春是出生年的立春，標記為 true
+            if (y === birthYear) {
+                isBirthYearXu2 = true;
+            }
+        }
+    }
+
+    return {
+        realAge,
+        xuAge,
+        isBirthYearXu2   // true = 出生年已過立春，虛歲已是 2
+    };
+}
+
+window.getAges = getAges;
