@@ -2,7 +2,7 @@
 let isGamChuMode = false;
 let currentUser = null;
 
-console.log("GamChuMode.js 已載入");
+//console.log("GamChuMode.js 已載入");
 
 // Google 登入
 async function googleLogin() {
@@ -47,12 +47,21 @@ function updateAuthUI() {
 function toggleGamChuMode() {
     const modalHTML = `
         <div id="gamchuModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; display:flex; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;">
-            <div style="background:white; border-radius:16px; width:100%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden;">
-                <div style="padding:20px 24px; background:#fffaf0; border-bottom:1px solid #eee; display:flex; align-items:center; gap:12px;">
-                    <span style="font-size:28px;">💰</span>
-                    <h2 style="margin:0; color:#8B4513; font-size:1.4em;">金主模式</h2>
-                </div>
+            <div style="background:white; border-radius:16px; width:100%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden; position:relative;">
                 
+                <!-- 右上角 X 關閉按鈕 -->
+                <button onclick="closeGamChuModal()" 
+                        style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:28px; color:#888; cursor:pointer; z-index:10; padding:0; width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+                    ✕
+                </button>
+
+                <!-- Header -->
+                <div style="padding:20px 24px 12px 24px; background:#fffaf0; border-bottom:1px solid #eee; display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px;">🔐</span>
+                    <h2 style="margin:0; color:#8B4513; font-size:1.4em;">登入 Google 啟用儲存</h2>
+                </div>
+               
+                <!-- Body -->
                 <div style="padding:24px;">
                     <div id="loginArea" style="text-align:center; margin-bottom:20px;">
                         <button onclick="googleLogin()" style="padding:12px 24px; background:#4285f4; color:white; border:none; border-radius:8px; font-size:1.05em; cursor:pointer; width:100%;">
@@ -67,16 +76,17 @@ function toggleGamChuMode() {
                         <button onclick="logout()" style="padding:6px 20px; background:#ef4444; color:white; border:none; border-radius:9999px; font-size:0.95em;">登出</button>
                     </div>
 
+                    <!-- 金主模式開關 -->
                     <div style="background:#f9f7f0; padding:16px; border-radius:12px; margin-bottom:20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:1.1em; font-weight:500;">金主模式</span>
+                            <span style="font-size:1.1em; font-weight:500;">開啟儲存</span>
                             <button onclick="toggleGamChuSwitch()" id="modeSwitch" style="padding:6px 20px; border:none; border-radius:9999px; font-weight:bold; cursor:pointer; min-width:70px;">
                                 ON
                             </button>
                         </div>
                     </div>
                     
-                    <!-- 其他內容保持不變 -->
+                    <!-- 其他內容 -->
                     <div style="background:#fff9e6; padding:18px; border-radius:12px; text-align:center; margin-bottom:20px;">
                         <div style="color:#d97706; font-weight:600; margin-bottom:8px;">課金打賞</div>
                         <div style="color:#b45309; font-size:0.95em;">CHANnal of Kowloon Creation</div>
@@ -88,11 +98,7 @@ function toggleGamChuMode() {
                     </div>
                     <div style="text-align:center; color:#666; font-size:0.95em; line-height:1.5;">
                         歡迎自由打賞，意見回饋請於 FPS 備註留言。
-                    </div>
-                </div>
-                
-                <div style="padding:16px 24px; border-top:1px solid #eee; text-align:center;">
-                    <button onclick="closeGamChuModal()" style="padding:12px 32px; background:#e5e7eb; color:#333; border:none; border-radius:9999px; font-size:1.05em; cursor:pointer;">關閉</button>
+                    </div>				
                 </div>
             </div>
         </div>
