@@ -490,7 +490,7 @@ function godFromStart(startIndex, n) {
 }
 
 function addItem() {
-    queryLiuren();
+    //queryLiuren();   // ← 刪掉這行
     const name = document.getElementById('itemName').value.trim();
     if (!name) {
         alert('請輸入項目名稱');
@@ -504,6 +504,7 @@ function addItem() {
     const item = {
         id: String(Date.now()),
         name,
+		note: "卦象",   // ← 預設
         gregorian: currentSnapshot.gregorian,
         lunarTime: currentSnapshot.lunarTime,
         monthGod: currentSnapshot.monthGod,
@@ -702,14 +703,21 @@ function renderItems() {
 
         return `
             <div class="item-card${item.id === selectedItemId ? ' selected' : ''}">
-<div class="item-head" style="display:flex; align-items:center; gap:10px;">
-    <span style="flex:1;">${escapeHtml(item.name)}</span>
-    <button type="button"
-            onclick="copyItemText('${item.id}')"
-            style="margin-left:auto; padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-        複製
-    </button>
-</div>
+				<div class="item-head" style="display:flex; align-items:center; gap:10px;">
+					<span>
+						${escapeHtml(item.name)}
+						<span class="item-note"
+							  style="margin-left:6px; font-size:0.8em; cursor:pointer; text-decoration:underline dotted; color:#555;"
+							  onclick="editItemNote('${item.id}')">
+							${escapeHtml(item.note || "卦象")}
+						</span>
+					</span>
+					<button type="button"
+							onclick="copyItemText('${item.id}')"
+							style="margin-left:auto; padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+						複製
+					</button>
+				</div>
                 <div class="item-meta">${item.lunarTime}</div>
                 <div class="gods-inline">
                     <span class="god-chip" style="${godStyle(item.monthGod)}"onclick="showGodInfo('${item.monthGod}')">${item.monthGod}</span>
@@ -777,6 +785,7 @@ function copyItemText(itemId) {
 
     const lines = [];
     lines.push(item.name);
+	lines.push(item.note || "卦象");
     //lines.push(item.gregorian);
     lines.push(item.lunarTime);
     lines.push(`${item.monthGod}　${item.dayGod}　${item.hourGod}`);
@@ -808,6 +817,42 @@ function copyItemText(itemId) {
     }
 }
 
+function editItemNote(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const current = item.note || "卦象";
+
+    const contentHTML = `
+        <p style="margin:0 0 6px 0;">項目簡述</p>
+        <input type="text" id="editItemNoteInput" value="${escapeHtml(current)}"
+               style="width:100%; padding:8px; font-size:1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;">
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveItemNote('${itemId}')"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">儲存</button>
+        </div>
+    `;
+    showMessageBox("修改項目簡述", contentHTML);
+    setTimeout(() => {
+        const input = document.getElementById("editItemNoteInput");
+        if (input) { input.focus(); input.select(); }
+    }, 50);
+}
+
+function saveItemNote(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const input = document.getElementById("editItemNoteInput");
+    if (!input) return;
+
+    const v = input.value.trim();
+    item.note = v || "卦象";   // 空白就回到預設
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
 function fallbackCopy(text) {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -826,6 +871,65 @@ function fallbackCopy(text) {
         alert("複製失敗，請手動選取");
     }
     document.body.removeChild(ta);
+}
+
+function addSampleItem() {
+    const year = 2026, month = 5, day = 14, hour = 14, minute = 30;
+    const result = window.getBazi(year, month, day, hour, minute);
+    if (!result || result.error) return;
+
+    // 用現有規則算月／日／時神（跟 queryLiuren 同一套）
+    const monthNumStr = String(result.lunar.month).replace("閏", "");
+    const lunarMonthNum = chineseMonthToNum[monthNumStr];
+    const chineseDayList = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                            "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                            "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    const lunarDayNum = chineseDayList.indexOf(result.lunar.day) + 1;
+    const monthGodIndex = (lunarMonthNum - 1) % 6;
+    const dayGodIndex = (monthGodIndex + (lunarDayNum - 1)) % 6;
+    const hourPos = branchToPos[result.branches.hour];
+    const hourGodIndex = (dayGodIndex + (hourPos - 1)) % 6;
+
+    const sample = {
+        id: "sample-26-054",
+        name: "六合彩",
+        note: "Sample 26/054",
+        gregorian: "2026-05-14 14:30",
+        lunarTime: `${result.lunar.full}　${result.branches.hour}時`,
+        monthGod: liurenGods[monthGodIndex],
+        dayGod: liurenGods[dayGodIndex],
+        hourGod: liurenGods[hourGodIndex],
+        hourGodIndex,
+        branches: []
+    };
+
+    const raw = [
+        { code: "5",  desc: "第二號碼" },
+        { code: "7",  desc: "第一號碼" },
+        { code: "13", desc: "第五號碼" },
+        { code: "15", desc: "第六號碼" },
+        { code: "27", desc: "第三號碼" },
+        { code: "31", desc: "第四號碼" }
+    ];
+
+    raw.forEach(row => {
+        const n = codeToNumber(row.code);
+        const startIndex = sample.branches.length === 0
+            ? sample.hourGodIndex
+            : liurenGods.indexOf(sample.branches[sample.branches.length - 1].result);
+        const god = godFromStart(startIndex, n);
+        sample.branches.push({
+            code: row.code,
+            desc: row.desc,
+            number: n,
+            result: god,
+            mark: "未知"
+        });
+    });
+
+    items.push(sample);
+    selectedItemId = sample.id;
+    saveData();
 }
 
 function showGodInfo(godName) {
@@ -849,6 +953,9 @@ function showGodInfo(godName) {
 }
 
 loadData();
+if (!items.length) {
+    addSampleItem();
+}
 refreshItemSelect();
 renderItems();
 queryLiuren();
