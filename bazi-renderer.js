@@ -78,7 +78,7 @@ async function renderBaziFate() {
     let daYears = [], daStems = [], daBranches = [];
     let curStem = monthStemIdx;
     let curBranch = monthBranchIdx;
-    for (let i = 0; i < 12; i++) {   // ← 改成 12
+    for (let i = 0; i < 10; i++) {   // ← 改成 12
         if (forward) {
             curStem = (curStem % 10) + 1;
             curBranch = (curBranch % 12) + 1;
@@ -102,6 +102,17 @@ async function renderBaziFate() {
     const currentYearBazi = window.getBazi(currentRealYear, 6, 15, 12, 0);
     const currentLiuNianStem = currentYearBazi.stems.year;
     const currentLiuNianBranch = currentYearBazi.branches.year;
+	
+	
+	window.lastBaziResult = {
+		stems: baziResult.stems,
+		branches: baziResult.branches,
+		currentDaYunStem,
+		currentDaYunBranch,
+		currentLiuNianStem,
+		currentLiuNianBranch
+	};
+	
 	
 	//神煞表 用
     const dayBranch = data.stemToBranch[dayStem][0];
@@ -226,9 +237,9 @@ async function renderBaziFate() {
     pillarsHTML += `<tr>`;
 	pillarsHTML += `<td class="pillar-label">天干<br>十二</td>`;
     ["hour","day","month","year"].forEach((key, idx) => {
-        if (idx === 1) {
-            pillarsHTML += `<td><span class="godsformat"><strong>日元</strong></span></td>`;
-        } else {
+		if (idx === 1) {
+			pillarsHTML += `<td onclick="showYuanGodCombo()" style="cursor:pointer;"><span class="godsformat"><strong>日元</strong></span></td>`;
+		} else {
             const stem = baziResult.stems[key];
             const mappedBranch = data.stemToBranch[stem][0];
             const offset = (branchesOrder.indexOf(mappedBranch) - branchesOrder.indexOf(dayBranch) + 12) % 12;
@@ -487,9 +498,75 @@ async function renderBaziFate() {
 		}
     });
     pillarsHTML += `</tr>`;
+	
+	// ====================== 流月（併入大表，6欄） ======================
+	const liuYueBranches = ["寅","卯","辰","巳","午","未","申","酉","戌","亥","子","丑"];
+	const wuHuDun = {
+		"甲": "丙", "己": "丙",
+		"乙": "戊", "庚": "戊",
+		"丙": "庚", "辛": "庚",
+		"丁": "壬", "壬": "壬",
+		"戊": "甲", "癸": "甲"
+	};
+	const stemOrder = "甲乙丙丁戊己庚辛壬癸";
+	const startStem = wuHuDun[currentLiuNianStem] || "丙";
+	const startIdx = stemOrder.indexOf(startStem);
 
+	const liuYuePairs = [];
+	for (let i = 0; i < 12; i += 2) {
+		const b1 = liuYueBranches[i];
+		const b2 = liuYueBranches[i + 1];
+		const s1 = stemOrder[(startIdx + i) % 10];
+		const s2 = stemOrder[(startIdx + i + 1) % 10];
+		const naYin = (data.naYin && data.naYin[s1 + b1]) || "——";
+		liuYuePairs.push({ s1, b1, s2, b2, naYin });
+	}
+	// 左→右對應 時日月年運流：子丑、戌亥、申酉、午未、辰巳、寅卯
+	const displayPairs = [...liuYuePairs].reverse();
 
-    pillarsHTML += `</tr></table>`;
+	// 流月干
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">流月<br>干</td>`;
+	displayPairs.forEach(p => {
+		const c1 = data.fiveColors[data.stemsElement[p.s1]] || "#333";
+		const c2 = data.fiveColors[data.stemsElement[p.s2]] || "#333";
+		const y1 = ["甲","丙","戊","庚","壬"].includes(p.s1);
+		const y2 = ["甲","丙","戊","庚","壬"].includes(p.s2);
+		pillarsHTML += `<td>
+			<span style="color:${c2};" class="liuyue-char ${y2 ? 'yang-stem' : 'yin-stem'}">${p.s2}</span>
+			<span style="color:${c1};" class="liuyue-char ${y1 ? 'yang-stem' : 'yin-stem'}">${p.s1}</span>		
+		</td>`;
+	});
+	pillarsHTML += `</tr>`;
+
+	// 流月支
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">流月<br>支</td>`;
+	displayPairs.forEach(p => {
+		const c1 = data.fiveColors[data.branchesElement[p.b1]] || "#333";
+		const c2 = data.fiveColors[data.branchesElement[p.b2]] || "#333";
+		const y1 = ["子","寅","辰","午","申","戌"].includes(p.b1);
+		const y2 = ["子","寅","辰","午","申","戌"].includes(p.b2);
+		pillarsHTML += `<td>
+			<span style="color:${c2};" class="liuyue-char branch ${y2 ? 'yang-branch' : 'yin-branch'}">${p.b2}</span>
+			<span style="color:${c1};" class="liuyue-char branch ${y1 ? 'yang-branch' : 'yin-branch'}">${p.b1}</span>
+		</td>`;
+	});
+	pillarsHTML += `</tr>`;
+
+	// 納音
+	pillarsHTML += `<tr>`;
+	pillarsHTML += `<td class="pillar-label">流月<br>納音</td>`;
+	displayPairs.forEach(p => {
+		const element = p.naYin.slice(-1);
+		const color = data.fiveColors[element] || "#8B4513";
+		pillarsHTML += `<td><span class="naYin-text" style="color:${color};">${p.naYin}</span></td>`;
+	});
+	pillarsHTML += `</tr>`;	
+	
+	
+	
+    pillarsHTML += `</table>`;
 
     // 格局表（保持原樣）
     const tenGodsList1 = ["比肩","食神","偏財","七殺","偏印"];
@@ -515,7 +592,7 @@ async function renderBaziFate() {
     // 第1行：運年
     daYunHTML += `<tr style="background:#f9f7f0; font-weight:bold;">`;
     daYunHTML += `<td class="daiyun-label">運年</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const y = daYears[i];
         daYunHTML += `<td onclick="setCurrentYear(${y})" style="cursor:pointer; font-size:0.6em;">${y}</td>`;
     }
@@ -524,7 +601,7 @@ async function renderBaziFate() {
     // 第2行：運干
     daYunHTML += `<tr>`;
     daYunHTML += `<td class="daiyun-label">運干</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const s = daStems[i];
         const isYang = ["甲","丙","戊","庚","壬"].includes(s);
         const y = daYears[i];
@@ -535,7 +612,7 @@ async function renderBaziFate() {
     // 第3行：運支
     daYunHTML += `<tr>`;
     daYunHTML += `<td class="daiyun-label">運支</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const b = daBranches[i];
         const isYang = ["子","寅","辰","午","申","戌"].includes(b);
         const y = daYears[i];
@@ -547,7 +624,7 @@ async function renderBaziFate() {
     const currentDaYunStartYear = daYears[currentDaYunIdx];
     daYunHTML += `<tr style="background:#f9f7f0; font-size:0.5em; font-weight: bold;">`;
     daYunHTML += `<td class="daiyun-label">流年</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;">${liuYear}</td>`;
     }
@@ -556,7 +633,7 @@ async function renderBaziFate() {
     // 第5行：流干
     daYunHTML += `<tr>`;
     daYunHTML += `<td class="daiyun-label">流干</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
         const yStem = yBazi.stems.year;
@@ -568,7 +645,7 @@ async function renderBaziFate() {
     // 第6行：流支
     daYunHTML += `<tr>`;
     daYunHTML += `<td class="daiyun-label">流支</td>`;
-    for (let i = 11; i >= 0; i--) {
+    for (let i = 9; i >= 0; i--) {
         const liuYear = currentDaYunStartYear + i;
         const yBazi = window.getBazi(liuYear, 6, 15, 12, 0);
         const yBranch = yBazi.branches.year;
@@ -576,6 +653,9 @@ async function renderBaziFate() {
         daYunHTML += `<td onclick="setCurrentYear(${liuYear})" style="cursor:pointer;"><span style="color:${data.fiveColors[data.branchesElement[yBranch]]}" class="branch ${isYang ? 'yang-branch' : 'yin-branch'}">${yBranch}</span></td>`;
     }
     daYunHTML += `</tr></table>`;
+	
+	
+	
 
 	//天干通地支表
     //let baziDataTable = `<p style="margin:25px 0 4px; color:#666; font-size:1.0em;">天干通地支表</p>`;	
@@ -988,3 +1068,100 @@ function showPillarMeaningDetail(key) {
     showMessageBox(title, contentHTML);
 }
 window.showPillarMeaningDetail = showPillarMeaningDetail;
+
+function showYuanGodCombo() {
+    const data = window.baziData;
+    if (!data) {
+        alert("資料尚未載入");
+        return;
+    }
+
+    const godsList = data.daily12Gods;
+    const branchesOrder = data.branchesOrder;
+    const dayStem = window.lastBaziResult.stems.day;
+    const dayBranchMapped = data.stemToBranch[dayStem][0];
+    const pairs = data.twelveGodPairs || {};
+
+    const groupMap = {
+        "太歲": "太病", "病符": "太病",
+        "青龍": "青六", "六合": "青六",
+        "大耗": "大小", "小耗": "大小",
+        "官符": "官貴", "貴神": "官貴",
+        "白虎": "白朱", "朱雀": "白朱",
+        "喪門": "喪吊", "吊客": "喪吊"
+    };
+
+    function getGodByBranch(branch) {
+        const offset = (branchesOrder.indexOf(branch) - branchesOrder.indexOf(dayBranchMapped) + 12) % 12;
+        return godsList[offset];
+    }
+    function getGodByStem(stem) {
+        const mapped = data.stemToBranch[stem][0];
+        return getGodByBranch(mapped);
+    }
+    function getPairText(stemGod, branchGod) {
+        const a = groupMap[stemGod];
+        const b = groupMap[branchGod];
+        if (!a || !b) return "";
+        const key = `${a}+${b}`;
+        if (a === b) return (pairs.same && pairs.same[key]) || "";
+        return (pairs.combo && pairs.combo[key]) || "";
+    }
+
+    const pillars = [
+        { key: "年", stem: window.lastBaziResult.stems.year,  branch: window.lastBaziResult.branches.year },
+        { key: "月", stem: window.lastBaziResult.stems.month, branch: window.lastBaziResult.branches.month },
+        { key: "時", stem: window.lastBaziResult.stems.hour,  branch: window.lastBaziResult.branches.hour },
+        { key: "運", stem: window.lastBaziResult.currentDaYunStem,   branch: window.lastBaziResult.currentDaYunBranch },
+        { key: "流", stem: window.lastBaziResult.currentLiuNianStem, branch: window.lastBaziResult.currentLiuNianBranch }
+    ];
+
+    const ziZuoBranchGod = getGodByBranch(window.lastBaziResult.branches.day);
+    let html = `<p><strong>自坐：</strong>${ziZuoBranchGod}</p>`;
+    html += `<hr style="margin:12px 0; border:none; border-top:1px solid #eee;">`;
+
+    pillars.forEach(p => {
+        if (!p.stem || !p.branch) return;
+        const stemGod = getGodByStem(p.stem);
+        const branchGod = getGodByBranch(p.branch);
+        const meaning = getPairText(stemGod, branchGod);
+        html += `<br>${p.key}：${stemGod}${branchGod}<br>${meaning ? "　" + meaning : ""}<br>`;
+    });
+
+    showMessageBox("十二神煞格局", html);
+}
+window.showYuanGodCombo = showYuanGodCombo;
+
+function buildLiuYueInnerRow(label, cellsHTML) {
+    return `<tr>
+        <td class="pillar-label">${label}</td>
+        <td colspan="6" style="padding:0;">
+            <table style="width:100%; border-collapse:collapse;">
+                <tr>${cellsHTML}</tr>
+            </table>
+        </td>
+    </tr>`;
+}
+
+let ganCells = "";
+let zhiCells = "";
+displayBranches.forEach(b => {
+    const i = liuYueBranches.indexOf(b);
+    const stem = stemOrder[(startIdx + i) % 10];
+    const sColor = data.fiveColors[data.stemsElement[stem]] || "#333";
+    const bColor = data.fiveColors[data.branchesElement[b]] || "#333";
+    const isYangS = ["甲","丙","戊","庚","壬"].includes(stem);
+    const isYangB = ["子","寅","辰","午","申","戌"].includes(b);
+
+    ganCells += `<td style="border:1px solid #D2B48C; text-align:center;">
+        <span style="color:${sColor};" class="${isYangS ? 'yang-stem' : 'yin-stem'}">${stem}</span>
+    </td>`;
+    zhiCells += `<td style="border:1px solid #D2B48C; text-align:center;">
+        <span style="color:${bColor};" class="branch ${isYangB ? 'yang-branch' : 'yin-branch'}">${b}</span>
+    </td>`;
+});
+
+pillarsHTML += buildLiuYueInnerRow("流月干", ganCells);
+pillarsHTML += buildLiuYueInnerRow("流月支", zhiCells);
+
+pillarsHTML += `</table>`;
