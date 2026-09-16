@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小六壬速查</title>
+<style>
+    body {
+        text-align: center;
+        font-family: sans-serif;
+        background: #f9f7f0;
+        padding: 20px;
+        margin: 0;
+    }
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 700px;
+        margin: 0 auto 16px auto;
+    }
+    .top-bar h1 {
+        color: #8B4513;
+        margin: 0;
+        font-size: 1.6em;
+        text-align: left;
+    }
+    .login-btn {
+        padding: 8px 18px;
+        background: #8B4513;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .login-btn:hover { background: #6b3410; }
+
+    .result-box {
+        max-width: 700px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .date-info {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+    table {
+        margin: 10px auto;
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 480px;
+        font-size: 1.2em;
+    }
+    td {
+        padding: 14px 10px;
+        border: 2px solid #D2B48C;
+        text-align: center;
+    }
+    .god-name {
+        font-size: 1.45em;
+        font-weight: bold;
+        color: #8B4513;
+    }
+    #hourGodCell { cursor: pointer; }
+
+    .action-box {
+        max-width: 700px;
+        margin: 16px auto;
+        padding: 16px 18px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: left;
+    }
+    .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+    }
+    .action-row input,
+    .action-row select {
+        flex: 1 1 140px;
+        min-width: 120px;
+        padding: 8px 10px;
+        font-size: 1em;
+        border: 2px solid #8B4513;
+        border-radius: 8px;
+    }
+    .action-row button {
+        padding: 9px 16px;
+        background: #8B4513;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .action-row button:hover { background: #6b3410; }
+    .row-label {
+        font-weight: bold;
+        color: #8B4513;
+        margin: 0;
+    }
+	.action-row button.btn-branch {
+		background: #C4A574;   /* 淺啡／淺棕 */
+		color: #fff;
+	}
+	.action-row button.btn-branch:hover {
+		background: #A88B5C;
+	}
+    .hint {
+        color: #888;
+        font-size: 0.85em;
+        margin: 6px 0 0 0;
+    }
+
+    .item-card {
+        max-width: 700px;
+        margin: 12px auto;
+        padding: 16px 18px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        text-align: left;
+        border-left: 6px solid #8B4513;
+    }
+    .item-card.selected {
+        outline: 2px solid #C9A227;
+    }
+    .item-head {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #8B4513;
+    }
+    .item-meta { color: #555; margin: 6px 0 10px 0; }
+    .gods-inline {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+    .god-chip {
+        background: #f4ead8;
+        border: 1px solid #D2B48C;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.95em;
+    }
+    .god-chip strong { color: #8B4513; }
+    .branch-list { margin-top: 10px; }
+    .branch-item {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: baseline;
+        padding: 8px 0;
+        border-top: 1px dashed #e6d5b8;
+        font-size: 1em;
+    }
+    .branch-code { font-weight: bold; color: #333; }
+    .branch-desc { color: #555; }
+    .branch-result {
+        margin-left: auto;
+        font-weight: bold;
+        color: #8B4513;
+        font-size: 1.15em;
+    }
+    .empty-note { color: #999; font-size: 0.9em; }
+	#dayModal {
+		display: none;
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: white;
+		padding: 25px;
+		border-radius: 12px;
+		box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+		z-index: 10000;
+		width: 320px;
+		text-align: center;
+	}
+	#dayModal h3 {
+		margin: 0 0 15px 0;
+		color: #8B4513;
+	}
+    #hourModal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        z-index: 10000;
+        width: 320px;
+        text-align: center;
+    }
+    #hourModal h3 {
+        margin: 0 0 15px 0;
+        color: #8B4513;
+    }
+	#itemName {
+		flex: 0 0 70px;
+		width: 70px;
+		min-width: 70px;
+		max-width: 70px;
+	}
+	#branchCode {
+		flex: 0 0 70px;
+		width: 70px;
+		min-width: 70px;
+		max-width: 70px;
+	}
+	#branchDesc {
+		flex: 0 0 124px;
+		width: 124px;
+		min-width: 124px;
+		max-width: 124px;
+	}
+	#itemSelect {
+		flex: 0 0 90px;
+		width: 90px;
+		min-width: 90px;
+		max-width: 90px;
+	}
+	.action-row button {
+		flex: 0 0 50px;
+		width: 50px;
+		min-width: 50px;
+		max-width: 50px;
+		padding: 6px 2px;   /* 字較多時可略縮左右 padding */
+		box-sizing: border-box;
+	}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>小六壬速查</h1>
+    <button type="button" class="login-btn" onclick="onLogin()">登入</button>
+</div>
+
+<div id="here" class="result-box"></div>
+
+<div class="action-box">
+    <p class="row-label">項目</p>
+    <!--項目行-->
+    <div class="action-row">
+        <input type="text" id="itemName" placeholder="項目名稱">
+        <button type="button" onclick="addItem()">新增</button>
+        <select id="itemSelect" onchange="onItemSelect()">
+            <option value="">選擇項目</option>
+        </select>
+        <button type="button" onclick="deleteItem()">刪除</button>
+    </div>
+    <!--分支行-->
+    <div class="action-row">
+        <input type="text" id="branchCode" placeholder="分支代號" oninput="sanitizeBranchCode(this)">
+        <input type="text" id="branchDesc" placeholder="分支簡述">
+        <button type="button" class="btn-branch" onclick="addBranch()">新增</button>
+    </div>
+    <p class="hint">取數：代號尾數，承接對上六神再起課。</p>
+</div>
+
+<div id="itemList"></div>
+
+<div id="dayModal">
+    <h3>改日期（改日神）</h3>
+    <p style="margin:10px 0 15px 0;">選擇公曆日期</p>
+    <input type="date" id="manualDate" style="width:180px; padding:8px; font-size:1.1em; border:2px solid #8B4513; border-radius:8px;">
+    <br><br>
+    <button onclick="applyManualDate()" style="padding:12px 30px; background:#8B4513; color:white; border:none; border-radius:8px; font-size:1.1em; margin-right:8px;">確定</button>
+    <button onclick="hideDayModal()" style="padding:12px 30px; background:#ddd; color:#333; border:none; border-radius:8px; font-size:1.1em;">取消</button>
+</div>
+
+<div id="hourModal">
+    <h3>手動推算 時神</h3>
+    <p style="margin:10px 0 15px 0;">輸入時辰序號<br>(1 = 子時　…　12 = 亥時)</p>
+    <input type="number" id="manualHour" min="1" max="12" value="9" style="width:100px; padding:8px; font-size:1.3em; text-align:center; border:2px solid #8B4513; border-radius:8px;">
+    <br><br>
+    <button onclick="calculateManualHourGod()" style="padding:12px 30px; background:#8B4513; color:white; border:none; border-radius:8px; font-size:1.1em; margin-right:8px;">推算</button>
+    <button onclick="hideHourModal()" style="padding:12px 30px; background:#ddd; color:#333; border:none; border-radius:8px; font-size:1.1em;">取消</button>
+</div>
+
+<script src="bazi-calculator.js"></script>
+<script src="MessageBox.js"></script>
+<script>
+let siuData = null;
+
+fetch("SiuSixYamData.json")
+  .then(r => r.json())
+  .then(data => {
+    siuData = data;
+    // 若已有畫面，可再 render 一次套顏色
+    if (currentSnapshot) renderCurrentGods();
+    renderItems();
+  })
+  .catch(err => console.error("載入六神資料失敗", err));
+
+const liurenGods = ["大安", "留連", "速喜", "赤口", "小吉", "空亡"];
+const branchMarks = ["未知🧿", "應課🙏", "應劫🗡️", "反轉💣", "不明💭"];
+
+const chineseMonthToNum = {
+    "正":1, "二":2, "三":3, "四":4, "五":5, "六":6,
+    "七":7, "八":8, "九":9, "十":10, "十一":11, "十二":12
+};
+
+const branchToPos = {
+    "子":1, "丑":2, "寅":3, "卯":4, "辰":5, "巳":6,
+    "午":7, "未":8, "申":9, "酉":10, "戌":11, "亥":12
+};
+const elementColor = {
+  "木": "#2E7D32",
+  "水": "#1565C0",
+  "火": "#C62828",
+  "金": "#F9A825",
+  "土": "#8D6E63"
+};
+
+let currentDayGodIndex = 0;
+let currentSnapshot = null;
+let manualDateStr = null;  // "YYYY-MM-DD" 或 null
+let items = [];
+let selectedItemId = "";
+
+function getNowHK() {
+    const now = new Date();
+    const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+    const iso = nowInHK.toISOString();
+    //const dateStr = iso.split('T')[0];
+	let dateStr = manualDateStr || iso.split('T')[0];
+    const timeStr = iso.split('T')[1].slice(0, 5);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = timeStr.split(':').map(Number);
+    return { year, month, day, hour, minute, dateStr, timeStr };
+}
+
+function queryLiuren() {
+    const { year, month, day, hour, minute, dateStr, timeStr } = getNowHK();
+
+    const result = window.getBazi(year, month, day, hour, minute);
+
+    if (result.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red; font-size:1.2em;">${result.error}</p>`;
+        currentSnapshot = null;
+        return;
+    }
+
+    let monthDisplay = result.lunar.month;
+    let monthNumStr = monthDisplay.replace('閏', '');
+    const lunarMonthNum = chineseMonthToNum[monthNumStr];
+
+    const chineseDayList = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                            "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                            "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    const lunarDayNum = chineseDayList.indexOf(result.lunar.day) + 1;
+
+    let monthGodIndex = (lunarMonthNum - 1) % 6;
+    const monthGod = liurenGods[monthGodIndex];
+
+    let dayGodIndex = (monthGodIndex + (lunarDayNum - 1)) % 6;
+    const dayGod = liurenGods[dayGodIndex];
+    currentDayGodIndex = dayGodIndex;
+
+    const hourBranch = result.branches.hour;
+    const hourPos = branchToPos[hourBranch];
+    let hourGodIndex = (dayGodIndex + (hourPos - 1)) % 6;
+    const hourGod = liurenGods[hourGodIndex];
+
+    const gregorian = `${dateStr} ${timeStr}`;
+    const lunarTime = `${result.lunar.full}　${hourBranch}時`;
+
+    currentSnapshot = {
+        gregorian,
+        lunarTime,
+        monthGod,
+        dayGod,
+        hourGod,
+        hourGodIndex
+    };
+
+    renderCurrentGods();
+}
+
+function renderCurrentGods() {
+    if (!currentSnapshot) return;
+    const s = currentSnapshot;
+	document.getElementById('here').innerHTML = `
+		<div class="date-info">
+			${s.gregorian}<br>
+			${s.lunarTime}
+		</div>
+		<table>
+			<tr>
+				<td style="color: green; cursor:pointer;" onclick="resetToNow()" title="重設為現在">月神♻️</td>
+				<td style="color: gold; cursor:pointer;" onclick="showDayModal()" title="改日期">日神🖌️</td>
+				<td style="color: gold; cursor:pointer;" onclick="showHourModal()" title="改時辰">時神🖌️</td>
+			</tr>
+			<tr>
+				<td class="god-name" style="${godStyle(s.monthGod)}" onclick="showGodInfo('${s.monthGod}')">${s.monthGod}</td>
+				<td class="god-name" style="${godStyle(s.dayGod)};" onclick="showGodInfo('${s.dayGod}')">${s.dayGod}</td>
+				<td class="god-name" style="${godStyle(s.hourGod)};" onclick="showGodInfo('${s.hourGod}')">${s.hourGod}</td>
+			</tr>
+		</table>
+		<p style="margin-top:15px; color:#666; font-size:0.95em;">
+			月上起日　日上起時　六神順時循環
+		</p>
+	`;
+}
+
+function showHourModal() {
+    document.getElementById('hourModal').style.display = 'block';
+}
+
+function hideHourModal() {
+    document.getElementById('hourModal').style.display = 'none';
+}
+function showDayModal() {
+    const input = document.getElementById('manualDate');
+    const { dateStr } = getNowHK();
+    input.value = manualDateStr || dateStr;
+    document.getElementById('dayModal').style.display = 'block';
+}
+function hideDayModal() {
+    document.getElementById('dayModal').style.display = 'none';
+}
+function applyManualDate() {
+    const v = document.getElementById('manualDate').value;
+    if (!v) {
+        alert('請選擇日期');
+        return;
+    }
+    manualDateStr = v;
+    hideDayModal();
+    queryLiuren();   // 用新日期重算 月神／日神／時神
+}
+
+function calculateManualHourGod() {
+    const hourPos = parseInt(document.getElementById('manualHour').value);
+    if (isNaN(hourPos) || hourPos < 1 || hourPos > 12) {
+        alert('請輸入 1 到 12 的數字');
+        return;
+    }
+    const hourGodIndex = (currentDayGodIndex + (hourPos - 1)) % 6;
+    const newHourGod = liurenGods[hourGodIndex];
+
+    if (currentSnapshot) {
+        currentSnapshot.hourGod = newHourGod;
+        currentSnapshot.hourGodIndex = hourGodIndex;
+    }
+    hideHourModal();
+    renderCurrentGods();   // 整表重畫，不必再找 hourGodCell
+}
+
+function resetToNow() {
+    manualDateStr = null;   // 清掉手動日期（若你有用這個變數）
+    queryLiuren();          // 用現在香港時間重起課
+}
+
+function onLogin() {
+    alert('登入功能尚未接上');
+}
+
+function sanitizeBranchCode(el) {
+    el.value = el.value.replace(/[^A-Za-z0-9]/g, '');
+}
+
+function codeToNumber(code) {
+    const last = code.slice(-1);
+    if (/[A-Za-z]/.test(last)) {
+        return last.toUpperCase().charCodeAt(0) - 64;
+    }
+    const n = parseInt(last, 10);
+    return n === 0 ? 10 : n;
+}
+
+function godFromStart(startIndex, n) {
+    return liurenGods[(startIndex + (n - 1)) % 6];
+}
+
+function addItem() {
+    //queryLiuren();   // ← 刪掉這行
+    const name = document.getElementById('itemName').value.trim();
+    if (!name) {
+        alert('請輸入項目名稱');
+        return;
+    }
+    if (!currentSnapshot) {
+        alert('起課失敗，請稍後再試');
+        return;
+    }
+
+    const item = {
+        id: String(Date.now()),
+        name,
+		note: "卦象",   // ← 預設
+        gregorian: currentSnapshot.gregorian,
+        lunarTime: currentSnapshot.lunarTime,
+        monthGod: currentSnapshot.monthGod,
+        dayGod: currentSnapshot.dayGod,
+        hourGod: currentSnapshot.hourGod,
+        hourGodIndex: currentSnapshot.hourGodIndex,
+        branches: []
+    };
+    items.push(item);
+    selectedItemId = item.id;
+    document.getElementById('itemName').value = '';
+    saveData();
+    refreshItemSelect();
+    renderItems();
+}
+
+function deleteItem() {
+    if (!selectedItemId) {
+        alert('請先選擇要刪除的項目');
+        return;
+    }
+    const item = items.find(i => i.id === selectedItemId);
+    if (!item) return;
+    if (!confirm('確定刪除項目「' + item.name + '」？')) return;
+
+    items = items.filter(i => i.id !== selectedItemId);
+    selectedItemId = '';
+    saveData();
+    refreshItemSelect();
+    renderItems();
+}
+
+function addBranch() {
+    if (!selectedItemId) {
+        alert('請先新增或選擇一個項目');
+        return;
+    }
+    const code = document.getElementById('branchCode').value.trim();
+    const desc = document.getElementById('branchDesc').value.trim();
+    if (!code) {
+        alert('請輸入分支代號');
+        return;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(code)) {
+        alert('分支代號只可以是數字或英文');
+        return;
+    }
+
+    // ★ 必須先有這行，後面才能用 item
+    const item = items.find(i => i.id === selectedItemId);
+    if (!item) return;
+
+    const n = codeToNumber(code);
+
+    let startIndex;
+    if (item.branches.length === 0) {
+        startIndex = item.hourGodIndex;
+    } else {
+        const prev = item.branches[item.branches.length - 1];
+        startIndex = liurenGods.indexOf(prev.result);
+    }
+
+    const result = godFromStart(startIndex, n);
+
+    item.branches.push({ code, desc, number: n, result, mark: "未知🧿"});
+    document.getElementById('branchCode').value = '';
+    document.getElementById('branchDesc').value = '';
+    saveData();
+    renderItems();
+}
+
+function editBranchDesc(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const b = item.branches[branchIndex];
+    const current = b.desc || "";
+
+    // 用 MessageBox 較美；若沒載入可用 prompt
+    if (typeof showMessageBox === "function") {
+        const contentHTML = `
+            <p style="margin:0 0 8px 0; color:#666;">代號：<strong>${escapeHtml(b.code)}</strong></p>
+			<br><br>
+            <input type="text" id="editBranchDescInput" value="${escapeHtml(current)}"
+                   style="width:100%; padding:8px; font-size:1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;">
+            <div style="margin-top:16px; text-align:right;">
+                <button type="button" onclick="closeMessageBox()"
+                        style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+                <button type="button" onclick="saveBranchDesc('${itemId}', ${branchIndex})"
+                        style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">儲存</button>
+            </div>
+        `;
+        showMessageBox("修改分支簡述", contentHTML);
+        setTimeout(() => {
+            const input = document.getElementById("editBranchDescInput");
+            if (input) { input.focus(); input.select(); }
+        }, 50);
+    } else {
+        const next = prompt("修改分支簡述（代號 " + b.code + " 不可改）", current);
+        if (next === null) return;
+        b.desc = next.trim();
+        saveData();
+        renderItems();
+    }
+}
+
+function saveBranchDesc(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const input = document.getElementById("editBranchDescInput");
+    if (!input) return;
+
+    item.branches[branchIndex].desc = input.value.trim();
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
+function onItemSelect() {
+    selectedItemId = document.getElementById('itemSelect').value;
+    saveData();
+    renderItems();
+}
+
+function refreshItemSelect() {
+    const sel = document.getElementById('itemSelect');
+    sel.innerHTML = '<option value="">選擇項目</option>' +
+        items.map(i => `<option value="${i.id}">${escapeHtml(i.name)}</option>`).join('');
+    sel.value = selectedItemId;
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function saveData() {
+    localStorage.setItem('xiaoliuren-data', JSON.stringify({
+        items,
+        selectedItemId
+    }));
+}
+
+function loadData() {
+    try {
+        const raw = localStorage.getItem('xiaoliuren-data');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.items)) items = data.items;
+        if (typeof data.selectedItemId === 'string') selectedItemId = data.selectedItemId;
+    } catch (e) {
+        items = [];
+        selectedItemId = '';
+    }
+}
+
+function renderItems() {
+    const box = document.getElementById('itemList');
+    const shown = selectedItemId
+        ? items.filter(i => i.id === selectedItemId)
+        : [];
+    if (!shown.length) {
+        box.innerHTML = '';
+        return;
+    }
+
+    box.innerHTML = shown.map(item => {
+        const branchesHtml = item.branches.length
+            ? item.branches.map((b, idx) => {
+				const mark = b.mark || "未知🧿";
+				return `
+				  <div class="branch-item">
+					<span class="branch-code">${escapeHtml(b.code)}</span>
+					<span class="branch-desc"
+						  style="cursor:pointer; text-decoration:underline dotted;"
+						  onclick="editBranchDesc('${item.id}', ${idx})">
+					  ${escapeHtml(b.desc || "null")}
+					</span>
+					<span class="branch-result"
+						  style="${godStyle(b.result)}"
+						  onclick="showGodInfo('${b.result}')">${b.result}</span>
+					<span class="branch-mark"
+						  style="margin-left:8px; cursor:pointer; color:#8B4513; font-size:0.9em;"
+						  onclick="editBranchMark('${item.id}', ${idx})"
+						  title="點擊修改">
+					  ${escapeHtml(mark)}
+					</span>
+				  </div>
+				`;
+			}).join("")
+            : '<p class="empty-note">尚未新增分支</p>';
+
+        return `
+            <div class="item-card${item.id === selectedItemId ? ' selected' : ''}">
+				<div class="item-head" style="display:flex; align-items:center; gap:10px;">
+					<span>
+						${escapeHtml(item.name)}
+						<span class="item-note"
+							  style="margin-left:6px; font-size:0.8em; cursor:pointer; text-decoration:underline dotted; color:#555;"
+							  onclick="editItemNote('${item.id}')">
+							${escapeHtml(item.note || "卦象")}
+						</span>
+					</span>
+					<button type="button"
+							onclick="copyItemText('${item.id}')"
+							style="margin-left:auto; padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+						複製
+					</button>
+				</div>
+                <div class="item-meta">${item.lunarTime}</div>
+                <div class="gods-inline">
+                    <span class="god-chip" style="${godStyle(item.monthGod)}"onclick="showGodInfo('${item.monthGod}')">${item.monthGod}</span>
+                    <span class="god-chip" style="${godStyle(item.dayGod)}"onclick="showGodInfo('${item.dayGod}')">${item.dayGod}</span>
+                    <span class="god-chip" style="${godStyle(item.hourGod)}"onclick="showGodInfo('${item.hourGod}')">${item.hourGod}</span>
+                </div>
+                <div class="branch-list">${branchesHtml}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function editBranchMark(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const b = item.branches[branchIndex];
+    const current = b.mark || "未知🧿";
+
+    const options = branchMarks.map(m =>
+        `<option value="${m}" ${m === current ? "selected" : ""}>${m}</option>`
+    ).join("");
+
+    const contentHTML = `
+        <p style="margin:0 0 8px 0; color:#666;">
+            ${escapeHtml(b.code)}　${escapeHtml(b.desc)}　<strong>${escapeHtml(b.result)}</strong>
+        </p>
+        <p style="margin:0 0 6px 0;">結果是</p>
+        <select id="editBranchMarkSelect"
+                style="width:100%; padding:8px; font-size:1.1em; border:2px solid #8B4513; border-radius:8px;">
+            ${options}
+        </select>
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveBranchMark('${itemId}', ${branchIndex})"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">確定</button>
+        </div>
+    `;
+    showMessageBox("分支結果", contentHTML);
+}
+
+function saveBranchMark(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const sel = document.getElementById("editBranchMarkSelect");
+    if (!sel) return;
+
+    item.branches[branchIndex].mark = sel.value;
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
+function godStyle(godName) {
+  const g = siuData && siuData.gods[godName];
+  const color = g ? (elementColor[g.element] || "#8B4513") : "#8B4513";
+  return `color:${color}; cursor:pointer; font-weight:bold;`;
+}
+
+function copyItemText(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const lines = [];
+    lines.push(item.name);
+	lines.push(item.note || "卦象");
+    //lines.push(item.gregorian);
+    lines.push(item.lunarTime);
+    lines.push(`${item.monthGod}　${item.dayGod}　${item.hourGod}`);
+    //lines.push("");
+
+    if (!item.branches.length) {
+        lines.push("（無分支）");
+    } else {
+        item.branches.forEach((b, i) => {
+            const mark = b.mark || "未知";
+            const desc = b.desc || "";
+            // 例：1. 88K  某簡述  → 赤口　應課
+            lines.push(`${b.code}  ${desc}  → ${b.result}　${mark}`);
+        });
+    }
+
+    const text = lines.join("\n");
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (typeof showMessageBox === "function") {
+                showMessageBox("已複製", "<p>項目內容已複製到剪貼簿</p>");
+            } else {
+                alert("已複製到剪貼簿");
+            }
+        }).catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function editItemNote(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const current = item.note || "卦象";
+
+    const contentHTML = `
+        <p style="margin:0 0 6px 0;">項目簡述</p>
+        <input type="text" id="editItemNoteInput" value="${escapeHtml(current)}"
+               style="width:100%; padding:8px; font-size:1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;">
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveItemNote('${itemId}')"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">儲存</button>
+        </div>
+    `;
+    showMessageBox("修改項目簡述", contentHTML);
+    setTimeout(() => {
+        const input = document.getElementById("editItemNoteInput");
+        if (input) { input.focus(); input.select(); }
+    }, 50);
+}
+
+function saveItemNote(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const input = document.getElementById("editItemNoteInput");
+    if (!input) return;
+
+    const v = input.value.trim();
+    item.note = v || "卦象";   // 空白就回到預設
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand("copy");
+        if (typeof showMessageBox === "function") {
+            showMessageBox("已複製", "<p>項目內容已複製到剪貼簿</p>");
+        } else {
+            alert("已複製到剪貼簿");
+        }
+    } catch (e) {
+        alert("複製失敗，請手動選取");
+    }
+    document.body.removeChild(ta);
+}
+
+function addSampleItem() {
+    const year = 2026, month = 5, day = 14, hour = 14, minute = 30;
+    const result = window.getBazi(year, month, day, hour, minute);
+    if (!result || result.error) return;
+
+    // 用現有規則算月／日／時神（跟 queryLiuren 同一套）
+    const monthNumStr = String(result.lunar.month).replace("閏", "");
+    const lunarMonthNum = chineseMonthToNum[monthNumStr];
+    const chineseDayList = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                            "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                            "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+    const lunarDayNum = chineseDayList.indexOf(result.lunar.day) + 1;
+    const monthGodIndex = (lunarMonthNum - 1) % 6;
+    const dayGodIndex = (monthGodIndex + (lunarDayNum - 1)) % 6;
+    const hourPos = branchToPos[result.branches.hour];
+    const hourGodIndex = (dayGodIndex + (hourPos - 1)) % 6;
+
+    const sample = {
+        id: "sample-26-054",
+        name: "六合彩",
+        note: "Sample 26/054",
+        gregorian: "2026-05-14 14:30",
+        lunarTime: `${result.lunar.full}　${result.branches.hour}時`,
+        monthGod: liurenGods[monthGodIndex],
+        dayGod: liurenGods[dayGodIndex],
+        hourGod: liurenGods[hourGodIndex],
+        hourGodIndex,
+        branches: []
+    };
+
+    const raw = [
+        { code: "5",  desc: "第二號碼" },
+        { code: "7",  desc: "第一號碼" },
+        { code: "13", desc: "第五號碼" },
+        { code: "15", desc: "第六號碼" },
+        { code: "27", desc: "第三號碼" },
+        { code: "31", desc: "第四號碼" }
+    ];
+
+    raw.forEach(row => {
+        const n = codeToNumber(row.code);
+        const startIndex = sample.branches.length === 0
+            ? sample.hourGodIndex
+            : liurenGods.indexOf(sample.branches[sample.branches.length - 1].result);
+        const god = godFromStart(startIndex, n);
+        sample.branches.push({
+            code: row.code,
+            desc: row.desc,
+            number: n,
+            result: god,
+            mark: "未知"
+        });
+    });
+
+    items.push(sample);
+    selectedItemId = sample.id;
+    saveData();
+}
+
+function showGodInfo(godName) {
+    if (!siuData || !siuData.gods[godName]) {
+        showMessageBox(godName, "<p>暫無資料</p>");
+        return;
+    }
+    const g = siuData.gods[godName];
+    const color = elementColor[g.element] || "#8B4513";
+
+    const contentHTML = `
+        <p style="margin:0 0 8px 0;"><strong style="color:${color}; font-size:1.2em;">${g.name}</strong></p>
+        <p style="margin:4px 0;">性質：${g.nature}</p>
+        <p style="margin:4px 0;">特徵：${g.traits}</p>
+        ${g.fortune ? `<p style="margin:4px 0;">吉凶：${g.fortune}</p>` : ""}
+        <p style="margin:4px 0;">陰陽：${g.yinYang}　五行：${g.element}</p>
+        ${g.details ? `<p style="margin:12px 0 0 0; color:#555; white-space:pre-wrap;">${g.details}</p>` : ""}
+    `;
+
+    showMessageBox(g.name, contentHTML);
+}
+
+loadData();
+if (!items.length) {
+    addSampleItem();
+}
+refreshItemSelect();
+renderItems();
+queryLiuren();
+</script>
+</body>
+</html>

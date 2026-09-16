@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>八字速查 API 範例頁面</title>
+<style>
+body { text-align: center; font-family: sans-serif; }
+.inputs { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+.inputs input { margin: 5px 0; width: 80%; max-width: 300px; }
+table { margin: auto; border-collapse: collapse; font-size: 1.3em; }
+td { padding: 10px; border: 1px solid #ddd; }
+#lunar { margin-top: 20px; font-size: 1.2em; color: #333; }
+#json { margin-top: 30px; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto; background: #f8f8f8; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>八字速查 API 範例頁面</h1>
+<p>這個頁面會呼叫獨立的 <code>bazi-calculator.js</code> 來取得四柱八字與農曆</p>
+
+<div class="inputs">
+    <input type="date" id="mydate">
+    <input type="time" id="mytime" value="00:00">
+    <button onclick="queryBazi()">查詢八字</button>
+</div>
+
+<div id="here"></div>
+<div id="json"></div>
+
+<script src="bazi-calculator.js"></script>
+<script>
+function queryBazi() {
+    const dateInput = document.getElementById('mydate').value;
+    const timeInput = document.getElementById('mytime').value || '00:00';
+    if (!dateInput) {
+        alert('請選擇日期');
+        return;
+    }
+
+    const [yearStr, monthStr, dayStr] = dateInput.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const day = parseInt(dayStr);
+    const [hourStr, minStr] = timeInput.split(':');
+    const hour = parseInt(hourStr);
+    const minute = parseInt(minStr);
+
+    // 呼叫 API（這就是「另一個 page 可以呼叫」的地方）
+    const result = window.getBazi(year, month, day, hour, minute);
+
+    if (result.error) {
+        document.getElementById('here').innerHTML = `<p style="color:red">${result.error}</p>`;
+        document.getElementById('json').textContent = '';
+        return;
+    }
+
+    // 顯示漂亮的表格（和原本一樣）
+    const html = `
+        <table>
+            <tr><td>時</td><td>日</td><td>月</td><td>年</td></tr>
+            <tr>
+                <td>${result.stems.hour}</td>
+                <td>${result.stems.day}</td>
+                <td>${result.stems.month}</td>
+                <td>${result.stems.year}</td>
+            </tr>
+            <tr>
+                <td>${result.branches.hour}</td>
+                <td>${result.branches.day}</td>
+                <td>${result.branches.month}</td>
+                <td>${result.branches.year}</td>
+            </tr>
+        </table>
+        <div id="lunar">
+            <strong>農曆日期時間：</strong><br>
+            ${result.lunar.full}<br>
+            ${result.hkTime}
+        </div>
+    `;
+    document.getElementById('here').innerHTML = html;
+
+    // 同時顯示完整的 JSON（方便其他程式使用）
+    document.getElementById('json').textContent = JSON.stringify(result, null, 2);
+}
+
+// 預設載入今天香港時間
+const now = new Date();
+const nowInHK = new Date(now.getTime() + 8 * 3600 * 1000);
+document.getElementById('mydate').value = nowInHK.toISOString().split('T')[0];
+document.getElementById('mytime').value = nowInHK.toISOString().split('T')[1].slice(0, 5);
+queryBazi();
+</script>
+</body>
+</html>
