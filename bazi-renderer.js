@@ -526,7 +526,7 @@ async function renderBaziFate() {
 
 	// 流月干
 	pillarsHTML += `<tr>`;
-	pillarsHTML += `<td class="pillar-label">流月<br>干</td>`;
+	pillarsHTML += `<td class="pillar-label">流月</td>`;
 	displayPairs.forEach(p => {
 		const c1 = data.fiveColors[data.stemsElement[p.s1]] || "#333";
 		const c2 = data.fiveColors[data.stemsElement[p.s2]] || "#333";
@@ -541,7 +541,7 @@ async function renderBaziFate() {
 
 	// 流月支
 	pillarsHTML += `<tr>`;
-	pillarsHTML += `<td class="pillar-label">流月<br>支</td>`;
+	pillarsHTML += `<td class="pillar-label">干支</td>`;
 	displayPairs.forEach(p => {
 		const c1 = data.fiveColors[data.branchesElement[p.b1]] || "#333";
 		const c2 = data.fiveColors[data.branchesElement[p.b2]] || "#333";
@@ -556,7 +556,7 @@ async function renderBaziFate() {
 
 	// 納音
 	pillarsHTML += `<tr>`;
-	pillarsHTML += `<td class="pillar-label">流月<br>納音</td>`;
+	pillarsHTML += `<td class="pillar-label">納音</td>`;
 	displayPairs.forEach(p => {
 		const element = p.naYin.slice(-1);
 		const color = data.fiveColors[element] || "#8B4513";
