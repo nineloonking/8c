@@ -254,7 +254,23 @@
 <div id="here" class="result-box"></div>
 
 <div class="action-box">
-    <p class="row-label">項目</p>
+	<div style="display:flex; align-items:center; margin-bottom:8px;">
+		<p class="row-label" style="margin:0;">項目</p>
+		<div style="margin-left:auto; display:flex; gap:6px;">
+			<button type="button" onclick="exportSelectedItem()"
+					style="padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+				匯出
+			</button>
+			<button type="button" onclick="importItem()"
+					style="padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+				匯入
+			</button>
+			<button type="button" onclick="exportAllItems()"
+					style="padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+				匯出全部
+			</button>
+		</div>
+	</div>
     <!--項目行-->
     <div class="action-row">
         <input type="text" id="itemName" placeholder="項目名稱">
@@ -489,6 +505,163 @@ function godFromStart(startIndex, n) {
     return liurenGods[(startIndex + (n - 1)) % 6];
 }
 
+function exportSelectedItem() {
+    if (!selectedItemId) {
+        alert("請先選擇要匯出的項目");
+        return;
+    }
+    const item = items.find(i => i.id === selectedItemId);
+    if (!item) return;
+
+    // 匯出時去掉 id（避免匯入時衝突），或保留也可以
+    const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        item: {
+            name: item.name,
+            note: item.note || "卦象",
+            gregorian: item.gregorian,
+            lunarTime: item.lunarTime,
+            monthGod: item.monthGod,
+            dayGod: item.dayGod,
+            hourGod: item.hourGod,
+            hourGodIndex: item.hourGodIndex,
+            branches: item.branches.map(b => ({
+                code: b.code,
+                desc: b.desc || "",
+                number: b.number,
+                result: b.result,
+                mark: b.mark || "未知"
+            }))
+        }
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${item.name || "item"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importItem() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                let toImport = [];
+
+                // 支援兩種格式
+                if (Array.isArray(data.items)) {
+                    // 匯出全部 的格式
+                    toImport = data.items;
+                } else if (data.item) {
+                    // 匯出單一項目 的格式
+                    toImport = [data.item];
+                } else if (data.name) {
+                    // 直接是 item 物件
+                    toImport = [data];
+                } else {
+                    throw new Error("無法辨識的檔案格式");
+                }
+
+                if (!toImport.length) {
+                    alert("檔案中沒有項目");
+                    return;
+                }
+
+                const imported = [];
+                toImport.forEach(raw => {
+                    if (!raw.name) return;
+
+                    const item = {
+                        id: String(Date.now() + Math.random()),
+                        name: raw.name,
+                        note: raw.note || "卦象",
+                        gregorian: raw.gregorian || "",
+                        lunarTime: raw.lunarTime || "",
+                        monthGod: raw.monthGod || "",
+                        dayGod: raw.dayGod || "",
+                        hourGod: raw.hourGod || "",
+                        hourGodIndex: typeof raw.hourGodIndex === "number" ? raw.hourGodIndex : 0,
+                        branches: Array.isArray(raw.branches) ? raw.branches.map(b => ({
+                            code: b.code || "",
+                            desc: b.desc || "",
+                            number: b.number || codeToNumber(b.code || "1"),
+                            result: b.result || "",
+                            mark: b.mark || "未知"
+                        })) : []
+                    };
+                    items.push(item);
+                    imported.push(item);
+                });
+
+                if (imported.length) {
+                    selectedItemId = imported[imported.length - 1].id; // 選中最後匯入的
+                    saveData();
+                    refreshItemSelect();
+                    renderItems();
+                    alert(`已匯入 ${imported.length} 個項目`);
+                } else {
+                    alert("沒有有效的項目可匯入");
+                }
+            } catch (err) {
+                alert("匯入失敗：" + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function exportAllItems() {
+    if (!items.length) {
+        alert("沒有項目可匯出");
+        return;
+    }
+
+    const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        items: items.map(item => ({
+            name: item.name,
+            note: item.note || "卦象",
+            gregorian: item.gregorian,
+            lunarTime: item.lunarTime,
+            monthGod: item.monthGod,
+            dayGod: item.dayGod,
+            hourGod: item.hourGod,
+            hourGodIndex: item.hourGodIndex,
+            branches: (item.branches || []).map(b => ({
+                code: b.code,
+                desc: b.desc || "",
+                number: b.number,
+                result: b.result,
+                mark: b.mark || "未知"
+            }))
+        }))
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `小六壬項目_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+
 function addItem() {
     //queryLiuren();   // ← 刪掉這行
     const name = document.getElementById('itemName').value.trim();
@@ -681,7 +854,12 @@ function renderItems() {
 				const mark = b.mark || "未知🧿";
 				return `
 				  <div class="branch-item">
-					<span class="branch-code">${escapeHtml(b.code)}</span>
+					<span class="branch-code"
+						  style="cursor:pointer; text-decoration:underline dotted;"
+						  onclick="editBranchCode('${item.id}', ${idx})"
+						  title="點擊修改代號">
+						${escapeHtml(b.code)}
+					</span>
 					<span class="branch-desc"
 						  style="cursor:pointer; text-decoration:underline dotted;"
 						  onclick="editBranchDesc('${item.id}', ${idx})">
@@ -704,8 +882,12 @@ function renderItems() {
         return `
             <div class="item-card${item.id === selectedItemId ? ' selected' : ''}">
 				<div class="item-head" style="display:flex; align-items:center; gap:10px;">
-					<span>
+					<span style="cursor:pointer; text-decoration:underline dotted;"
+						  onclick="editItemName('${item.id}')"
+						  title="點擊修改名稱">
 						${escapeHtml(item.name)}
+					</span>
+					<span>
 						<span class="item-note"
 							  style="margin-left:6px; font-size:0.8em; cursor:pointer; text-decoration:underline dotted; color:#555;"
 							  onclick="editItemNote('${item.id}')">
@@ -728,6 +910,47 @@ function renderItems() {
             </div>
         `;
     }).join('');
+}
+
+function editItemName(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const current = item.name || "";
+
+    const contentHTML = `
+        <p style="margin:0 0 6px 0;">項目名稱</p>
+        <input type="text" id="editItemNameInput" value="${escapeHtml(current)}"
+               style="width:100%; padding:8px; font-size:1.1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;">
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveItemName('${itemId}')"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">儲存</button>
+        </div>
+    `;
+    showMessageBox("修改項目名稱", contentHTML);
+    setTimeout(() => {
+        const input = document.getElementById("editItemNameInput");
+        if (input) { input.focus(); input.select(); }
+    }, 50);
+}
+
+function saveItemName(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const input = document.getElementById("editItemNameInput");
+    if (!input) return;
+
+    const v = input.value.trim();
+    if (!v) {
+        alert("名稱不能空白");
+        return;
+    }
+    item.name = v;
+    saveData();
+    closeMessageBox();
+    refreshItemSelect();   // 下拉選單也要更新名稱
+    renderItems();
 }
 
 function editBranchMark(itemId, branchIndex) {
@@ -853,6 +1076,73 @@ function saveItemNote(itemId) {
     renderItems();
 }
 
+function editBranchCode(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const b = item.branches[branchIndex];
+    const current = b.code || "";
+
+    const contentHTML = `
+        <p style="margin:0 0 6px 0;">分支代號（只准英數）</p>
+        <input type="text" id="editBranchCodeInput" value="${escapeHtml(current)}"
+               style="width:100%; padding:8px; font-size:1.1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;"
+               oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g, '')">
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveBranchCode('${itemId}', ${branchIndex})"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">儲存</button>
+        </div>
+    `;
+    showMessageBox("修改分支代號", contentHTML);
+    setTimeout(() => {
+        const input = document.getElementById("editBranchCodeInput");
+        if (input) { input.focus(); input.select(); }
+    }, 50);
+}
+
+function saveBranchCode(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const input = document.getElementById("editBranchCodeInput");
+    if (!input) return;
+
+    const newCode = input.value.trim();
+    if (!newCode) {
+        alert("代號不能空白");
+        return;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(newCode)) {
+        alert("只准數字或英文");
+        return;
+    }
+
+    // 更新代號
+    item.branches[branchIndex].code = newCode;
+    item.branches[branchIndex].number = codeToNumber(newCode);
+
+    // 從被改的這支開始，往後全部重算六神
+    for (let i = branchIndex; i < item.branches.length; i++) {
+        const branch = item.branches[i];
+        const n = branch.number;
+
+        let startIndex;
+        if (i === 0) {
+            startIndex = item.hourGodIndex;          // 第一支用項目時神
+        } else {
+            const prev = item.branches[i - 1];
+            startIndex = liurenGods.indexOf(prev.result);
+        }
+        branch.result = godFromStart(startIndex, n);
+    }
+
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
 function fallbackCopy(text) {
     const ta = document.createElement("textarea");
     ta.value = text;
@@ -908,7 +1198,6 @@ function addSampleItem() {
         { code: "7",  desc: "第一號碼" },
         { code: "13", desc: "第五號碼" },
         { code: "15", desc: "第六號碼" },
-        { code: "27", desc: "第三號碼" },
         { code: "31", desc: "第四號碼" }
     ];
 
