@@ -49,8 +49,9 @@ function getMonthDays(year, month) {
 }
 
 function getLunar(sy, sm, sd) {
-    const baseDate = new Date(1900, 0, 31);
-    const objDate = new Date(sy, sm - 1, sd);
+    // 用 UTC 建立日期，避免本地時區影響
+    const baseDate = Date.UTC(1900, 0, 31);
+    const objDate = Date.UTC(sy, sm - 1, sd);
     let offset = Math.floor((objDate - baseDate) / 86400000);
 
     let year = 1900, temp = 0;
