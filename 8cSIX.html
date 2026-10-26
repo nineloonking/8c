@@ -93,7 +93,7 @@
         border: 2px solid #8B4513;
         border-radius: 8px;
     }
-    .action-row button {
+    .action-row > button {
         padding: 9px 16px;
         background: #8B4513;
         color: white;
@@ -103,7 +103,7 @@
         cursor: pointer;
         white-space: nowrap;
     }
-    .action-row button:hover { background: #6b3410; }
+    .action-row > button:hover { background: #6b3410; }
     .row-label {
         font-weight: bold;
         color: #8B4513;
@@ -173,6 +173,43 @@
         color: #8B4513;
         font-size: 1.15em;
     }
+    /* 分支：拖拽把手、插入／刪除、拖放指示 */
+    .branch-drag {
+        color: #bbb;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+        font-size: 1.05em;
+        letter-spacing: -2px;
+        line-height: 1;
+        align-self: center;
+    }
+    .branch-drag:active { cursor: grabbing; }
+    .branch-item.dragging { opacity: 0.45; }
+    .branch-item.drop-before { box-shadow: inset 0 3px 0 #C9A227; }
+    .branch-item.drop-after { box-shadow: inset 0 -3px 0 #C9A227; }
+    .branch-actions {
+        display: inline-flex;
+        gap: 4px;
+        margin-left: 4px;
+        align-self: center;
+    }
+    .branch-action {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        color: #fff;
+        font-family: inherit;
+        font-size: 0.85em;
+        line-height: 1;
+        cursor: pointer;
+    }
+    .branch-action.insert { background: #C4A574; }
+    .branch-action.insert:hover { background: #A88B5C; }
+    .branch-action.delete { background: #C62828; }
+    .branch-action.delete:hover { background: #A32020; }
     .empty-note { color: #999; font-size: 0.9em; }
 	#dayModal {
 		display: none;
@@ -217,24 +254,157 @@
 		max-width: 70px;
 	}
 	#branchCode {
-		flex: 0 0 70px;
-		width: 70px;
-		min-width: 70px;
-		max-width: 70px;
+		flex: 0 0 52px;
+		width: 52px;
+		min-width: 52px;
+		max-width: 52px;
 	}
 	#branchDesc {
-		flex: 0 0 124px;
-		width: 124px;
-		min-width: 124px;
-		max-width: 124px;
+		flex: 1 1 60px;
+		min-width: 60px;
 	}
-	#itemSelect {
-		flex: 0 0 90px;
-		width: 90px;
+	#itemSelect { display: none; }
+
+	/* 分支行：固定寬度 + 強制不換行，讓 新增／批次 永遠同住一行 */
+	.action-row.branch-row {
+		gap: 6px;
+		flex-wrap: nowrap;
+	}
+	.action-row.branch-row input {
+		box-sizing: border-box;
+		min-width: 0;
+	}
+	.action-row.branch-row > button {
+		flex: 0 0 42px;
+		width: 42px;
+		min-width: 42px;
+		max-width: 42px;
+		padding: 6px 2px;
+		box-sizing: border-box;
+		font-size: 0.95em;
+	}
+
+	/* 項目選擇器：可搜尋下拉 */
+	.item-picker {
+		position: relative;
+		flex: 1 1 90px;
 		min-width: 90px;
-		max-width: 90px;
+		text-align: left;
 	}
-	.action-row button {
+	.item-picker-btn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 100%;
+		padding: 8px 10px;
+		font-size: 1em;
+		font-family: inherit;
+		color: #333;
+		background: #fff;
+		border: 2px solid #8B4513;
+		border-radius: 8px;
+		cursor: pointer;
+	}
+	.item-picker-btn:hover { background: #fdf8ef; }
+	.item-picker-label {
+		flex: 1 1 auto;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.item-picker-label.placeholder { color: #999; }
+	.item-picker-caret { color: #8B4513; font-size: 0.9em; }
+	.item-picker-panel {
+		display: none;
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 0;
+		right: auto;
+		width: 100%;
+		min-width: 280px;
+		max-width: calc(100vw - 32px);
+		z-index: 600;
+		background: #fff;
+		border: 2px solid #8B4513;
+		border-radius: 10px;
+		box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+		overflow: hidden;
+	}
+	.item-picker-panel.open { display: block; }
+	.item-picker-search {
+		padding: 8px;
+		border-bottom: 1px solid #eadcc4;
+		background: #fdf8ef;
+	}
+	.action-row .item-picker-search input {
+		flex: 1 1 auto;
+		width: 100%;
+		min-width: 0;
+		padding: 8px 10px;
+		font-size: 1em;
+		border: 1px solid #D2B48C;
+		border-radius: 6px;
+		box-sizing: border-box;
+	}
+	.item-picker-list {
+		max-height: 280px;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	.item-picker-count {
+		padding: 6px 12px;
+		font-size: 0.8em;
+		color: #999;
+		border-bottom: 1px dashed #eadcc4;
+	}
+	.item-picker-row {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		padding: 10px 12px;
+		cursor: pointer;
+		border-bottom: 1px solid #f2ead9;
+	}
+	.item-picker-row:last-child { border-bottom: none; }
+	.item-picker-row:hover { background: #f9f1e2; }
+	.item-picker-row.active { background: #f4ead8; }
+	.item-picker-row.active .item-picker-row-name { color: #8B4513; font-weight: bold; }
+	.item-picker-row-name {
+		flex: 1 1 auto;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.item-picker-row-note {
+		flex: 0 0 auto;
+		font-size: 0.8em;
+		color: #999;
+		white-space: nowrap;
+	}
+	.item-picker-empty {
+		padding: 14px 12px;
+		color: #999;
+		font-size: 0.9em;
+		text-align: center;
+	}
+	/* 窄螢幕：清單改成置中浮層，避免 90px 按鈕配太窄的清單 */
+	@media (max-width: 520px) {
+		.item-picker-panel {
+			position: fixed;
+			left: 12px;
+			right: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: auto;
+			min-width: 0;
+			max-width: none;
+			max-height: 80vh;
+		}
+		.item-picker-list {
+			max-height: calc(80vh - 90px);
+		}
+	}
+	.action-row > button {
 		flex: 0 0 50px;
 		width: 50px;
 		min-width: 50px;
@@ -275,18 +445,33 @@
     <div class="action-row">
         <input type="text" id="itemName" placeholder="項目名稱">
         <button type="button" onclick="addItem()">新增</button>
-        <select id="itemSelect" onchange="onItemSelect()">
-            <option value="">選擇項目</option>
-        </select>
-        <button type="button" onclick="deleteItem()">刪除</button>
+        <div class="item-picker" id="itemPicker">
+            <button type="button" class="item-picker-btn" id="itemPickerBtn"
+                    onclick="toggleItemPicker(event)" aria-haspopup="listbox" aria-expanded="false">
+                <span class="item-picker-label placeholder" id="itemPickerLabel">選擇項目</span>
+                <span class="item-picker-caret">▾</span>
+            </button>
+            <div class="item-picker-panel" id="itemPickerPanel">
+                <div class="item-picker-search">
+                    <input type="text" id="itemSearchInput" placeholder="輸入關鍵字搜尋…"
+                           autocomplete="off" oninput="filterItemPicker()"
+                           onkeydown="onItemSearchKeydown(event)">
+                </div>
+                <div class="item-picker-list" id="itemPickerList" role="listbox"></div>
+            </div>
+            <select id="itemSelect" onchange="onItemSelect()">
+                <option value="">選擇項目</option>
+            </select>
+        </div>
     </div>
     <!--分支行-->
-    <div class="action-row">
+    <div class="action-row branch-row">
         <input type="text" id="branchCode" placeholder="分支代號" oninput="sanitizeBranchCode(this)">
         <input type="text" id="branchDesc" placeholder="分支簡述">
         <button type="button" class="btn-branch" onclick="addBranch()">新增</button>
+        <button type="button" class="btn-branch" onclick="openBatchBranch()" title="批次新增分支">批次</button>
     </div>
-    <p class="hint">取數：代號尾數，承接對上六神再起課。</p>
+    <p class="hint">取代號尾數承接對上六神起課。　⋮⋮ 可拖動排序。</p>
 </div>
 
 <div id="itemList"></div>
@@ -327,6 +512,20 @@ fetch("SiuSixYamData.json")
 const liurenGods = ["大安", "留連", "速喜", "赤口", "小吉", "空亡"];
 const branchMarks = ["未知🧿", "應課🙏", "應劫🗡️", "反轉💣", "不明💭"];
 
+// 舊資料／匯入檔可能只有文字沒有圖示，統一補回
+const markIconMap = {
+    "未知": "未知🧿",
+    "應課": "應課🙏",
+    "應劫": "應劫🗡️",
+    "反轉": "反轉💣",
+    "不明": "不明💭"
+};
+function normalizeMark(mark) {
+    const m = String(mark || "").trim();
+    if (!m) return "未知🧿";
+    return markIconMap[m] || m;
+}
+
 const chineseMonthToNum = {
     "正":1, "二":2, "三":3, "四":4, "五":5, "六":6,
     "七":7, "八":8, "九":9, "十":10, "十一":11, "十二":12
@@ -349,6 +548,8 @@ let currentSnapshot = null;
 let manualDateStr = null;  // "YYYY-MM-DD" 或 null
 let items = [];
 let selectedItemId = "";
+// 正式版資料存放 key
+const ITEM_STORAGE_KEY = 'xiaoliuren-data';
 
 function getNowHK() {
     const now = new Date();
@@ -505,6 +706,28 @@ function godFromStart(startIndex, n) {
     return liurenGods[(startIndex + (n - 1)) % 6];
 }
 
+// 由指定分支開始，往後重算六神（刪除／插入／排序／改代號後使用）
+function recalcBranchesFrom(item, startIndex) {
+    if (!item || !Array.isArray(item.branches)) return;
+    const from = Math.max(0, startIndex || 0);
+
+    for (let i = from; i < item.branches.length; i++) {
+        const branch = item.branches[i];
+        const n = branch.number || codeToNumber(branch.code || "");
+        branch.number = n;
+
+        let startGodIndex;
+        if (i === 0) {
+            startGodIndex = item.hourGodIndex || 0;
+        } else {
+            startGodIndex = liurenGods.indexOf(item.branches[i - 1].result);
+        }
+        if (startGodIndex < 0) startGodIndex = 0;
+
+        branch.result = godFromStart(startGodIndex, n);
+    }
+}
+
 function exportSelectedItem() {
     if (!selectedItemId) {
         alert("請先選擇要匯出的項目");
@@ -531,7 +754,7 @@ function exportSelectedItem() {
                 desc: b.desc || "",
                 number: b.number,
                 result: b.result,
-                mark: b.mark || "未知"
+                mark: normalizeMark(b.mark)
             }))
         }
     };
@@ -598,7 +821,7 @@ function importItem() {
                             desc: b.desc || "",
                             number: b.number || codeToNumber(b.code || "1"),
                             result: b.result || "",
-                            mark: b.mark || "未知"
+                            mark: normalizeMark(b.mark)
                         })) : []
                     };
                     items.push(item);
@@ -646,7 +869,7 @@ function exportAllItems() {
                 desc: b.desc || "",
                 number: b.number,
                 result: b.result,
-                mark: b.mark || "未知"
+                mark: normalizeMark(b.mark)
             }))
         }))
     };
@@ -694,20 +917,32 @@ function addItem() {
     renderItems();
 }
 
-function deleteItem() {
-    if (!selectedItemId) {
-        alert('請先選擇要刪除的項目');
-        return;
-    }
-    const item = items.find(i => i.id === selectedItemId);
+function deleteItemById(itemId) {
+    const item = items.find(i => i.id === itemId);
     if (!item) return;
-    if (!confirm('確定刪除項目「' + item.name + '」？')) return;
 
-    items = items.filter(i => i.id !== selectedItemId);
-    selectedItemId = '';
-    saveData();
-    refreshItemSelect();
-    renderItems();
+    const contentHTML = `
+        <p style="margin:0 0 20px 0;">確定刪除項目「<strong>${escapeHtml(item.name)}</strong>」？</p>
+        <div style="text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 18px; margin-right:8px; border:none; border-radius:8px; background:#ddd; color:#333; cursor:pointer;">取消</button>
+            <button type="button" onclick="confirmDeleteItem('${itemId}')"
+                    style="padding:8px 18px; border:none; border-radius:8px; background:#C62828; color:#fff; cursor:pointer;">刪除</button>
+        </div>
+    `;
+    showMessageBox("刪除項目", contentHTML);
+}
+
+function confirmDeleteItem(itemId) {
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+        items = items.filter(i => i.id !== itemId);
+        if (selectedItemId === itemId) selectedItemId = '';
+        saveData();
+        refreshItemSelect();
+        renderItems();
+    }
+    closeMessageBox();
 }
 
 function addBranch() {
@@ -732,21 +967,255 @@ function addBranch() {
 
     const n = codeToNumber(code);
 
-    let startIndex;
-    if (item.branches.length === 0) {
-        startIndex = item.hourGodIndex;
-    } else {
-        const prev = item.branches[item.branches.length - 1];
-        startIndex = liurenGods.indexOf(prev.result);
-    }
-
-    const result = godFromStart(startIndex, n);
-
-    item.branches.push({ code, desc, number: n, result, mark: "未知🧿"});
+    item.branches.push({ code, desc, number: n, result: "", mark: "未知🧿"});
+    recalcBranchesFrom(item, item.branches.length - 1);
     document.getElementById('branchCode').value = '';
     document.getElementById('branchDesc').value = '';
     saveData();
     renderItems();
+}
+
+/* ---------- 分支：拖拽排序 ---------- */
+let branchDrag = null;
+
+function onBranchDragStart(e, itemId, index) {
+    if (e.button !== undefined && e.button !== 0) return;
+    branchDrag = {
+        itemId,
+        index,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        active: false,
+        slot: index
+    };
+    const handle = e.currentTarget;
+    if (handle.setPointerCapture) {
+        try { handle.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+}
+
+function onBranchDragMove(e) {
+    const d = branchDrag;
+    if (!d || e.pointerId !== d.pointerId) return;
+
+    if (!d.active) {
+        if (Math.abs(e.clientX - d.startX) < 6 && Math.abs(e.clientY - d.startY) < 6) return;
+        d.active = true;
+        const row = document.querySelector(`.branch-item[data-index="${d.index}"]`);
+        if (row) row.classList.add('dragging');
+    }
+
+    if (e.cancelable) e.preventDefault();
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const row = el && el.closest ? el.closest('.branch-item') : null;
+
+    document.querySelectorAll('.branch-item.drop-before, .branch-item.drop-after')
+        .forEach(r => r.classList.remove('drop-before', 'drop-after'));
+
+    if (row) {
+        const rect = row.getBoundingClientRect();
+        const after = e.clientY > rect.top + rect.height / 2;
+        row.classList.add(after ? 'drop-after' : 'drop-before');
+        const idx = Number(row.dataset.index);
+        d.slot = idx + (after ? 1 : 0);
+    }
+}
+
+function onBranchDragEnd() {
+    const d = branchDrag;
+    if (!d) return;
+    branchDrag = null;
+
+    document.querySelectorAll('.branch-item.dragging, .branch-item.drop-before, .branch-item.drop-after')
+        .forEach(r => r.classList.remove('dragging', 'drop-before', 'drop-after'));
+
+    if (!d.active) return;
+
+    let slot = d.slot;
+    if (d.index < slot) slot -= 1;
+    if (slot === d.index) return;
+
+    const item = items.find(i => i.id === d.itemId);
+    if (!item || !item.branches[d.index]) return;
+
+    const [moved] = item.branches.splice(d.index, 1);
+    item.branches.splice(slot, 0, moved);
+    recalcBranchesFrom(item, Math.min(d.index, slot));
+    saveData();
+    renderItems();
+}
+
+/* ---------- 分支：插入 ---------- */
+function insertBranch(itemId, beforeIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const contentHTML = `
+        <p style="margin:0 0 14px 0; color:#666;">在第 ${beforeIndex + 1} 支之前插入</p>
+        <input type="text" id="insertBranchCodeInput" placeholder="分支代號（只准英數）"
+               style="width:100%; padding:8px; font-size:1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box; margin-bottom:8px;"
+               oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g, '')">
+        <input type="text" id="insertBranchDescInput" placeholder="分支簡述"
+               style="width:100%; padding:8px; font-size:1em; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box;">
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveInsertBranch('${itemId}', ${beforeIndex})"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">插入</button>
+        </div>
+    `;
+    showMessageBox("插入分支", contentHTML);
+    setTimeout(() => {
+        const input = document.getElementById('insertBranchCodeInput');
+        if (input) input.focus();
+    }, 50);
+}
+
+function saveInsertBranch(itemId, beforeIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    const codeEl = document.getElementById('insertBranchCodeInput');
+    const descEl = document.getElementById('insertBranchDescInput');
+    const code = codeEl ? codeEl.value.trim() : '';
+    const desc = descEl ? descEl.value.trim() : '';
+
+    if (!code) { alert('請輸入分支代號'); return; }
+    if (!/^[A-Za-z0-9]+$/.test(code)) { alert('分支代號只可以是數字或英文'); return; }
+
+    item.branches.splice(beforeIndex, 0, {
+        code,
+        desc,
+        number: codeToNumber(code),
+        result: "",
+        mark: "未知🧿"
+    });
+    recalcBranchesFrom(item, beforeIndex);
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
+/* ---------- 分支：刪除 ---------- */
+function deleteBranch(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) return;
+
+    const b = item.branches[branchIndex];
+    const label = b.code + (b.desc ? '　' + b.desc : '');
+    const contentHTML = `
+        <p style="margin:0 0 20px 0;">確定刪除分支「<strong>${escapeHtml(label)}</strong>」？</p>
+        <div style="text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 18px; margin-right:8px; border:none; border-radius:8px; background:#ddd; color:#333; cursor:pointer;">取消</button>
+            <button type="button" onclick="confirmDeleteBranch('${itemId}', ${branchIndex})"
+                    style="padding:8px 18px; border:none; border-radius:8px; background:#C62828; color:#fff; cursor:pointer;">刪除</button>
+        </div>
+    `;
+    showMessageBox("刪除分支", contentHTML);
+}
+
+function confirmDeleteBranch(itemId, branchIndex) {
+    const item = items.find(i => i.id === itemId);
+    if (!item || !item.branches[branchIndex]) { closeMessageBox(); return; }
+
+    item.branches.splice(branchIndex, 1);
+    recalcBranchesFrom(item, branchIndex);
+    saveData();
+    closeMessageBox();
+    renderItems();
+}
+
+/* ---------- 分支：批次新增 ---------- */
+function openBatchBranch() {
+    if (!selectedItemId) {
+        alert('請先新增或選擇一個項目');
+        return;
+    }
+
+    const contentHTML = `
+        <p style="margin:0 0 8px 0; color:#666;">每行一支；一行多個代號會自動拆開。支援：</p>
+        <pre style="margin:0 0 10px 0; padding:8px; background:#fdf8ef; border-radius:6px; font-size:0.85em; color:#555; white-space:pre-wrap;">5 第二號碼
+7,第一號碼
+13
+5,7,15,31</pre>
+        <textarea id="batchBranchInput" rows="6" placeholder="貼上分支資料…"
+                  style="width:100%; padding:8px; font-size:1em; font-family:inherit; border:2px solid #8B4513; border-radius:8px; box-sizing:border-box; resize:vertical;"></textarea>
+        <div style="margin-top:16px; text-align:right;">
+            <button type="button" onclick="closeMessageBox()"
+                    style="padding:8px 16px; margin-right:8px; border:none; border-radius:8px; background:#ddd; cursor:pointer;">取消</button>
+            <button type="button" onclick="saveBatchBranches()"
+                    style="padding:8px 16px; border:none; border-radius:8px; background:#8B4513; color:#fff; cursor:pointer;">加入</button>
+        </div>
+    `;
+    showMessageBox("批次新增分支", contentHTML);
+    setTimeout(() => {
+        const ta = document.getElementById('batchBranchInput');
+        if (ta) ta.focus();
+    }, 50);
+}
+
+function parseBatchBranchLines(text) {
+    const rows = [];
+    String(text || '').split(/\r?\n/).forEach(rawLine => {
+        const line = rawLine.trim();
+        if (!line) return;
+
+        // 一行多個純代號：5,7,15,31 或 5 7 15 31
+        const tokens = line.split(/[\s,，、]+/).filter(Boolean);
+        if (tokens.length > 1 && tokens.every(t => /^[A-Za-z0-9]+$/.test(t))) {
+            tokens.forEach(code => rows.push({ code, desc: "" }));
+            return;
+        }
+
+        // 代號 + 簡述：5 第二號碼 / 7,第一號碼
+        const m = line.match(/^([A-Za-z0-9]+)[\s,，、]+(.*)$/);
+        if (m) {
+            rows.push({ code: m[1], desc: (m[2] || "").trim() });
+        } else if (/^[A-Za-z0-9]+$/.test(line)) {
+            rows.push({ code: line, desc: "" });
+        } else {
+            rows.push({ invalid: line });
+        }
+    });
+    return rows;
+}
+
+function saveBatchBranches() {
+    if (!selectedItemId) { alert('請先新增或選擇一個項目'); return; }
+    const item = items.find(i => i.id === selectedItemId);
+    const ta = document.getElementById('batchBranchInput');
+    if (!item || !ta) return;
+
+    const rows = parseBatchBranchLines(ta.value);
+    const valid = rows.filter(r => !r.invalid);
+    if (!valid.length) {
+        alert('沒有有效的分支，請檢查格式');
+        return;
+    }
+
+    const startIndex = item.branches.length;
+    valid.forEach(r => {
+        item.branches.push({
+            code: r.code,
+            desc: r.desc || "",
+            number: codeToNumber(r.code),
+            result: "",
+            mark: "未知🧿"
+        });
+    });
+    recalcBranchesFrom(item, startIndex);
+
+    saveData();
+    closeMessageBox();
+    renderItems();
+
+    const skipped = rows.length - valid.length;
+    showMessageBox("批次新增完成",
+        `<p style="margin:0;">已加入 <strong>${valid.length}</strong> 支分支。` +
+        (skipped ? `<br>略過 ${skipped} 行（格式不符）。` : '') + `</p>`);
 }
 
 function editBranchDesc(itemId, branchIndex) {
@@ -800,22 +1269,140 @@ function saveBranchDesc(itemId, branchIndex) {
 function onItemSelect() {
     selectedItemId = document.getElementById('itemSelect').value;
     saveData();
+    updateItemPickerLabel();
     renderItems();
+}
+
+function sortedItems() {
+    // 依名稱由小至大排序（中文也適用）
+    return [...items].sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', 'zh-Hant')
+    );
 }
 
 function refreshItemSelect() {
     const sel = document.getElementById('itemSelect');
-    
-    // 依名稱由小至大排序（中文也適用）
-    const sorted = [...items].sort((a, b) => 
-        (a.name || '').localeCompare(b.name || '', 'zh-Hant')
-    );
+    const sorted = sortedItems();
 
+    // 隱藏的原生 select 只負責保存狀態，畫面由可搜尋下拉顯示
     sel.innerHTML = '<option value="">選擇項目</option>' +
         sorted.map(i => `<option value="${i.id}">${escapeHtml(i.name)}</option>`).join('');
-    
-    sel.value = selectedItemId;
+    sel.value = selectedItemId || '';
+
+    updateItemPickerLabel();
+    const input = document.getElementById('itemSearchInput');
+    renderItemPicker(input ? input.value : '');
 }
+
+function updateItemPickerLabel() {
+    const label = document.getElementById('itemPickerLabel');
+    if (!label) return;
+    const item = items.find(i => i.id === selectedItemId);
+    const name = item ? item.name : '選擇項目';
+    label.textContent = name;
+    label.classList.toggle('placeholder', !item);
+    const btn = document.getElementById('itemPickerBtn');
+    if (btn) btn.title = name;
+}
+
+function renderItemPicker(keyword) {
+    const list = document.getElementById('itemPickerList');
+    if (!list) return;
+
+    const kw = (keyword || '').trim().toLowerCase();
+    const all = sortedItems();
+    const shown = kw
+        ? all.filter(i =>
+            (i.name || '').toLowerCase().includes(kw) ||
+            (i.note || '').toLowerCase().includes(kw))
+        : all;
+
+    let html = `<div class="item-picker-count">共 ${all.length} 個項目` +
+        (kw ? `，符合 ${shown.length} 個` : (all.length > 8 ? '（可輸入關鍵字搜尋）' : '')) +
+        `</div>`;
+
+    if (!shown.length) {
+        html += '<div class="item-picker-empty">找不到符合的項目</div>';
+    } else {
+        html += shown.map(i => {
+            const active = i.id === selectedItemId ? ' active' : '';
+            const note = i.note && i.note !== '卦象'
+                ? `<span class="item-picker-row-note">${escapeHtml(i.note)}</span>`
+                : '';
+            return `<div class="item-picker-row${active}" role="option" data-id="${escapeHtml(i.id)}"
+                         onclick="selectItemFromPicker(this.dataset.id)">
+                        <span class="item-picker-row-name">${escapeHtml(i.name)}</span>${note}
+                    </div>`;
+        }).join('');
+    }
+
+    list.innerHTML = html;
+}
+
+function selectItemFromPicker(id) {
+    selectedItemId = id || '';
+    const sel = document.getElementById('itemSelect');
+    if (sel) sel.value = selectedItemId;
+    saveData();
+    updateItemPickerLabel();
+    renderItems();
+    closeItemPicker();
+}
+
+function openItemPicker() {
+    const panel = document.getElementById('itemPickerPanel');
+    const btn = document.getElementById('itemPickerBtn');
+    const input = document.getElementById('itemSearchInput');
+    if (!panel) return;
+
+    panel.classList.add('open');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+    if (input) input.value = '';
+    renderItemPicker('');
+    if (input) setTimeout(() => input.focus(), 0);
+}
+
+function closeItemPicker() {
+    const panel = document.getElementById('itemPickerPanel');
+    const btn = document.getElementById('itemPickerBtn');
+    if (panel) panel.classList.remove('open');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleItemPicker(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById('itemPickerPanel');
+    if (!panel) return;
+    if (panel.classList.contains('open')) closeItemPicker();
+    else openItemPicker();
+}
+
+function filterItemPicker() {
+    const input = document.getElementById('itemSearchInput');
+    renderItemPicker(input ? input.value : '');
+}
+
+function onItemSearchKeydown(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        closeItemPicker();
+        return;
+    }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const first = document.querySelector('#itemPickerList .item-picker-row');
+        if (first) selectItemFromPicker(first.dataset.id);
+    }
+}
+
+// 點擊選單外面或按 Esc 時收起
+document.addEventListener('click', (e) => {
+    const picker = document.getElementById('itemPicker');
+    if (picker && !picker.contains(e.target)) closeItemPicker();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeItemPicker();
+});
 
 function escapeHtml(str) {
     return String(str)
@@ -826,7 +1413,7 @@ function escapeHtml(str) {
 }
 
 function saveData() {
-    localStorage.setItem('xiaoliuren-data', JSON.stringify({
+    localStorage.setItem(ITEM_STORAGE_KEY, JSON.stringify({
         items,
         selectedItemId
     }));
@@ -834,11 +1421,20 @@ function saveData() {
 
 function loadData() {
     try {
-        const raw = localStorage.getItem('xiaoliuren-data');
+        let raw = localStorage.getItem(ITEM_STORAGE_KEY);
+        // 沿用舊版資料（若有）
+        if (!raw) raw = localStorage.getItem('xiaoliuren-data');
         if (!raw) return;
         const data = JSON.parse(raw);
         if (Array.isArray(data.items)) items = data.items;
         if (typeof data.selectedItemId === 'string') selectedItemId = data.selectedItemId;
+
+        // 舊資料的狀態可能沒有圖示，載入時統一補上
+        items.forEach(item => {
+            (item.branches || []).forEach(b => {
+                b.mark = normalizeMark(b.mark);
+            });
+        });
     } catch (e) {
         items = [];
         selectedItemId = '';
@@ -858,9 +1454,14 @@ function renderItems() {
     box.innerHTML = shown.map(item => {
         const branchesHtml = item.branches.length
             ? item.branches.map((b, idx) => {
-				const mark = b.mark || "未知🧿";
+				const mark = normalizeMark(b.mark);
 				return `
-				  <div class="branch-item">
+				  <div class="branch-item" data-index="${idx}">
+					<span class="branch-drag" title="按住拖動排序"
+						  onpointerdown="onBranchDragStart(event, '${item.id}', ${idx})"
+						  onpointermove="onBranchDragMove(event)"
+						  onpointerup="onBranchDragEnd(event)"
+						  onpointercancel="onBranchDragEnd(event)">⋮⋮</span>
 					<span class="branch-code"
 						  style="cursor:pointer; text-decoration:underline dotted;"
 						  onclick="editBranchCode('${item.id}', ${idx})"
@@ -880,6 +1481,14 @@ function renderItems() {
 						  onclick="editBranchMark('${item.id}', ${idx})"
 						  title="點擊修改">
 					  ${escapeHtml(mark)}
+					</span>
+					<span class="branch-actions">
+						<button type="button" class="branch-action insert"
+								onclick="insertBranch('${item.id}', ${idx})"
+								title="在此插入分支">＋</button>
+						<button type="button" class="branch-action delete"
+								onclick="deleteBranch('${item.id}', ${idx})"
+								title="刪除分支">✕</button>
 					</span>
 				  </div>
 				`;
@@ -902,8 +1511,14 @@ function renderItems() {
 						</span>
 					</span>
 					<button type="button"
+							onclick="deleteItemById('${item.id}')"
+							title="刪除項目"
+							style="margin-left:auto; padding:2px 4px; font-size:0.8em; background:#C62828; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+						刪除
+					</button>
+					<button type="button"
 							onclick="copyItemText('${item.id}')"
-							style="margin-left:auto; padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+							style="padding:2px 4px; font-size:0.8em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
 						複製
 					</button>
 				</div>
@@ -965,7 +1580,7 @@ function editBranchMark(itemId, branchIndex) {
     if (!item || !item.branches[branchIndex]) return;
 
     const b = item.branches[branchIndex];
-    const current = b.mark || "未知🧿";
+    const current = normalizeMark(b.mark);
 
     const options = branchMarks.map(m =>
         `<option value="${m}" ${m === current ? "selected" : ""}>${m}</option>`
@@ -1025,7 +1640,7 @@ function copyItemText(itemId) {
         lines.push("（無分支）");
     } else {
         item.branches.forEach((b, i) => {
-            const mark = b.mark || "未知";
+            const mark = normalizeMark(b.mark);
             const desc = b.desc || "";
             // 例：1. 88K  某簡述  → 赤口　應課
             lines.push(`${b.code}  ${desc}  → ${b.result}　${mark}`);
@@ -1131,19 +1746,7 @@ function saveBranchCode(itemId, branchIndex) {
     item.branches[branchIndex].number = codeToNumber(newCode);
 
     // 從被改的這支開始，往後全部重算六神
-    for (let i = branchIndex; i < item.branches.length; i++) {
-        const branch = item.branches[i];
-        const n = branch.number;
-
-        let startIndex;
-        if (i === 0) {
-            startIndex = item.hourGodIndex;          // 第一支用項目時神
-        } else {
-            const prev = item.branches[i - 1];
-            startIndex = liurenGods.indexOf(prev.result);
-        }
-        branch.result = godFromStart(startIndex, n);
-    }
+    recalcBranchesFrom(item, branchIndex);
 
     saveData();
     closeMessageBox();
@@ -1219,7 +1822,7 @@ function addSampleItem() {
             desc: row.desc,
             number: n,
             result: god,
-            mark: "未知"
+            mark: "未知🧿"
         });
     });
 
