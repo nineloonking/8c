@@ -805,8 +805,15 @@ function onItemSelect() {
 
 function refreshItemSelect() {
     const sel = document.getElementById('itemSelect');
+    
+    // 依名稱由小至大排序（中文也適用）
+    const sorted = [...items].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '', 'zh-Hant')
+    );
+
     sel.innerHTML = '<option value="">選擇項目</option>' +
-        items.map(i => `<option value="${i.id}">${escapeHtml(i.name)}</option>`).join('');
+        sorted.map(i => `<option value="${i.id}">${escapeHtml(i.name)}</option>`).join('');
+    
     sel.value = selectedItemId;
 }
 
