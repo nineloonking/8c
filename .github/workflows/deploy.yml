@@ -15,12 +15,21 @@ jobs:
 
       - name: Replace Firebase API Key
         run: |
-          echo "🔄 正在替換 Firebase4p8c.js 中的 API Key..."
-          sed -i "s/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g" Firebase4p8c.js
-          echo "✅ API Key 替換指令執行完畢"
+          echo "🔄 正在替換 Firebase 檔案中的 API Keys..."
           
-          echo "🔍 再次確認修改後的內容 (前 15 行)："
+          # 1. 替換第一個檔案
+          sed -i "s/YOUR_API_KEY_HERE/${{ secrets.FIREBASE4P8C }}/g" Firebase4p8c.js
+          
+          # 2. 替換第二個檔案
+          sed -i "s/YOUR_API_KEY_smallsix/${{ secrets.FIREBASESMALLSIX }}/g" Firebasesmallsix.js
+          
+          echo "✅ 所有 API Key 替換指令執行完畢"
+          
+          echo "🔍 檢查第一個檔案修改後的內容 (前 15 行)："
           head -n 15 Firebase4p8c.js
+          
+          echo "🔍 檢查第二個檔案修改後的內容 (前 15 行)："
+          head -n 15 Firebasesmallsix.js
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
