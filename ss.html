@@ -451,7 +451,14 @@ window.onCloudDataLoaded = function() {
     <button type="button" class="login-btn" id="loginBtn" onclick="toggleGamChuMode()">登入</button>
 </div>
 
-<div id="here" class="result-box"></div>
+<div style="position:relative; max-width:700px; margin:20px auto;">
+    <button type="button" onclick="showHelp()"
+            style="position:absolute; top:8px; right:8px; z-index:10; padding:2px 8px; font-size:0.75em; background:#8B4513; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+        說明
+    </button>
+    <div id="here" class="result-box"></div>
+</div>
+
 
 <div class="action-box">
 	<div style="display:flex; align-items:center; margin-bottom:8px;">
@@ -516,8 +523,8 @@ window.onCloudDataLoaded = function() {
 </div>
 
 <div id="hourModal">
-    <h3>手動推算 時神</h3>
-    <p style="margin:10px 0 15px 0;">輸入時辰序號<br>(1 = 子時　…　12 = 亥時)</p>
+    <h3>時決 或 數決</h3>
+    <p style="margin:10px 0 15px 0;">輸入時辰 或 數字<br>(1 = 子時　…　12 = 亥時)</p>
     <input type="number" id="manualHour" min="1" max="12" value="9" style="width:100px; padding:8px; font-size:1.3em; text-align:center; border:2px solid #8B4513; border-radius:8px;">
     <br><br>
     <button onclick="calculateManualHourGod()" style="padding:12px 30px; background:#8B4513; color:white; border:none; border-radius:8px; font-size:1.1em; margin-right:8px;">推算</button>
@@ -579,6 +586,22 @@ let manualDateStr = null;  // "YYYY-MM-DD" 或 null
 let items = [];
 let selectedItemId = "";
 
+
+function showHelp() {
+    const contentHTML = `
+        <p style="margin:0 0 8px 0; line-height:1.6;">
+		小六壬又稱馬前課係諸葛亮孔明常用的掌上占卜法
+		<br>現加整理為App版本。使用說明：<br><br>
+		心中一事「猶豫不決」亦「十五十六」，打開App來看時辰卜卦結果。如果時辰已用，可以用數決占卦，點擊 👉時神👈️ 即可輸入1-12數字來起課。
+		<br><br>
+		進一步可以新增項目來記錄占卦<br>
+		下項目表輸入項目名稱，再按新增。更可在分支輸入分支代號(0~9 A~Z)來新增支節
+		<br><br>
+		六合彩Sample是第26/054期，起課是大安(吉)，六個號碼也是吉
+		</p>
+    `;
+    showMessageBox("說明", contentHTML);
+}
 
 function getNowHK() {
     const now = new Date();
@@ -651,7 +674,7 @@ function renderCurrentGods() {
 			<tr>
 				<td style="color: green; cursor:pointer;" onclick="resetToNow()" title="重設為現在">月神♻️</td>
 				<td style="color: gold; cursor:pointer;" onclick="showDayModal()" title="改日期">日神🖌️</td>
-				<td style="color: gold; cursor:pointer;" onclick="showHourModal()" title="改時辰">時神🖌️</td>
+				<td style="color: gold; cursor:pointer; background-color: #FDFBF7;" onclick="showHourModal()" title="改時辰或數字">👉時神👈️</td>
 			</tr>
 			<tr>
 				<td class="god-name" style="${godStyle(s.monthGod)}" onclick="showGodInfo('${s.monthGod}')">${s.monthGod}</td>
@@ -1841,6 +1864,7 @@ function addSampleItem() {
         { code: "7",  desc: "第一號碼" },
         { code: "13", desc: "第五號碼" },
         { code: "15", desc: "第六號碼" },
+		{ code: "21", desc: "第三號碼" },
         { code: "31", desc: "第四號碼" }
     ];
 
