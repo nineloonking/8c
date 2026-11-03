@@ -13,10 +13,12 @@ async function googleLogin() {
         console.log("登入成功", currentUser.uid);
         updateAuthUI();
         loadFromCloud();   // 登入後立即載入雲端資料
-        alert(`✅ 登入成功！\n${currentUser.displayName}`);
+        //已移除alert
+		//alert(`✅ 登入成功！\n${currentUser.displayName}`);
     } catch (error) {
         console.error("登入失敗", error);
-        alert("登入失敗：" + error.message);
+        //已移除alert
+		//alert("登入失敗：" + error.message);
     }
 }
 
@@ -79,7 +81,7 @@ function toggleGamChuMode() {
                     <!-- 金主模式開關 -->
                     <div style="background:#f9f7f0; padding:16px; border-radius:12px; margin-bottom:20px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:1.1em; font-weight:500;">開啟儲存</span>
+                            <span style="font-size:1.1em; font-weight:500;">開啟功能</span>
                             <button onclick="toggleGamChuSwitch()" id="modeSwitch" style="padding:6px 20px; border:none; border-radius:9999px; font-weight:bold; cursor:pointer; min-width:70px;">
                                 ON
                             </button>
@@ -170,47 +172,7 @@ function closeGamChuModal() {
     if (modal) modal.remove();
 }
 
-// ==================== Firestore 同步 ====================
-async function saveToCloud() {
-    if (!currentUser) {
-        console.log("未登入，無法上傳");
-        return;
-    }
-    const records = JSON.parse(localStorage.getItem('baziRecords') || '[]');
-    console.log("準備上傳", records.length, "筆紀錄");
-    try {
-        await db.collection('users').doc(currentUser.uid).set({
-            records: records,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log("✅ 上傳成功");
-    } catch (e) {
-        console.error("❌ 上傳失敗", e);
-    }
-}
-
-async function loadFromCloud() {
-    if (!currentUser) {
-        console.log("未登入，無法下載");
-        return;
-    }
-    try {
-        console.log("正在從雲端下載...");
-        const doc = await db.collection('users').doc(currentUser.uid).get();
-        if (doc.exists) {
-            const data = doc.data();
-            if (data.records && data.records.length > 0) {
-                localStorage.setItem('baziRecords', JSON.stringify(data.records));
-                loadRecordOptions();
-                console.log("✅ 已從雲端載入", data.records.length, "筆紀錄");
-            }
-        } else {
-            console.log("雲端無資料");
-        }
-    } catch (e) {
-        console.error("❌ 下載失敗", e);
-    }
-}
+// ==================== Firestore 同步 ==================== move to Firebase****.js
 
 function toggleGamChuSwitch() {
     isGamChuMode = !isGamChuMode;
