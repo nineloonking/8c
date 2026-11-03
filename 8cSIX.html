@@ -416,9 +416,39 @@
 </head>
 <body>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="Firebasesmallsix.js"></script>
+<script>
+// 初始化 Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(window.firebaseConfig);
+}
+const auth = firebase.auth();
+const db = firebase.firestore();
+window.auth = auth;   // 讓外部也能用
+window.db = db;
+
+// 正式版資料存放 key
+const ITEM_STORAGE_KEY = 'xiaoliuren-data';
+
+window.CLOUD_STORAGE_KEY = ITEM_STORAGE_KEY;
+window.CLOUD_FIELD = 'xiaoliuren';
+
+window.onCloudDataLoaded = function() {
+    loadData();
+    refreshItemSelect();
+    renderItems();
+};
+
+</script>
+<script src="GamChuMode.js"></script>
+
 <div class="top-bar">
     <h1>小六壬速查</h1>
-    <button type="button" class="login-btn" onclick="onLogin()">登入</button>
+    <button type="button" class="login-btn" id="loginBtn" onclick="toggleGamChuMode()">登入</button>
 </div>
 
 <div id="here" class="result-box"></div>
@@ -548,8 +578,7 @@ let currentSnapshot = null;
 let manualDateStr = null;  // "YYYY-MM-DD" 或 null
 let items = [];
 let selectedItemId = "";
-// 正式版資料存放 key
-const ITEM_STORAGE_KEY = 'xiaoliuren-data';
+
 
 function getNowHK() {
     const now = new Date();
@@ -1417,6 +1446,10 @@ function saveData() {
         items,
         selectedItemId
     }));
+    // 只要登入就上傳，不管開關
+    if (typeof saveToCloud === 'function' && currentUser) {
+        saveToCloud();
+    }
 }
 
 function loadData() {
@@ -1852,6 +1885,26 @@ function showGodInfo(godName) {
 }
 
 loadData();
+window.auth.onAuthStateChanged(user => {
+    if (user && typeof loadFromCloud === 'function') {
+        setTimeout(loadFromCloud, 800); // 等 Firebase 就緒
+    }
+	//已登入 → 金色背景 + 用戶名 | 未登入 → 紅色背景 + 「登入」
+	const btn = document.getElementById('loginBtn');
+    if (user) {
+        btn.textContent = user.displayName || user.email || '已登入';
+        btn.style.background = '#C9A227';   // 金色
+        btn.style.color = '#fff';
+        if (typeof loadFromCloud === 'function') {
+            setTimeout(loadFromCloud, 800);
+        }
+    } else {
+        btn.textContent = '登入';
+        btn.style.background = '#C62828';   // 紅色
+        btn.style.color = '#fff';
+    }
+});
+
 if (!items.length) {
     addSampleItem();
 }
